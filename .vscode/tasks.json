@@ -1,0 +1,113 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake Configure Debug",
+            "type": "shell",
+            "windows": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-G",
+                    "MinGW Makefiles",
+                    "-DCMAKE_BUILD_TYPE=Debug",
+                    "-DCMAKE_C_COMPILER=C:/Program Files/mingw64/bin/gcc.exe",
+                    "-DCMAKE_CXX_COMPILER=C:/Program Files/mingw64/bin/g++.exe"
+                ]
+            },
+            "linux": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_BUILD_TYPE=Debug",
+                    "-DCMAKE_C_COMPILER=/usr/bin/gcc",
+                    "-DCMAKE_CXX_COMPILER=/usr/bin/g++"
+                ]
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CMake Configure Release",
+            "type": "shell",
+            "windows": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-G",
+                    "MinGW Makefiles",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DCMAKE_C_COMPILER=C:/Program Files/mingw64/bin/gcc.exe",
+                    "-DCMAKE_CXX_COMPILER=C:/Program Files/mingw64/bin/g++.exe"
+                ]
+            },
+            "linux": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DCMAKE_C_COMPILER=/usr/bin/gcc",
+                    "-DCMAKE_CXX_COMPILER=/usr/bin/g++"
+                ]
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CMake Build Debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build",
+                "--config",
+                "Debug",
+                "--",
+                "-j",
+            ],
+            "problemMatcher": [],
+            "dependsOn": "CMake Configure Debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CMake Build Release",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build",
+                "--config",
+                "Release",
+                "--",
+                "-j",
+            ],
+            "problemMatcher": [],
+            "dependsOn": "CMake Configure Release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
