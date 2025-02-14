@@ -6,7 +6,17 @@ LoremScriptum is a basic programming language with Latin-inspired syntax and mat
 > This is just a student project for fun and education.
 > Do not use it in production!
 
+## Requirements
+
+- C++17 Compiler
+- CMake, Make
+- LLVM
+
+If you are on Windows, I recommend using MinGW from https://winlibs.com/
+
 ## Installation
+
+Before installation
 
 To build and use the LoremScriptum compiler, follow these steps:
 
@@ -125,6 +135,6 @@ numerus[] trahtebedoh := [I, III, V, I]
     scribor(i)
 ;
 
-nihil function := \lamda (littera[] scripture): scribor(scripture);
+nihil function := λ (littera[] scripture): scribor(scripture);
 
 ```
