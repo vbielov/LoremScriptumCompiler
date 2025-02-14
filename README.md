@@ -2,8 +2,9 @@
 
 LoremScriptum is a basic programming language with Latin-inspired syntax and mathematical symbols that replace conventional flow control and basic operations.
 
-> [!WARNING] Do not use it in production
+> [!WARNING]
 > This is just a student project for fun and education.
+> Do not use it in production!
 
 ## Installation
 
@@ -12,8 +13,8 @@ To build and use the LoremScriptum compiler, follow these steps:
 1. **Clone the repository:**
 
     ```bash
-    git clone https://...
-    cd ...
+    git clone https://github.com/vbielov/LoremScriptumCompiler.git
+    cd LoremScriptumCompiler
     ```
 
 2. **Build the compiler:**
