@@ -38,20 +38,19 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LLVM_LIBS})
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    LLVMCore
-    LLVMExecutionEngine
-    LLVMMCJIT
-    LLVMOrcJIT
-    # LLVMNative (I don't have it. Do I need it? idk)
-    LLVMSupport
-)
-
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
 # Statically link gcc and std, because Windows doesn't have it without MinGW
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        LLVMCore
+        LLVMExecutionEngine
+        LLVMMCJIT
+        LLVMOrcJIT
+        # LLVMNative (I don't have it. Do I need it? idk)
+        LLVMSupport
+    )
 endif(WIN32)
 
 # ---------------------------- TESTING ----------------------------

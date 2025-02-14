@@ -16,7 +16,6 @@ static const char* OPERATORS[] = {
     "," ":=", "=", "\u2260" , ">", "<", ">=", "<=", "+", "-", "*", "/", "^", "\u00AC", "!"
 };
 
-void tokenize(const std::vector<std::string>& sourceCodeLines, std::vector<Token>* outTokens)
-{
+void tokenize(const std::vector<std::string>& sourceCodeLines, std::vector<Token>* outTokens) {
 
 }
