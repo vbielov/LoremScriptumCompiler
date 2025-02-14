@@ -5,6 +5,8 @@ project(lsc CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(LLVM_LINK_LLVM_DYLIB ON)
+
 # set(CMAKE_BUILD_TYPE Debug)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
@@ -23,9 +25,28 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(PROJECT_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/include/)
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM: ${LLVM_DIR}")
+message(STATUS "Using LLVM version: ${LLVM_VERSION}")
+
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LLVM_LIBS})
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    LLVMCore
+    LLVMExecutionEngine
+    LLVMMCJIT
+    LLVMOrcJIT
+    # LLVMNative (I don't have it. Do I need it? idk)
+    LLVMSupport
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
 # ---------------------------- TESTING ----------------------------
