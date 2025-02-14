@@ -1,33 +1,32 @@
 #include <iostream>
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/MCJIT.h"
-#include "llvm/Support/TargetSelect.h"
+#include <fstream>
+#include <sstream>
+#include <Lexer.hpp>
 
-int main() {
-    std::cout << "Hello World!\n";
+int main(int argc, const char** argv) {
+    if (argc < 2) {
+        std::cerr << "Usage: lsc <input_file.ls>" << std::endl;
+        return 2;
+    }
 
-    // Create an LLVM context
-    llvm::LLVMContext Context;
+    // Read File
+    const char* inputFilePath = argv[1];
+    std::ifstream inputFile(inputFilePath);
+    std::string lineBuffer;
+    std::vector<std::string> sourceCodeLines;
+    while (std::getline(inputFile, lineBuffer)) {
+        sourceCodeLines.emplace_back(std::move(lineBuffer));
+    }
 
-    // Create an LLVM module
-    llvm::Module Module("TestModule", Context);
+    // Tokenize
+    std::vector<Token> tokens;
+    tokenize(sourceCodeLines, &tokens);
 
-    // Create a function type (void testFunction())
-    llvm::FunctionType *funcType = llvm::FunctionType::get(llvm::Type::getVoidTy(Context), false);
-    llvm::Function *testFunction = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "testFunction", Module);
+    // Build AST
 
-    // Create a basic block and attach it to the function
-    llvm::BasicBlock *entry = llvm::BasicBlock::Create(Context, "entry", testFunction);
-    llvm::IRBuilder<> builder(entry);
+    // Generate IR
 
-    // Return from function
-    builder.CreateRetVoid();
-
-    // Print the generated LLVM IR
-    Module.print(llvm::errs(), nullptr);
-
+    // End?
+    
     return 0;
 }
