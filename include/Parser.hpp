@@ -6,6 +6,10 @@ private:
     Lexer* m_lexer;
     Token currentToken;
 
+public:
+    Parser(Lexer& lexer);
+
+private:
     /// @brief Get the precedence of the pending binary operator token.
     int getTokenPrecedence();
 
@@ -13,7 +17,4 @@ private:
     // ParseExpression();
     // ParseIdentifierExpr();
     // ParseParenExpr();
-
-public:
-    Parser(Lexer& lexer);
 };
