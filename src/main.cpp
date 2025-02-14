@@ -13,20 +13,20 @@ int main(int argc, const char** argv) {
     const char* inputFilePath = argv[1];
     std::ifstream inputFile(inputFilePath);
     std::string lineBuffer;
-    std::vector<std::string> sourceCodeLines;
+    std::string sourceCode;
     while (std::getline(inputFile, lineBuffer)) {
-        sourceCodeLines.emplace_back(std::move(lineBuffer));
+        sourceCode += lineBuffer + "\n"; // das is sehr langsam, aber egal.
     }
 
     // Tokenize
-    std::vector<Token> tokens;
-    tokenize(sourceCodeLines, &tokens);
+    Lexer lexer = Lexer(sourceCode.c_str());
 
-    // Build AST
+    // Parser
+    
 
     // Generate IR
 
     // End?
-    
+
     return 0;
 }
