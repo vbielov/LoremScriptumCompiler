@@ -17,7 +17,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ make llvm clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ make llvm clang libffi-dev libncurses5-dev libncursesw5-dev
 
       - name: Create build directory
         run: mkdir -p build
