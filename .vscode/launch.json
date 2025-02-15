@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/lsc.exe",
-            "args": [],
+            "args": ["../code.ls"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

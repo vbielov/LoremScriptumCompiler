@@ -20,9 +20,12 @@ int main(int argc, const char** argv) {
 
     // Tokenize
     Lexer lexer = Lexer(sourceCode.c_str());
+    Token token;
+    while ((token = lexer.getNextToken()).type != TokenType::EOF_TOKEN) {
+        std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << token.value << std::endl;
+    }
 
     // Parser
-    
 
     // Generate IR
 
