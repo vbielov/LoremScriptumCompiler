@@ -31,4 +31,4 @@ jobs:
         run: cmake --build build -- -j$(nproc)
 
       - name: Run tests
-        run: ./build/testHelloWorld
+        run: ./build/lscTest

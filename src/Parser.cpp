@@ -6,3 +6,8 @@ Parser::Parser(Lexer &lexer)
 int Parser::getTokenPrecedence() {    
     return 0;
 }
+
+AST Parser::sieveToken([[maybe_unused]] const Token& token) const
+{
+    return AST();
+}

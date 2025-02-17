@@ -83,7 +83,7 @@ numerus c = foo(I, V)
 numerus cadabra := XVI
 
 ∑(∞):
-    Numerus abra := II
+    numerus abra := II
     abra := abra + abra
     
     si abra > cadabra:

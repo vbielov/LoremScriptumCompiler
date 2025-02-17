@@ -4,6 +4,7 @@
             "name": "Windows",
             "includePath": [
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/test",
                 "${workspaceFolder}/build/googletest-src/googlemock/include/**",
                 "${workspaceFolder}/build/googletest-src/googletest/include/**"
             ],
@@ -21,7 +22,10 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/test",
+                "${workspaceFolder}/build/googletest-src/googlemock/include/**",
+                "${workspaceFolder}/build/googletest-src/googletest/include/**"
             ],
             "defines": [
                 "_DEBUG"

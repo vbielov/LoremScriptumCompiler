@@ -3,7 +3,7 @@
 
 enum class TokenType {
     EOF_TOKEN,      // End of the file
-    IDENTIFIER,     // Name of the variable, function, ect.
+    IDENTIFIER,     // Name of the variable, function, ect. [a-z][a-zA-Z0-9]
     NUMBER,         // Integer, ∅
     LITERAL,        // anything but ", surrounded by "'s
     TYPE,           // numerus, literra, nihil, ect.
@@ -13,7 +13,20 @@ enum class TokenType {
     KEYWORD,        // λ, retro, finio, ∑(∞), si, ni
 };
 
+inline const char* TOKEN_TYPE_LABELS[] = {
+    "EOF_TOKEN",
+    "IDENTIFIER",
+    "NUMBER",
+    "LITERAL",
+    "TYPE",
+    "COMMENT",
+    "OPERATOR",
+    "PUNCTUATION",
+    "KEYWORD",
+};
+
 struct Token {
     TokenType type;
-    std::string value;
+    // NOTE(Vlad): if you need const char* cast it like this: (const char*)(token.value.c_str())
+    std::u8string value; 
 };

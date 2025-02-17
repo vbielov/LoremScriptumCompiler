@@ -72,6 +72,43 @@
             }
         },
         {
+            "label": "CMake Configure Test",
+            "type": "shell",
+            "windows": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-G",
+                    "MinGW Makefiles",
+                    "-DCMAKE_BUILD_TYPE=Debug",
+                    "-DCMAKE_C_COMPILER=C:/Program Files/mingw64/bin/gcc.exe",
+                    "-DCMAKE_CXX_COMPILER=C:/Program Files/mingw64/bin/g++.exe",
+                    "-DBUILD_TESTS=ON"
+                ]
+            },
+            "linux": {
+                "command": "cmake",
+                "args": [
+                    "-S",
+                    "${workspaceFolder}",
+                    "-B",
+                    "${workspaceFolder}/build",
+                    "-DCMAKE_BUILD_TYPE=Debug",
+                    "-DCMAKE_C_COMPILER=/usr/bin/gcc",
+                    "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+                    "-DBUILD_TESTS=ON"
+                ]
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "CMake Build Debug",
             "type": "shell",
             "command": "cmake",
@@ -108,6 +145,25 @@
                 "kind": "build",
                 "isDefault": true
             }
-        }
+        },
+        {
+            "label": "CMake Build Test",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build",
+                "--config",
+                "Debug",
+                "--",
+                "-j",
+            ],
+            "problemMatcher": [],
+            "dependsOn": "CMake Configure Test",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
     ]
 }
