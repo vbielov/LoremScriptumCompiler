@@ -13,15 +13,19 @@ if (APPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
 
-add_executable(testHelloWorld ${SRCS})
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*[/\\]main\\.cpp$")
+add_executable(lscTest ${SRCS} ${PROJECT_SOURCES})
+target_include_directories(lscTest PRIVATE ${INCLUDE_DIR})
 
-target_link_libraries(testHelloWorld
-        gtest
-        gmock
+target_link_libraries(lscTest
+    gtest
+    gmock
 )
 
 include_directories("..")
 
-install(TARGETS testHelloWorld DESTINATION bin)
+install(TARGETS lscTest DESTINATION bin)
 
 

@@ -7,7 +7,7 @@ int Parser::getTokenPrecedence() {
     return 0;
 }
 
-AST Parser::sieveToken(const Token &token) const
+AST Parser::sieveToken([[maybe_unused]] const Token& token) const
 {
     return AST();
 }

@@ -13,7 +13,7 @@ enum class TokenType {
     KEYWORD,        // λ, retro, finio, ∑(∞), si, ni
 };
 
-inline static const char* TOKEN_TYPE_LABELS[] = {
+inline const char* TOKEN_TYPE_LABELS[] = {
     "EOF_TOKEN",
     "IDENTIFIER",
     "NUMBER",
@@ -27,5 +27,6 @@ inline static const char* TOKEN_TYPE_LABELS[] = {
 
 struct Token {
     TokenType type;
-    std::string value;
+    // NOTE(Vlad): if you need const char* cast it like this: (const char*)(token.value.c_str())
+    std::u8string value; 
 };

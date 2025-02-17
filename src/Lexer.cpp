@@ -1,117 +1,115 @@
 #include "Lexer.hpp"
 
-Lexer::Lexer(const char* sourceCode) 
-    : m_souceCode(sourceCode), m_charIterator(0) {}
+Lexer::Lexer(const std::u8string& sourceCode) 
+    : m_souceCode(&sourceCode), m_charIterator(0) {}
 
 Token Lexer::getNextToken() {
     // ignore any whitespace, new line, tab, ect.
-    while ( m_souceCode[m_charIterator] == ' ' || 
-            m_souceCode[m_charIterator] == '\n' || 
-            m_souceCode[m_charIterator] == '\r' ||
-            m_souceCode[m_charIterator] == '\t') {
+    while ( getCharAt(m_charIterator) == u8' ' || 
+            getCharAt(m_charIterator) == u8'\n' || 
+            getCharAt(m_charIterator) == u8'\r' ||
+            getCharAt(m_charIterator) == u8'\t') {
         m_charIterator++;
     }
 
     // End of the file
-    if (m_souceCode[m_charIterator] == '\0') {
-        return Token{TokenType::EOF_TOKEN, ""};
+    if (getCharAt(m_charIterator) == u8'\0') {
+        return {TokenType::EOF_TOKEN, u8""};
     }
 
     // is punctuation
-    for (int i = 0; i < sizeof(PUNCTUATION); i++) {
-        if (m_souceCode[m_charIterator] == PUNCTUATION[i]) {
-            std::string puctuationSymbol = "";
-            puctuationSymbol += m_souceCode[m_charIterator];
+    for (int i = 0; i < (int)PUNCTUATION.size(); i++) {
+        if (getCharAt(m_charIterator) == PUNCTUATION[i][0]) {
+            std::u8string puctuationSymbol = u8"";
+            puctuationSymbol += getCharAt(m_charIterator);
             m_charIterator++;
-            return Token{TokenType::PUNCTUATION, std::move(puctuationSymbol)};
+            return {TokenType::PUNCTUATION, std::move(puctuationSymbol)};
         }
     }
 
     // is keyword
-    int keywordIndex = startWithWord(m_souceCode, KEYWORDS, sizeof(KEYWORDS) / sizeof(const char*), false);
+    int keywordIndex = startWithWord(KEYWORDS, false);
     if (keywordIndex != -1) {
-        m_charIterator += strlen(KEYWORDS[keywordIndex]);
-        return Token{TokenType::KEYWORD, KEYWORDS[keywordIndex]};
+        m_charIterator += KEYWORDS[keywordIndex].length();
+        return {TokenType::KEYWORD, KEYWORDS[keywordIndex]};
     }
 
     // is type
-    int typeIndex = startWithWord(m_souceCode, TYPES, sizeof(TYPES) / sizeof(const char*), false);
+    int typeIndex = startWithWord(TYPES, false);
     if (typeIndex != -1) {
-        m_charIterator += strlen(TYPES[typeIndex]);
-        return Token{TokenType::TYPE, TYPES[typeIndex]};
+        m_charIterator += TYPES[typeIndex].length();
+        return {TokenType::TYPE, TYPES[typeIndex]};
     }
 
     // if comment
-    if (m_souceCode[m_charIterator] == '/' && m_souceCode[m_charIterator+1] == '/') {
-        std::string commentStr = "";
-        while (m_souceCode[m_charIterator] != '\n' && m_souceCode[m_charIterator] != '\0') {
-            commentStr += m_souceCode[m_charIterator];
+    if (getCharAt(m_charIterator) == u8'/' && getCharAt(m_charIterator+1) == '/') {
+        std::u8string commentStr = u8"";
+        while (getCharAt(m_charIterator) != u8'\n' && getCharAt(m_charIterator) != '\0') {
+            commentStr += getCharAt(m_charIterator);
             m_charIterator++;
         }
-        return Token{TokenType::COMMENT, std::move(commentStr)};
+        return {TokenType::COMMENT, std::move(commentStr)};
     }
 
     // is operator
-    int operatorIndex = startWithWord(m_souceCode, OPERATORS, sizeof(OPERATORS) / sizeof(const char*), true);
+    int operatorIndex = startWithWord(OPERATORS, true);
     if (operatorIndex != -1) {
-        m_charIterator += strlen(OPERATORS[operatorIndex]);
-        return Token{TokenType::OPERATOR, OPERATORS[operatorIndex]};
+        m_charIterator += OPERATORS[operatorIndex].length();
+        return {TokenType::OPERATOR, OPERATORS[operatorIndex]};
     }
 
     // if literal
-    // TODO(Vlad): think how you would parse \n
-    if (m_souceCode[m_charIterator] == '\'' && m_souceCode[m_charIterator+1] != '\0' && m_souceCode[m_charIterator+2] == '\'') {
-        if ((m_souceCode[m_charIterator+1] >= 'a' && m_souceCode[m_charIterator+1] <= 'z') ||
-            (m_souceCode[m_charIterator+1] >= 'A' && m_souceCode[m_charIterator+1] <= 'Z') ||
-            (m_souceCode[m_charIterator+1] >= '0' && m_souceCode[m_charIterator+1] <= '9')) {
-                std::string literraSymbol = "";
-                literraSymbol += m_souceCode[m_charIterator+1];
-                m_charIterator += 3; // skip ', literra and '
-                return Token{TokenType::LITERAL, std::move(literraSymbol)};
+    if (getCharAt(m_charIterator) == u8'\'') {
+        std::u8string literraSymbol = u8"";
+        m_charIterator++; // skip '
+        // NOTE(Vlad):  it's allowed here to input multiple symbols to literal, 
+        //              parser should not let literal with multiple symbols inside
+        while (getCharAt(m_charIterator) != u8'\'') {
+            literraSymbol += getCharAt(m_charIterator);
+            m_charIterator++;
         }
+        m_charIterator++; // skip '
+        return {TokenType::LITERAL, std::move(literraSymbol)};
     }
 
     // if number
-    if (m_souceCode[m_charIterator] >= 'A' && m_souceCode[m_charIterator] <= 'Z') {
-        std::string numberStr = "";
-        while (m_souceCode[m_charIterator] >= 'A' && m_souceCode[m_charIterator] <= 'Z') {
-            numberStr += m_souceCode[m_charIterator];
+    if (getCharAt(m_charIterator) >= u8'A' && getCharAt(m_charIterator) <= 'Z') {
+        std::u8string numberStr = u8"";
+        while (getCharAt(m_charIterator) >= u8'A' && getCharAt(m_charIterator) <= u8'Z') {
+            numberStr += getCharAt(m_charIterator);
             m_charIterator++;
         }
-        return Token{TokenType::NUMBER, std::move(numberStr)};
+        return {TokenType::NUMBER, std::move(numberStr)};
     }
 
     // if identifier
-    if (m_souceCode[m_charIterator] >= 'a' && m_souceCode[m_charIterator] <= 'z') {
-        std::string identifierStr = "";
-        while ( (m_souceCode[m_charIterator] >= 'a' && m_souceCode[m_charIterator] <= 'z') ||
-                (m_souceCode[m_charIterator] >= 'A' && m_souceCode[m_charIterator] <= 'Z') ||
-                (m_souceCode[m_charIterator] >= '0' && m_souceCode[m_charIterator] <= '9')) {
-            identifierStr += m_souceCode[m_charIterator];
-            m_charIterator++;
-        }
-        return Token{TokenType::IDENTIFIER, std::move(identifierStr)};
+    std::u8string identifierStr = u8"";
+    while ( getCharAt(m_charIterator) != u8' ' && 
+            getCharAt(m_charIterator) != u8'\n' && 
+            getCharAt(m_charIterator) != u8'\0' && 
+            startWithWord(OPERATORS, true) == -1 &&
+            startWithWord(PUNCTUATION, true) == -1) {
+        identifierStr += getCharAt(m_charIterator);
+        m_charIterator++;
     }
-
-    std::cout << m_souceCode[m_charIterator] << std::endl;
-    assert(false && "Unknown token");
+    return {TokenType::IDENTIFIER, std::move(identifierStr)};
 }
 
-int Lexer::startWithWord(const std::string& text, const char** strArr, int arrSize, bool isOperator) {
-    for (int i = 0; i < arrSize; i++) {
+int Lexer::startWithWord(const std::vector<std::u8string>& strList, bool isOperator) {
+    for (int i = 0; i < (int)strList.size(); i++) {
         bool isEqual = true;
         int j = 0;
-        for (; j < strlen(strArr[i]); j++) {
-            if (m_souceCode[m_charIterator+j] != strArr[i][j]) {
+        for (; j < (int)strList[i].length(); j++) {
+            if (getCharAt(m_charIterator+j) != strList[i][j]) {
                 isEqual = false;
                 break;
             }    
         }
         if (isEqual) {
-            if (!isOperator && // operator can be directory before identifier, for example "¬cadabra"
-                (m_souceCode[m_charIterator+j] >= 'a' && m_souceCode[m_charIterator+j] <= 'z') ||
-                (m_souceCode[m_charIterator+j] >= 'A' && m_souceCode[m_charIterator+j] <= 'Z') ||
-                (m_souceCode[m_charIterator+j] >= '0' && m_souceCode[m_charIterator+j] <= '9')) {
+            if ((!isOperator) && ( // operator can be before identifier, for example "¬cadabra"
+                (getCharAt(m_charIterator+j) >= u8'a' && getCharAt(m_charIterator+j) <= u8'z') ||
+                (getCharAt(m_charIterator+j) >= u8'A' && getCharAt(m_charIterator+j) <= u8'Z') ||
+                (getCharAt(m_charIterator+j) >= u8'0' && getCharAt(m_charIterator+j) <= u8'9'))) {
                 // it's some identifier 
                 break;
             }
@@ -119,4 +117,8 @@ int Lexer::startWithWord(const std::string& text, const char** strArr, int arrSi
         }
     }
     return -1;
-};
+}
+
+char8_t Lexer::getCharAt(int index) const {
+    return (*m_souceCode)[index];
+}

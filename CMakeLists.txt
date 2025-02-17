@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(lsc C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(LLVM_LINK_LLVM_DYLIB ON)
@@ -89,5 +89,5 @@ if(BUILD_TESTS)
 
     add_subdirectory(test)
     enable_testing()
-    add_test(testTrie test/testHelloWorld --gtest_output=xml:report.xml)
+    add_test(testTrie test/lscTest --gtest_output=xml:report.xml)
 endif()
