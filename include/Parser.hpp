@@ -13,7 +13,9 @@ public:
 private:
     /// @brief Get the precedence of the pending binary operator token.
     int getTokenPrecedence();
-    AST sieveToken(const Token& token) const;
+
+    /// @brief Converts token to the node for tree, for example Token with type number will convert roman number to normal int format
+    std::unique_ptr<AST> sieveToken(const Token& token) const;
 
     // TODO: Based on token do:
     // ParseExpression();
