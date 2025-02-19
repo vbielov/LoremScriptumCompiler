@@ -1,5 +1,7 @@
 # ΛoremScriptum Compiler
 
+![](./resources/icon.ico)
+
 LoremScriptum is a basic programming language with Latin-inspired syntax and mathematical symbols that replace conventional flow control and basic operations.
 
 > [!WARNING]
@@ -8,7 +10,7 @@ LoremScriptum is a basic programming language with Latin-inspired syntax and mat
 
 ## Requirements
 
-- C++17 Compiler
+- C++20 Compiler
 - CMake, Make
 - LLVM
 

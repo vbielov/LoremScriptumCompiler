@@ -33,7 +33,25 @@ message(STATUS "Using LLVM version: ${LLVM_VERSION}")
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+# 1. Put app.ico in directory.
+
+# 2. Create app.rc in same directory with one line:
+# IDI_ICON1               ICON        DISCARDABLE            "app.ico"
+
+# 3. Run command (Warning: it's app.o, not app.res, how it is mentioned in other manuals!)
+# windres app.rc -o app.o
+
+# 4. add_executable(app
+#   ...
+#   app.o
+# )
+
+# 5. Proofit!
+
+if(WIN32)
+    set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
+endif(WIN32)
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${WINDOWS_RESOURCES}) 
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
