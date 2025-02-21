@@ -30,8 +30,8 @@ inline static const std::vector<std::u8string> TYPES = {
 };
 
 inline static const std::vector<std::u8string> OPERATORS = {
-    u8":=", 
     u8"=", 
+    u8"==", 
     u8"≠",
     u8">", 
     u8"<", 
@@ -41,6 +41,7 @@ inline static const std::vector<std::u8string> OPERATORS = {
     u8"-", 
     u8"*", 
     u8"/", 
+    u8"%", 
     u8"^",
     u8"¬",
     u8"!"
