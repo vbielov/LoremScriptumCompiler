@@ -3,25 +3,15 @@
 Parser::Parser(Lexer& lexer) : m_lexer(&lexer), m_currentToken(lexer.getNextToken()) {}
 
 void Parser::parse() {
+    std::vector<std::unique_ptr<AST>> ASTTrees;
     while (true) {
         switch (m_currentToken.type) {
             case TokenType::EOF_TOKEN: 
                 return;
-            case TokenType::KEYWORD: {
-                if(m_currentToken.value == u8"λ") {
-                    if (!parseDefinition()) {
-                        m_currentToken = m_lexer->getNextToken();
-                    }
-                    break;
-                }
-            }
-            default: {
-                if (!parseTopLevelExpr()) {
-                    m_currentToken = m_lexer->getNextToken(); // skip token for error recovery
-                }
-                break;
-            }
         }
+    }
+    for (const auto& rootNode : ASTTrees) {
+        rootNode->printTree();
     }
 }
 
@@ -34,8 +24,8 @@ int Parser::getTokenPrecedence() const {
     return precendence;
 }
 
-std::unique_ptr<AST> Parser::sieveToken(const Token& token) const {
-    return nullptr;
+Token& Parser::getNextToken() {
+    return m_currentToken = m_lexer->getNextToken(); 
 }
 
 std::unique_ptr<AST> Parser::parseExpression() {
@@ -48,12 +38,12 @@ std::unique_ptr<AST> Parser::parseExpression() {
 
 std::unique_ptr<AST> Parser::parseNumberExpr() {
     int arabicNumber = toArabicConverter(m_currentToken.value);
-    m_currentToken = m_lexer->getNextToken(); // eat number
+    getNextToken(); // eat number
     return std::make_unique<NumberAST>(arabicNumber);
 }
 
 std::unique_ptr<AST> Parser::parseParenExpr() {
-    m_currentToken = m_lexer->getNextToken(); // eat (
+    getNextToken(); // eat (
     std::unique_ptr<AST> body = parseExpression();
     if (!body) {
         return nullptr;
@@ -62,20 +52,20 @@ std::unique_ptr<AST> Parser::parseParenExpr() {
         std::cerr << "Error: expected ')'\n";
         return nullptr;
     }
-    m_currentToken = m_lexer->getNextToken(); // eat )
+    getNextToken(); // eat )
     return body;
 }
 
 std::unique_ptr<AST> Parser::parseIdentifierExpr() {
     std::u8string identifier = m_currentToken.value;
-    m_currentToken = m_lexer->getNextToken(); // eat identifier
+    getNextToken(); // eat identifier
     
     // variable reference
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
         return std::make_unique<VariableAST>(identifier);
     }
 
-    m_currentToken = m_lexer->getNextToken(); // eat ( 
+    getNextToken(); // eat ( 
     std::vector<std::unique_ptr<AST>> args;
     if (m_currentToken.type != TokenType::PUNCTUATION && m_currentToken.value != u8")") {
         while (true) {
@@ -89,10 +79,10 @@ std::unique_ptr<AST> Parser::parseIdentifierExpr() {
                 std::cerr << "Error: Expected ')' or ',' in argument list\n";
                 return nullptr;
             }
-            m_currentToken = m_lexer->getNextToken(); // eat ,
+            getNextToken(); // eat ,
         }
     }
-    m_currentToken = m_lexer->getNextToken(); // eat )
+    getNextToken(); // eat )
     return std::make_unique<FuncCallAST>(identifier, std::move(args));
 }
 
@@ -129,7 +119,7 @@ std::unique_ptr<AST> Parser::parseBinOpRHS(int exprPrec, std::unique_ptr<AST> LH
 
         // now it's 100% binary operation, and not a single value
         std::u8string op = m_currentToken.value;
-        m_currentToken = m_lexer->getNextToken(); // eat binary operation
+        getNextToken(); // eat binary operation
 
         // parse right side after operator
         std::unique_ptr<AST> RHS = parsePrimary();
@@ -149,57 +139,49 @@ std::unique_ptr<AST> Parser::parseBinOpRHS(int exprPrec, std::unique_ptr<AST> LH
         // Merge LHS/RHS.
         LHS = std::make_unique<BinaryOperatorAST>(op, std::move(LHS), std::move(RHS));
     }
-
 }
 
-std::unique_ptr<FuncDeclarationAST> Parser::parseDeclaration() {
+std::unique_ptr<AST> Parser::parseAssigment() {
+    std::u8string type = m_currentToken.value;
+    getNextToken(); // eat type
 
-    if (m_currentToken.type != TokenType::IDENTIFIER) {
-        std::cerr << "Error: Expected function name in function declaration\n";
+    if(m_currentToken.type != TokenType::IDENTIFIER) {
+        std::cerr << "Error: Expected identifier after type\n";
         return nullptr;
     }
+    std::u8string identifier = m_currentToken.value;
+    getNextToken(); // eat identifier
 
-    std::u8string funcName = m_currentToken.value;
-    m_currentToken = m_lexer->getNextToken(); // eat identifier
-
-    if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
-        std::cerr << "Error: Expected '(' in function declaration\n";
+    if(m_currentToken.type != TokenType::OPERATOR || m_currentToken.value != u8"=") {
+        std::cerr << "Error: Expected '=' after variable declaration for definition\n";
         return nullptr;
     }
+    getNextToken(); // eat '='
 
-    std::vector<std::u8string> argNames;
-    while ((m_currentToken = m_lexer->getNextToken()).type == TokenType::IDENTIFIER) {
-        argNames.push_back(m_currentToken.value);
+    if(m_currentToken.type != TokenType::KEYWORD || m_currentToken.value != u8"λ") {
+        // Just a basic assigment
+        return parsePrimary();
     }
 
-    if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8")") {
-        std::cerr << "Error: Expected ')' in function declaration\n";
+    // That's a function
+    getNextToken(); // eat 'λ'
+
+    if(m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
+        std::cerr << "Error: Expected '(' in function definition\n";
         return nullptr;
     }
+    getNextToken(); // eat '('
 
-    m_currentToken = m_lexer->getNextToken(); // eat )
-    return std::make_unique<FuncDeclarationAST>(funcName, std::move(argNames));
-}
+    std::vector<VariableAST> args; // but a variable is also a type, and I used it as reference, so I need to split it.
 
-std::unique_ptr<FuncDefinitionAST> Parser::parseDefinition() {
-    m_currentToken = m_lexer->getNextToken(); // eat λ
 
-    auto declaration = parseDeclaration();
-    if (!declaration) {
-        return nullptr;
-    }
 
-    auto body = parseExpression();
-    if (body) {
-        return std::make_unique<FuncDefinitionAST>(std::move(declaration), std::move(body));
-    }
     return nullptr;
 }
 
-std::unique_ptr<FuncDefinitionAST> Parser::parseTopLevelExpr() {
+std::unique_ptr<FunctionAST> Parser::parseTopLevelExpr() {
     if (auto expr = parseExpression()) {
-        auto declaration = std::make_unique<FuncDeclarationAST>(u8"", std::vector<std::u8string>());
-        return std::make_unique<FuncDefinitionAST>(std::move(declaration), std::move(expr));
+        return std::make_unique<FunctionAST>(u8"anon", std::vector<VariableAST>(), std::move(expr));
     }
     return nullptr;
 }

@@ -42,8 +42,7 @@ private:
     /// @brief Get the precedence of the pending binary operator token.
     int getTokenPrecedence() const;
 
-    /// @brief Converts token to the node for tree, for example Token with type number will convert roman number to normal int format
-    std::unique_ptr<AST> sieveToken(const Token& token) const;
+    Token& getNextToken();
 
     // any expression
     std::unique_ptr<AST> parseExpression(); 
@@ -61,12 +60,8 @@ private:
 
     std::unique_ptr<AST> parseBinOpRHS(int exprPrec, std::unique_ptr<AST> LHS);
 
-    // funcDeclaration(argsNames and types)
-    std::unique_ptr<FuncDeclarationAST> parseDeclaration();
-
-    // funcDefinition(argsNames and types) { body }
-    std::unique_ptr<FuncDefinitionAST> parseDefinition();
+    std::unique_ptr<AST> parseAssigment();
 
     // Anonymous functions that are just expresions
-    std::unique_ptr<FuncDefinitionAST> parseTopLevelExpr();
+    std::unique_ptr<FunctionAST> parseTopLevelExpr();
 };

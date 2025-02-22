@@ -23,10 +23,12 @@ inline static const std::vector<std::u8string> KEYWORDS = {
     u8"ni"
 };
 
-inline static const std::vector<std::u8string> TYPES = {
+inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
     u8"numerus", 
     u8"literra", 
-    u8"nihil"
+    u8"nihil",
+    // u8"asertio",
+    // u8"rerum",
 };
 
 inline static const std::vector<std::u8string> OPERATORS = {

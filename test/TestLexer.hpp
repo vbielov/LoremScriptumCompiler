@@ -5,18 +5,18 @@
 #include <vector>
 
 inline static const std::u8string SOURCE_CODE_TO_TEST = u8R"(
-    numerus foo := λ(numerus a, numerus b):
-        a := a + b
-        b := a * II
+    numerus foo = λ(numerus a, numerus b):
+        a = a + b
+        b = a * II
         retro b
     ;
     numerus c = foo(I, V)
 
-    numerus cadabra := XVI
+    numerus cadabra = XVI
 
     ∑(∞):
-        numerus abra := II
-        abra := abra + abra
+        numerus abra = II
+        abra = abra + abra
         
         si abra > cadabra:
             finio
@@ -25,12 +25,12 @@ inline static const std::u8string SOURCE_CODE_TO_TEST = u8R"(
 
     scribor(abra)
 
-    literra test := '\n'
+    literra test = '\n'
 
     scribor(test)
 
     scribor(abra ≠ cadabra)
-    scribor(abra = cadabra)
+    scribor(abra == cadabra)
     scribor(abra < cadabra)
     scribor(abra > cadabra)
 
@@ -41,7 +41,7 @@ inline static const std::u8string SOURCE_CODE_TO_TEST = u8R"(
     scribor(¬cadabra)
     scribor(abra!)
 
-    // numerus addition := λ(numerus α, numerus beta): retro α + β;
+    // numerus addition = λ(numerus α, numerus beta): retro α + β;
 )";
 
 inline static const std::vector<Token> EXPECTED_TOKENS = {

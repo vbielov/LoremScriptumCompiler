@@ -1,13 +1,25 @@
 #include "AST.hpp"
 
+void AST::printTree(const std::string& prefix, bool isLeft) const {
+    std::cout << prefix;
+    std::cout << (isLeft ? "├── " : "└── ");
+    std::cout << TOKEN_TYPE_LABELS[(int)m_token.type] << ": " << (const char*)m_token.value.c_str() << std::endl; // Assuming Token has a value member
+
+    if (m_left)
+        m_left->printTree(prefix + (isLeft ? "│   " : "    "), true);
+    if (m_right)
+        m_right->printTree(prefix + (isLeft ? "│   " : "    "), false);
+}
+
 NumberAST::NumberAST(int value) : m_value(value) {}
 
 llvm::Value* NumberAST::codegen() {
     return nullptr;
 }
 
-VariableAST::VariableAST(const std::u8string& name) 
-    : m_name(std::move(name)) {}
+VariableAST::VariableAST(const std::u8string& type, const std::u8string& name) 
+    : m_type(std::move(type)), m_name(std::move(name)) {}
+
 
 llvm::Value* VariableAST::codegen() {
     return nullptr;
@@ -27,17 +39,10 @@ llvm::Value* FuncCallAST::codegen() {
     return nullptr;
 }
 
-FuncDeclarationAST::FuncDeclarationAST(const std::u8string& name, std::vector<std::u8string> args)
-    : m_name(std::move(name)), m_args(std::move(args)) {}
+FunctionAST::FunctionAST(std::u8string name, std::vector<VariableAST> args, std::unique_ptr<AST> body)
+    : m_name(std::move(name)), m_args(std::move(args)), m_body(std::move(body)) {}
 
-llvm::Value* FuncDeclarationAST::codegen() {
-    return nullptr;
-}
-
-FuncDefinitionAST::FuncDefinitionAST(std::unique_ptr<FuncDeclarationAST> declaration, std::unique_ptr<AST> body)
-    : m_declaration(std::move(declaration)), m_body(std::move(body)) {}
-
-llvm::Value* FuncDefinitionAST::codegen() {
+llvm::Value* FunctionAST::codegen() {
     return nullptr;
 }
 

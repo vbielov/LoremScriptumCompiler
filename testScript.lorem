@@ -1,0 +1,37 @@
+numerus foo = λ(numerus a, numerus b):
+    a = a + b
+    b = a * II
+    retro b
+;
+numerus c = foo(I, V)
+
+numerus cadabra = XVI
+
+∑(∞):
+    numerus abra = II
+    abra = abra + abra
+    
+    si abra > cadabra:
+        finio
+    ;    
+;
+
+scribor(abra)
+
+literra test = '\n'
+
+scribor(test)
+
+scribor(abra ≠ cadabra)
+scribor(abra == cadabra)
+scribor(abra < cadabra)
+scribor(abra > cadabra)
+
+scribor(abra + cadabra)
+scribor(abra - cadabra)
+scribor(abra ^ cadabra)
+scribor(abra / cadabra)
+scribor(¬cadabra)
+scribor(abra!)
+
+// numerus addition = λ(numerus α, numerus beta): retro α + β;

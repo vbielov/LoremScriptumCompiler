@@ -3,7 +3,8 @@
 #include <fstream>
 #include <codecvt>
 #include <locale>
-#include <Lexer.hpp>
+#include "Lexer.hpp"
+#include "Parser.hpp"
 
 std::u8string readFileToU8String(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
@@ -34,6 +35,8 @@ int main(int argc, const char** argv) {
     }
 
     // Parser
+    Parser parser = Parser(lexer);
+    parser.parse();
 
     // Generate IR
 

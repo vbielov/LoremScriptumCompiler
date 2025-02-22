@@ -1,7 +1,9 @@
 #pragma once
-#include "Token.hpp"
 #include <memory>
+#include "Lexer.hpp"
 #include "llvm/IR/Value.h"
+#include <iostream>
+#include <string>
 
 /// @brief Abstract Syntax Tree: Base class for all expression node.
 /// NOTE(Vlad): It is interface
@@ -12,6 +14,7 @@ private:
     AST* m_right;
 public:
     virtual ~AST() = default;
+    void printTree(const std::string& prefix = "", bool isLeft = true) const;
     virtual llvm::Value* codegen() = 0;
 };
 
@@ -27,6 +30,7 @@ public:
 
 class VariableAST : public AST {
 private:
+    std::u8string m_type;
     std::u8string m_name;
 public:
     VariableAST(const std::u8string& name);
@@ -55,26 +59,14 @@ public:
 };
 
 
-/// @brief This class represents the "prototype" for a function,
-/// which captures its name, and its argument names (thus implicitly the number
-/// of arguments the function takes).
-class FuncDeclarationAST : public AST {
+class FunctionAST : public AST {
 private:
+    VariableType m_returnType;
     std::u8string m_name;
-    std::vector<std::u8string> m_args;    
-public:
-    FuncDeclarationAST(const std::u8string& name, std::vector<std::u8string> args);
-    llvm::Value* codegen() override;
-};
-
-
-/// @brief This class represents a function definition itself.
-class FuncDefinitionAST : public AST {
-private:
-    std::unique_ptr<FuncDeclarationAST> m_declaration;
+    std::vector<VariableAST> m_args;    
     std::unique_ptr<AST> m_body;
 public:
-    FuncDefinitionAST(std::unique_ptr<FuncDeclarationAST> declaration, std::unique_ptr<AST> body);
+    FunctionAST(std::u8string name, std::vector<VariableAST> args, std::unique_ptr<AST> body);
     llvm::Value* codegen() override;
 };
 

@@ -35,10 +35,10 @@ Token Lexer::getNextToken() {
     }
 
     // is type
-    int typeIndex = startWithWord(TYPES, false);
+    int typeIndex = startWithWord(VARIABLE_TYPE_LABELS, false);
     if (typeIndex != -1) {
-        m_charIterator += TYPES[typeIndex].length();
-        return {TokenType::TYPE, TYPES[typeIndex]};
+        m_charIterator += VARIABLE_TYPE_LABELS[typeIndex].length();
+        return {TokenType::TYPE, VARIABLE_TYPE_LABELS[typeIndex]};
     }
 
     // if comment
