@@ -17,7 +17,7 @@ else()
     set(CMAKE_RELEASE_POSTFIX "_release")
 endif()
 
-add_definitions(-Wall -Wextra)
+add_definitions(-Wall -Wextra -DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
 
 set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)

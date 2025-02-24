@@ -8,6 +8,9 @@ void Parser::parse() {
         switch (m_currentToken.type) {
             case TokenType::EOF_TOKEN: 
                 return;
+            default:
+                getNextToken();
+                break;
         }
     }
     for (const auto& rootNode : ASTTrees) {

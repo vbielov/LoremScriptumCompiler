@@ -60,7 +60,7 @@ llvm::Value* IfAST::codegen() {
 }
 
 ForAST::ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::unique_ptr<AST> end, std::unique_ptr<AST> step, std::unique_ptr<AST> body)
-    : m_varName(std::move(varName)), m_start(std::move(start)), m_end(std::move(end)), m_body(std::move(body)) {}
+    : m_varName(std::move(varName)), m_start(std::move(start)), m_end(std::move(end)), m_step(std::move(step)), m_body(std::move(body)) {}
 
 llvm::Value* ForAST::codegen() {
     return nullptr;
