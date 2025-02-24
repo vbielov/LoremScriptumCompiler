@@ -17,11 +17,17 @@ llvm::Value* NumberAST::codegen() {
     return nullptr;
 }
 
-VariableAST::VariableAST(const std::u8string& type, const std::u8string& name) 
-    : m_type(std::move(type)), m_name(std::move(name)) {}
+VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
+    : m_type(type), m_name(name) {}
 
+llvm::Value* VariableDeclarationAST::codegen() {
+    return nullptr;
+}
 
-llvm::Value* VariableAST::codegen() {
+VariableReferenceAST::VariableReferenceAST(const std::u8string &name)
+    : m_name(std::move(name)) {}
+
+llvm::Value *VariableReferenceAST::codegen() {
     return nullptr;
 }
 
@@ -39,8 +45,8 @@ llvm::Value* FuncCallAST::codegen() {
     return nullptr;
 }
 
-FunctionAST::FunctionAST(std::u8string name, std::vector<VariableAST> args, std::unique_ptr<AST> body)
-    : m_name(std::move(name)), m_args(std::move(args)), m_body(std::move(body)) {}
+FunctionAST::FunctionAST(const std::u8string& returnType, const std::u8string& name, std::vector<VariableDeclarationAST> args, std::unique_ptr<AST> body)
+    : m_returnType(std::move(returnType)), m_name(std::move(name)), m_args(std::move(args)), m_body(std::move(body)) {}
 
 llvm::Value* FunctionAST::codegen() {
     return nullptr;
@@ -59,3 +65,4 @@ ForAST::ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::un
 llvm::Value* ForAST::codegen() {
     return nullptr;
 }
+

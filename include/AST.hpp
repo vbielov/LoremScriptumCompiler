@@ -28,12 +28,20 @@ public:
 };
 
 
-class VariableAST : public AST {
+class VariableDeclarationAST : public AST {
 private:
     std::u8string m_type;
     std::u8string m_name;
 public:
-    VariableAST(const std::u8string& name);
+    VariableDeclarationAST(const std::u8string& type, const std::u8string& name);
+    llvm::Value* codegen() override;
+};
+
+class VariableReferenceAST : public AST {
+private:
+    std::u8string m_name;
+public:
+    VariableReferenceAST(const std::u8string& name);
     llvm::Value* codegen() override;
 };
 
@@ -61,12 +69,12 @@ public:
 
 class FunctionAST : public AST {
 private:
-    VariableType m_returnType;
+    std::u8string m_returnType;
     std::u8string m_name;
-    std::vector<VariableAST> m_args;    
+    std::vector<VariableDeclarationAST> m_args;    
     std::unique_ptr<AST> m_body;
 public:
-    FunctionAST(std::u8string name, std::vector<VariableAST> args, std::unique_ptr<AST> body);
+    FunctionAST(const std::u8string& returnType, const std::u8string& name, std::vector<VariableDeclarationAST> args, std::unique_ptr<AST> body);
     llvm::Value* codegen() override;
 };
 

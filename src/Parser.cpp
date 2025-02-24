@@ -62,7 +62,7 @@ std::unique_ptr<AST> Parser::parseIdentifierExpr() {
     
     // variable reference
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
-        return std::make_unique<VariableAST>(identifier);
+        return std::make_unique<VariableReferenceAST>(identifier);
     }
 
     getNextToken(); // eat ( 
@@ -172,16 +172,14 @@ std::unique_ptr<AST> Parser::parseAssigment() {
     }
     getNextToken(); // eat '('
 
-    std::vector<VariableAST> args; // but a variable is also a type, and I used it as reference, so I need to split it.
-
-
+    std::vector<VariableDeclarationAST> args; // but a variable is also a type, and I used it as reference, so I need to split it.
 
     return nullptr;
 }
 
 std::unique_ptr<FunctionAST> Parser::parseTopLevelExpr() {
     if (auto expr = parseExpression()) {
-        return std::make_unique<FunctionAST>(u8"anon", std::vector<VariableAST>(), std::move(expr));
+        return std::make_unique<FunctionAST>(u8"nihil", u8"anon", std::vector<VariableDeclarationAST>(), std::move(expr));
     }
     return nullptr;
 }
