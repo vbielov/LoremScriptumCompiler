@@ -32,8 +32,8 @@ inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
 };
 
 inline static const std::vector<std::u8string> OPERATORS = {
-    u8"=", 
     u8"==", 
+    u8"=",
     u8"≠",
     u8">", 
     u8"<", 
