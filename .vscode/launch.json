@@ -48,7 +48,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/lsc",
-            "args": [],
+            "args": ["../testScript.lorem"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

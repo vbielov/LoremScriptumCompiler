@@ -9,7 +9,7 @@ set(LLVM_LINK_LLVM_DYLIB ON)
 
 # set(CMAKE_BUILD_TYPE Debug)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
     set(CMAKE_DEBUG_POSTFIX "_debug")
     set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 else()
