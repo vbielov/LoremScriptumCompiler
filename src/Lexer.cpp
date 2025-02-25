@@ -4,9 +4,8 @@ Lexer::Lexer(const std::u8string& sourceCode)
     : m_souceCode(&sourceCode), m_charIterator(0) {}
 
 Token Lexer::getNextToken() {
-    // ignore any whitespace, new line, tab, ect.
+    // ignore any whitespace, tab, ect.
     while ( getCharAt(m_charIterator) == u8' ' || 
-            getCharAt(m_charIterator) == u8'\n' || 
             getCharAt(m_charIterator) == u8'\r' ||
             getCharAt(m_charIterator) == u8'\t') {
         m_charIterator++;
@@ -15,6 +14,12 @@ Token Lexer::getNextToken() {
     // End of the file
     if (getCharAt(m_charIterator) == u8'\0') {
         return {TokenType::EOF_TOKEN, u8""};
+    }
+
+    // New line
+    if (getCharAt(m_charIterator) == u8'\n') {
+        m_charIterator++;
+        return {TokenType::NEW_LINE, u8""};
     }
 
     // is punctuation
@@ -86,6 +91,7 @@ Token Lexer::getNextToken() {
     std::u8string identifierStr = u8"";
     while ( getCharAt(m_charIterator) != u8' ' && 
             getCharAt(m_charIterator) != u8'\n' && 
+            getCharAt(m_charIterator) != u8'\r' && 
             getCharAt(m_charIterator) != u8'\0' && 
             startWithWord(OPERATORS, true) == -1 &&
             startWithWord(PUNCTUATION, true) == -1) {

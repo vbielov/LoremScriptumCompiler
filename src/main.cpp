@@ -25,18 +25,30 @@ int main(int argc, const char** argv) {
     // Read File
     const char* inputFilePath = argv[1];
     std::u8string sourceCode = readFileToU8String(inputFilePath);
-    std::cout << (const char*)(sourceCode.c_str()) << std::endl;
+
+    std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
+    std::cout << (const char*)(sourceCode.c_str()) << std::endl << std::endl;
 
     // Tokenize
+    std::cout << "----------------------- Tokens: ----------------------- " << std::endl << std::endl;
     Lexer lexer = Lexer(sourceCode);
     Token token;
     while ((token = lexer.getNextToken()).type != TokenType::EOF_TOKEN) {
         std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
     }
+    std::cout << std::endl;
+    lexer = Lexer(sourceCode); // reset Lexer
 
     // Parser
+    std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl << std::endl;
     Parser parser = Parser(lexer);
-    parser.parse();
+    auto tree = parser.parseBlock();
+    if (tree) {
+        tree->printTree("", false);
+    } else {
+        std::cerr << "Error: Nothing parsed :(" << std::endl;
+    }
+    std::cout << std::endl;
 
     // Generate IR
 
