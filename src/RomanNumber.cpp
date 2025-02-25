@@ -48,11 +48,15 @@ std::u8string toRomanConverter(int number){
 
 
 // quickest on average
-int toArabicConverterAuto(std::u8string romanNumber){
-    int arabic = 0;
+bool toArabicConverterAuto(std::u8string romanNumber, int* outArabic){
+    if(outArabic == nullptr){
+        return false;
+    }
+    
+    *outArabic = 0;
 
     if(romanNumber == u8"O"){
-        return arabic;
+        return true;
     }
 
     bool negative = false;
@@ -63,7 +67,7 @@ int toArabicConverterAuto(std::u8string romanNumber){
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'M'){
-            arabic += 1000;
+            *outArabic += 1000;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -71,14 +75,14 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'C' && romanNumber[1] == u8'M'){
-        arabic += 900;
+        *outArabic += 900;
         romanNumber.erase(0,2);
     }
 
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'D'){
-            arabic += 500;
+            *outArabic += 500;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -86,14 +90,14 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'C' && romanNumber[1] == u8'D'){
-        arabic += 400;
+        *outArabic += 400;
         romanNumber.erase(0,2);
     }
 
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'C'){
-            arabic += 100;
+            *outArabic += 100;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -101,13 +105,13 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'X' && romanNumber[1] == u8'C'){
-        arabic += 90;
+        *outArabic += 90;
         romanNumber.erase(0,2);
     }
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'L'){
-            arabic += 50;
+            *outArabic += 50;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -115,13 +119,13 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'X' && romanNumber[1] == u8'L'){
-        arabic += 40;
+        *outArabic += 40;
         romanNumber.erase(0,2);
     }
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'X'){
-            arabic += 10;
+            *outArabic += 10;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -129,13 +133,13 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'I' && romanNumber[1] == u8'X'){
-        arabic += 9;
+        *outArabic += 9;
         romanNumber.erase(0,2);
     }
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'V'){
-            arabic += 5;
+            *outArabic += 5;
             romanNumber.erase(0,1);
         } else {
             break;
@@ -143,38 +147,42 @@ int toArabicConverterAuto(std::u8string romanNumber){
     }
 
     if(romanNumber.size() > 1 && romanNumber[0] == u8'I' && romanNumber[1] == u8'V'){
-        arabic += 4;
+        *outArabic += 4;
         romanNumber.erase(0,2);
     }
 
     for(int i = 0; i < 4; i++){
         if(romanNumber.size() > 0 && romanNumber[0] == u8'I'){
-            arabic += 1;
+            *outArabic += 1;
             romanNumber.erase(0,1);
         } else {
             break;
         }
     }
 
-    if(romanNumber != u8""){
-        throw std::invalid_argument("Roman Numeral does not follow rules!");
-        return 0; 
+    if(romanNumber != u8""){ //illegal string was input
+        return false; 
     }
 
     if(negative){
-        arabic = -arabic;
+        *outArabic = -*outArabic;
     }
 
-    return arabic;
+
+    return true;
 }
 
 
 //faster for longer roman numerals
-int toArabicConverter(std::u8string romanNumber){     // infinity is illegal
-    int arabic = 0;
+bool toArabicConverter(std::u8string romanNumber, int* outArabic){     // infinity is illegal
+    if(outArabic == nullptr){
+        return false;
+    }
+    
+    *outArabic = 0;
     
     if(romanNumber == u8"O"){
-        return arabic;
+        return true;
     }
 
     bool negative = false;
@@ -183,26 +191,26 @@ int toArabicConverter(std::u8string romanNumber){     // infinity is illegal
         romanNumber.erase(0,1);
     }
 
-    arabic += subConverter(romanNumber, Units);
-    arabic += subConverter(romanNumber, Tens);
-    arabic += subConverter(romanNumber, Hundreds);
+    *outArabic += subConverter(romanNumber, Units);
+    *outArabic += subConverter(romanNumber, Tens);
+    *outArabic += subConverter(romanNumber, Hundreds);
 
     switch (romanNumber.size()){
         case 3:
             if(romanNumber == u8"MMM"){
-                arabic += 3000;
+                *outArabic += 3000;
                 romanNumber = u8"";
             }
             break;
         case 2:
             if(romanNumber == u8"MM"){
-                arabic += 2000;
+                *outArabic += 2000;
                 romanNumber = u8"";
             }
             break;
         case 1:
             if(romanNumber == u8"M"){
-                arabic += 1000;
+                *outArabic += 1000;
                 romanNumber = u8"";
             }
             break;
@@ -210,15 +218,14 @@ int toArabicConverter(std::u8string romanNumber){     // infinity is illegal
     };
 
     if (romanNumber != u8""){
-        throw std::invalid_argument("Roman Numeral does not follow rules!");
-        return 0;
+        return false;
     }
 
     if(negative){
-        arabic = -arabic;
+        *outArabic = -*outArabic;
     }
 
-    return arabic;
+    return true;
 }; 
 
 

@@ -64,9 +64,9 @@ inline static const std::u8string OrderedThousands[] = {
 
 std::u8string toRomanConverter(int number);
 
-int toArabicConverterAuto(std::u8string romanNumber);
+bool toArabicConverterAuto(std::u8string romanNumber, int* outArabic);
 
-int toArabicConverter(std::u8string romanNumber); 
+bool toArabicConverter(std::u8string romanNumber, int* outArabic); 
 
 int subConverter(std::u8string& romanNumber, const ConvertData steps[]);
 
