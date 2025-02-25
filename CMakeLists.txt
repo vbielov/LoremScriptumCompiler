@@ -51,7 +51,7 @@ add_definitions(${LLVM_DEFINITIONS})
 if(WIN32)
     set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
 endif(WIN32)
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${WINDOWS_RESOURCES}) 
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
