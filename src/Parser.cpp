@@ -8,10 +8,10 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     std::vector<std::unique_ptr<AST>> instructions;
 
     // while it's not the end of current scope and not eof, search for next instr
-    while(m_currentToken.value != u8";" && m_currentToken.type != TokenType::EOF_TOKEN) {
+    while (m_currentToken.value != u8";" && m_currentToken.type != TokenType::EOF_TOKEN) {
         // Empty line
         if (m_currentToken.type == TokenType::NEW_LINE) {
-            getNextToken(); // eat \n
+            getNextToken();  // eat \n
             continue;
         }
         switch (m_currentToken.type) {
@@ -21,7 +21,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
                 break;
             }
             case TokenType::IDENTIFIER: {
-                auto instr = parseExpression(); // because parseIdentifier() doesn't capture binary operation that can follow after identifier
+                auto instr = parseExpression();  // because parseIdentifier() doesn't capture binary operation that can follow after identifier
                 if (instr) instructions.push_back(std::move(instr));
                 break;
             }
@@ -31,8 +31,8 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
                 break;
             }
             default:
-                std::cerr   << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)] 
-                            << " " << (const char*)(m_currentToken.value.c_str()) << RESET << std::endl;
+                std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)]
+                          << " " << (const char*)(m_currentToken.value.c_str()) << RESET << std::endl;
                 getNextToken();
                 break;
         }
@@ -41,7 +41,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     return std::make_unique<BlockAST>(std::move(instructions));
 }
 
-int Parser::getTokenPrecedence() const {    
+int Parser::getTokenPrecedence() const {
     int precendence = -1;
     auto precedenceIt = BINARY_OPERATION_PRECEDENCE.find(m_currentToken.value);
     if (precedenceIt != BINARY_OPERATION_PRECEDENCE.end()) {
@@ -51,25 +51,25 @@ int Parser::getTokenPrecedence() const {
 }
 
 Token& Parser::getNextToken() {
-    return m_currentToken = m_lexer->getNextToken(); 
+    return m_currentToken = m_lexer->getNextToken();
 }
 
 std::unique_ptr<AST> Parser::parseType() {
     std::u8string type = m_currentToken.value;
-    getNextToken(); // eat type
+    getNextToken();  // eat type
 
     if (m_currentToken.type != TokenType::IDENTIFIER) {
         std::cerr << RED << "Error: Expecting identifier after type" << RESET << std::endl;
         return nullptr;
     }
     std::u8string identifier = m_currentToken.value;
-    getNextToken(); // eat identifier
+    getNextToken();  // eat identifier
 
     if (m_currentToken.type != TokenType::OPERATOR || m_currentToken.value != u8"=") {
         // it's just a variable declaration
         return std::make_unique<VariableDeclarationAST>(type, identifier);
     }
-    getNextToken(); // eat =
+    getNextToken();  // eat =
 
     if (m_currentToken.type == TokenType::KEYWORD && m_currentToken.value == u8"λ") {
         return parseFunction(type, identifier);
@@ -88,15 +88,15 @@ std::unique_ptr<AST> Parser::parseType() {
 
 std::unique_ptr<AST> Parser::parseIdentifier() {
     std::u8string identifier = m_currentToken.value;
-    getNextToken(); // eat identifier
+    getNextToken();  // eat identifier
 
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
         // just a variable reference
-        return std::make_unique<VariableReferenceAST>(identifier);   
+        return std::make_unique<VariableReferenceAST>(identifier);
     }
 
     // that's a function call
-    getNextToken(); // eat (
+    getNextToken();  // eat (
 
     std::vector<std::unique_ptr<AST>> arguments;
     while (true) {
@@ -106,11 +106,11 @@ std::unique_ptr<AST> Parser::parseIdentifier() {
         }
         if (m_currentToken.type == TokenType::PUNCTUATION) {
             if (m_currentToken.value == u8",") {
-                getNextToken(); // eat ,
+                getNextToken();  // eat ,
                 continue;
             }
             if (m_currentToken.value == u8")") {
-                getNextToken(); // eat )
+                getNextToken();  // eat )
                 break;
             }
         }
@@ -123,13 +123,13 @@ std::unique_ptr<AST> Parser::parseIdentifier() {
 
 std::unique_ptr<AST> Parser::parseKeyword() {
     if (m_currentToken.value == u8"∑") {
-        getNextToken(); // eat ∑
+        getNextToken();  // eat ∑
         return parseFor();
     } else if (m_currentToken.value == u8"si") {
-        getNextToken(); // eat "si"
+        getNextToken();  // eat "si"
         return parseIf();
     } else if (m_currentToken.value == u8"retro") {
-        getNextToken(); // eat "retro"
+        getNextToken();  // eat "retro"
         auto expr = parseExpression();
         if (expr) {
             return std::make_unique<ReturnAST>(std::move(expr));
@@ -137,8 +137,8 @@ std::unique_ptr<AST> Parser::parseKeyword() {
         return nullptr;
     }
 
-    // u8"retro", 
-    // u8"finio", 
+    // u8"retro",
+    // u8"finio",
 
     std::cerr << RED << "Error: Wrong keyword" << RESET << std::endl;
     return nullptr;
@@ -147,14 +147,15 @@ std::unique_ptr<AST> Parser::parseKeyword() {
 std::unique_ptr<AST> Parser::parseExpression() {
     std::unique_ptr<AST> lhs;
     if (m_currentToken.type == TokenType::NUMBER) {
-        int number = toArabicConverter(m_currentToken.value);
-        getNextToken(); // eat number
+        int* number;
+        bool sucess = toArabicConverter(m_currentToken.value, number);
+        getNextToken();  // eat number
         lhs = std::make_unique<NumberAST>(number);
     }
 
     if (m_currentToken.type == TokenType::LITERAL) {
         char8_t character = m_currentToken.value[0];
-        getNextToken(); // eat char
+        getNextToken();  // eat char
         lhs = std::make_unique<CharAST>(character);
     }
 
@@ -164,7 +165,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
 
     // that's a paren expression
     if (m_currentToken.type == TokenType::PUNCTUATION && m_currentToken.value == u8"(") {
-        getNextToken(); // eat (
+        getNextToken();  // eat (
         auto innerExpr = parseExpression();
         if (!innerExpr) {
             return nullptr;
@@ -173,7 +174,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
             std::cerr << RED << "Error: expected ')' after paren expression" << RESET << std::endl;
             return nullptr;
         }
-        getNextToken(); // eat )
+        getNextToken();  // eat )
         return innerExpr;
     }
 
@@ -193,7 +194,7 @@ std::unique_ptr<AST> Parser::parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lh
 
         // This is 100% binop
         std::u8string binOp = m_currentToken.value;
-        getNextToken(); // eat binop
+        getNextToken();  // eat binop
 
         auto rhs = parseExpression();
         if (!rhs) {
@@ -215,37 +216,37 @@ std::unique_ptr<AST> Parser::parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lh
 }
 
 std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnType, const std::u8string& funcName) {
-    getNextToken(); // eat λ
-    
+    getNextToken();  // eat λ
+
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
         std::cerr << RED << "Error: Expected '(' in function declaration" << RESET << std::endl;
         return nullptr;
     }
-    getNextToken(); // eat (
+    getNextToken();  // eat (
 
     std::vector<std::unique_ptr<VariableDeclarationAST>> arguments;
     while (true) {
         if (m_currentToken.type == TokenType::TYPE) {
             std::u8string type = m_currentToken.value;
-            getNextToken(); // eat type
+            getNextToken();  // eat type
 
             if (m_currentToken.type != TokenType::IDENTIFIER) {
                 std::cerr << RED << "Error: Expecting identifier after type" << RESET << std::endl;
                 return nullptr;
             }
             std::u8string identifier = m_currentToken.value;
-            getNextToken(); // eat identifier
+            getNextToken();  // eat identifier
 
             arguments.emplace_back(std::make_unique<VariableDeclarationAST>(type, identifier));
         }
 
         if (m_currentToken.type == TokenType::PUNCTUATION) {
             if (m_currentToken.value == u8",") {
-                getNextToken(); // eat ,
+                getNextToken();  // eat ,
                 continue;
             }
             if (m_currentToken.value == u8")") {
-                getNextToken(); // eat )
+                getNextToken();  // eat )
                 break;
             }
         }
