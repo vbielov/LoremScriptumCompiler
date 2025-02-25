@@ -33,10 +33,16 @@ int main(int argc, const char** argv) {
     while ((token = lexer.getNextToken()).type != TokenType::EOF_TOKEN) {
         std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
     }
+    lexer = Lexer(sourceCode); // reset Lexer
 
     // Parser
     Parser parser = Parser(lexer);
-    parser.parse();
+    auto tree = parser.parseBlock();
+    if (tree) {
+        tree->printTree("", false);
+    } else {
+        std::cerr << "Error: Nothing parsed :(" << std::endl;
+    }
 
     // Generate IR
 

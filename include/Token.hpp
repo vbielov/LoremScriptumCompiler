@@ -11,6 +11,7 @@ enum class TokenType {
     OPERATOR,       // , :=, =, ≠ , >, <, >=, <=, +, -, *, /, ^, ¬, !
     PUNCTUATION,    // (, ), :, ;
     KEYWORD,        // λ, retro, finio, ∑(∞), si, ni
+    NEW_LINE,       // \n
 };
 
 inline const char* TOKEN_TYPE_LABELS[] = {
@@ -23,6 +24,7 @@ inline const char* TOKEN_TYPE_LABELS[] = {
     "OPERATOR",
     "PUNCTUATION",
     "KEYWORD",
+    "NEW_LINE"
 };
 
 struct Token {

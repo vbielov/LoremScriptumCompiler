@@ -14,13 +14,14 @@ private:
 
     // https://en.wikipedia.org/wiki/Order_of_operations
     inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRECEDENCE = {
-        {u8"==", 1},
-        {u8"≠" , 1},
+        {u8"=", 1},
+        {u8"≠" , 2},
+        {u8"==", 2},
 
-        {u8"<", 10},
-        {u8">", 10},
         {u8">=", 10},
         {u8"<=", 10},
+        {u8"<", 10},
+        {u8">", 10},
 
         {u8"+", 20},
         {u8"-", 20},
@@ -35,8 +36,7 @@ private:
 public:
     Parser(Lexer& lexer);
 
-    /// @brief Main loop
-    void parse();
+    std::unique_ptr<BlockAST> parseBlock();
 
 private:
     /// @brief Get the precedence of the pending binary operator token.
@@ -44,24 +44,24 @@ private:
 
     Token& getNextToken();
 
-    // any expression
-    std::unique_ptr<AST> parseExpression(); 
-    
-    std::unique_ptr<AST> parseNumberExpr();
-    
-    std::unique_ptr<AST> parseParenExpr(); // ( args )
+    // Anything that starts with a type is some declaration of something
+    std::unique_ptr<AST> parseType();
 
-    // identifier() => function
-    // identifier => variable
-    std::unique_ptr<AST> parseIdentifierExpr(); 
+    // It can be veriable reference or a function call
+    std::unique_ptr<AST> parseIdentifier();
 
-    // identifier-, number-, paren- expression
-    std::unique_ptr<AST> parsePrimary();
+    // It can be for-loop, if statement or any other.
+    std::unique_ptr<AST> parseKeyword();
 
-    std::unique_ptr<AST> parseBinOpRHS(int exprPrec, std::unique_ptr<AST> LHS);
+    // It can be Identifier, constant value or some parantecies/binary operation
+    std::unique_ptr<AST> parseExpression();
 
-    std::unique_ptr<AST> parseAssigment();
+    std::unique_ptr<AST> parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lhs);
 
-    // Anonymous functions that are just expresions
-    std::unique_ptr<FunctionAST> parseTopLevelExpr();
+    // It is a function
+    std::unique_ptr<FunctionAST> parseFunction(const std::u8string& returnType, const std::u8string& funcName);
+
+    std::unique_ptr<IfAST> parseIf();
+
+    std::unique_ptr<ForAST> parseFor();
 };
