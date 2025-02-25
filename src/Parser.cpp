@@ -147,7 +147,10 @@ std::unique_ptr<AST> Parser::parseKeyword() {
 std::unique_ptr<AST> Parser::parseExpression() {
     std::unique_ptr<AST> lhs;
     if (m_currentToken.type == TokenType::NUMBER) {
-        int number = toArabicConverter(m_currentToken.value);
+        int number = 0;
+        if (!toArabicConverter(m_currentToken.value, &number)) {
+            std::cerr << RED << "Error: Number is not parsable" << RESET << std::endl;
+        }
         getNextToken(); // eat number
         lhs = std::make_unique<NumberAST>(number);
     }
