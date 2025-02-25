@@ -13,16 +13,22 @@ if (APPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
 
+find_package(LLVM REQUIRED CONFIG)
+
+message(STATUS "Found LLVM: ${LLVM_DIR}")
+message(STATUS "Using LLVM version: ${LLVM_VERSION}")
+
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+llvm_map_components_to_libnames(LLVM_LIBS core irreader support)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
 list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*[/\\]main\\.cpp$")
 add_executable(lscTest ${SRCS} ${PROJECT_SOURCES})
 target_include_directories(lscTest PRIVATE ${INCLUDE_DIR})
 
-target_link_libraries(lscTest
-    gtest
-    gmock
-)
+target_link_libraries(lscTest PRIVATE gtest gmock -static-libgcc -static-libstdc++ ${LLVM_LIBS})
 
 include_directories("..")
 
