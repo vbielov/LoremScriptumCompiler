@@ -3,4 +3,5 @@ numerus b = V
 numerus foo = λ(numerus a, numerus b):
     a = II + X * b == III
     foo()
+    retro a
 ;

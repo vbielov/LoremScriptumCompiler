@@ -12,7 +12,7 @@ void printIndent(const std::string &indent, bool isLast) {
 BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions)
     : m_instructions(std::move(instructions)) {}
 
-llvm::Value* BlockAST::codegen() {
+Value* BlockAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -27,8 +27,8 @@ void BlockAST::printTree(const std::string& indent, bool isLast) const {
 
 NumberAST::NumberAST(int value) : m_value(value) {}
 
-llvm::Value* NumberAST::codegen() {
-    return nullptr;
+Value* NumberAST::codegen(LLVMStructs& llvmStructs) {
+    return ConstantInt::get(*llvmStructs.theContext, APInt(32, m_value, true));
 }
 
 void NumberAST::printTree(const std::string& indent, bool isLast) const {
@@ -38,8 +38,8 @@ void NumberAST::printTree(const std::string& indent, bool isLast) const {
 
 CharAST::CharAST(char8_t character) : m_char(character) {}
 
-llvm::Value* CharAST::codegen() {
-    return nullptr;
+Value* CharAST::codegen(LLVMStructs& llvmStructs) {
+    return ConstantInt::get(*llvmStructs.theContext, APInt(8, m_char, false));
 }
 
 void CharAST::printTree(const std::string& indent, bool isLast) const {
@@ -50,7 +50,7 @@ void CharAST::printTree(const std::string& indent, bool isLast) const {
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
     : m_type(type), m_name(name) {}
 
-llvm::Value* VariableDeclarationAST::codegen() {
+Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -63,8 +63,13 @@ void VariableDeclarationAST::printTree(const std::string& indent, bool isLast) c
 VariableReferenceAST::VariableReferenceAST(const std::u8string &name)
     : m_name(std::move(name)) {}
 
-llvm::Value* VariableReferenceAST::codegen() {
-    return nullptr;
+Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
+    std::string str = (const char*)m_name.c_str();
+    Value* value = llvmStructs.namedValues[str];
+    if (!value) {
+        std::cerr << RED << "Error: Unknown variable name" << RESET << std::endl;
+    }
+    return value;
 }
 
 void VariableReferenceAST::printTree(const std::string& indent, bool isLast) const {
@@ -75,7 +80,7 @@ void VariableReferenceAST::printTree(const std::string& indent, bool isLast) con
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
     : m_op(std::move(op)), m_LHS(std::move(LHS)), m_RHS(std::move(RHS)) {}
 
-llvm::Value* BinaryOperatorAST::codegen() {
+Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -90,7 +95,7 @@ void BinaryOperatorAST::printTree(const std::string& indent, bool isLast) const 
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args)
     : m_calleeIdentifier(std::move(callee)), m_args(std::move(args)) {}
 
-llvm::Value* FuncCallAST::codegen() {
+Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -106,7 +111,7 @@ void FuncCallAST::printTree(const std::string& indent, bool isLast) const {
 FunctionAST::FunctionAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args, std::unique_ptr<BlockAST> body)
     : m_returnType(std::move(returnType)), m_name(std::move(name)), m_args(std::move(args)), m_body(std::move(body)) {}
 
-llvm::Value* FunctionAST::codegen() {
+Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -121,10 +126,23 @@ void FunctionAST::printTree(const std::string& indent, bool isLast) const {
     m_body->printTree(newIndent, true);
 }
 
+ReturnAST::ReturnAST(std::unique_ptr<AST> expr) : m_expr(std::move(expr)) {}
+
+Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
+    return nullptr;
+}
+
+void ReturnAST::printTree(const std::string& indent, bool isLast) const {
+    printIndent(indent, isLast);
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    std::cout << "ReturnAST" << std::endl;
+    m_expr->printTree(newIndent, true);
+}
+
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
     : m_cond(std::move(cond)), m_then(std::move(then)), m_else(std::move(_else)) {}
 
-llvm::Value* IfAST::codegen() {
+Value* IfAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -140,7 +158,7 @@ void IfAST::printTree(const std::string& indent, bool isLast) const {
 ForAST::ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::unique_ptr<AST> end, std::unique_ptr<AST> step, std::unique_ptr<BlockAST> body)
     : m_varName(std::move(varName)), m_start(std::move(start)), m_end(std::move(end)), m_step(std::move(step)), m_body(std::move(body)) {}
 
-llvm::Value* ForAST::codegen() {
+Value* ForAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
@@ -153,3 +171,4 @@ void ForAST::printTree(const std::string& indent, bool isLast) const {
     m_step->printTree(newIndent, false);
     m_body->printTree(newIndent, true);
 }
+

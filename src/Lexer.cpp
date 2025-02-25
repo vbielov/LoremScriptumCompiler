@@ -91,6 +91,7 @@ Token Lexer::getNextToken() {
     std::u8string identifierStr = u8"";
     while ( getCharAt(m_charIterator) != u8' ' && 
             getCharAt(m_charIterator) != u8'\n' && 
+            getCharAt(m_charIterator) != u8'\r' && 
             getCharAt(m_charIterator) != u8'\0' && 
             startWithWord(OPERATORS, true) == -1 &&
             startWithWord(PUNCTUATION, true) == -1) {

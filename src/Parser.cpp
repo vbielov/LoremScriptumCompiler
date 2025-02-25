@@ -31,7 +31,8 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
                 break;
             }
             default:
-                std::cerr << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)] << " " << (const char*)(m_currentToken.value.c_str()) << std::endl;
+                std::cerr   << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)] 
+                            << " " << (const char*)(m_currentToken.value.c_str()) << RESET << std::endl;
                 getNextToken();
                 break;
         }
@@ -58,7 +59,7 @@ std::unique_ptr<AST> Parser::parseType() {
     getNextToken(); // eat type
 
     if (m_currentToken.type != TokenType::IDENTIFIER) {
-        std::cerr << "Error: Expecting identifier after type" << std::endl;
+        std::cerr << RED << "Error: Expecting identifier after type" << RESET << std::endl;
         return nullptr;
     }
     std::u8string identifier = m_currentToken.value;
@@ -81,7 +82,7 @@ std::unique_ptr<AST> Parser::parseType() {
         return std::make_unique<BinaryOperatorAST>(op, std::move(left), std::move(expression));
     }
 
-    std::cerr << "Error: Expected expression or function after assign" << std::endl;
+    std::cerr << RED << "Error: Expected expression or function after assign" << RESET << std::endl;
     return nullptr;
 }
 
@@ -113,7 +114,7 @@ std::unique_ptr<AST> Parser::parseIdentifier() {
                 break;
             }
         }
-        std::cerr << "Error: Expected ) in function call" << std::endl;
+        std::cerr << RED << "Error: Expected ) in function call" << RESET << std::endl;
         return nullptr;
     }
 
@@ -122,14 +123,24 @@ std::unique_ptr<AST> Parser::parseIdentifier() {
 
 std::unique_ptr<AST> Parser::parseKeyword() {
     if (m_currentToken.value == u8"∑") {
-        // TODO
-        return nullptr;
+        getNextToken(); // eat ∑
+        return parseFor();
     } else if (m_currentToken.value == u8"si") {
-        // TODO
+        getNextToken(); // eat "si"
+        return parseIf();
+    } else if (m_currentToken.value == u8"retro") {
+        getNextToken(); // eat "retro"
+        auto expr = parseExpression();
+        if (expr) {
+            return std::make_unique<ReturnAST>(std::move(expr));
+        }
         return nullptr;
     }
 
-    std::cerr << "Error: Wrong keyword" << std::endl;
+    // u8"retro", 
+    // u8"finio", 
+
+    std::cerr << RED << "Error: Wrong keyword" << RESET << std::endl;
     return nullptr;
 }
 
@@ -159,7 +170,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
             return nullptr;
         }
         if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8")") {
-            std::cerr << "Error: expected ')' after paren expression" << std::endl;
+            std::cerr << RED << "Error: expected ')' after paren expression" << RESET << std::endl;
             return nullptr;
         }
         getNextToken(); // eat )
@@ -207,7 +218,7 @@ std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnTy
     getNextToken(); // eat λ
     
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
-        std::cerr << "Error: Expected '(' in function declaration" << std::endl;
+        std::cerr << RED << "Error: Expected '(' in function declaration" << RESET << std::endl;
         return nullptr;
     }
     getNextToken(); // eat (
@@ -219,7 +230,7 @@ std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnTy
             getNextToken(); // eat type
 
             if (m_currentToken.type != TokenType::IDENTIFIER) {
-                std::cerr << "Error: Expecting identifier after type" << std::endl;
+                std::cerr << RED << "Error: Expecting identifier after type" << RESET << std::endl;
                 return nullptr;
             }
             std::u8string identifier = m_currentToken.value;
@@ -239,15 +250,15 @@ std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnTy
             }
         }
 
-        std::cerr << "Error: Expected ')' in function call" << std::endl;
+        std::cerr << RED << "Error: Expected ')' in function call" << RESET << std::endl;
         return nullptr;
     }
 
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8":") {
-        std::cerr << "Error: Expected ':' after function declaration" << std::endl;
+        std::cerr << RED << "Error: Expected ':' after function declaration" << RESET << std::endl;
         return nullptr;
     }
-    // Do not eat ':' before parsing Block
+    // Don't eat ':' before parsing Block
     auto block = parseBlock();
     if (block) {
         return std::make_unique<FunctionAST>(returnType, funcName, std::move(arguments), std::move(block));

@@ -1,16 +1,17 @@
 #pragma once
-#include <memory>
 #include "Lexer.hpp"
-#include "llvm/IR/Value.h"
+#include "LLVMStructs.hpp"
 #include <iostream>
 #include <string>
+#define RED     "\033[31m"
+#define RESET   "\033[0m"
 
 /// @brief Abstract Syntax Tree: Base class for all expression node.
 /// NOTE(Vlad): It is interface
 class AST {
 public:
     virtual ~AST() = default;
-    virtual llvm::Value* codegen() = 0;
+    virtual Value* codegen(LLVMStructs& llvmStructs) = 0;
     virtual void printTree(const std::string& indent, bool isLast) const = 0;
 };
 
@@ -21,7 +22,7 @@ private:
     std::vector<std::unique_ptr<AST>> m_instructions;
 public:
     BlockAST(std::vector<std::unique_ptr<AST>> instructions);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -30,7 +31,7 @@ private:
     int m_value;
 public:
     NumberAST(int value);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -40,7 +41,7 @@ private:
     char8_t m_char;
 public:
     CharAST(char8_t character);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -51,7 +52,7 @@ private:
     std::u8string m_name;
 public:
     VariableDeclarationAST(const std::u8string& type, const std::u8string& name);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -61,7 +62,7 @@ private:
     std::u8string m_name;
 public:
     VariableReferenceAST(const std::u8string& name);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -72,7 +73,7 @@ private:
     std::unique_ptr<AST> m_LHS, m_RHS;
 public:
     BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -83,7 +84,7 @@ private:
     std::vector<std::unique_ptr<AST>> m_args;
 public:
     FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -96,7 +97,17 @@ private:
     std::unique_ptr<BlockAST> m_body;
 public:
     FunctionAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args, std::unique_ptr<BlockAST> body);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
+    void printTree(const std::string& indent, bool isLast) const override;
+};
+
+
+class ReturnAST : public AST {
+private:
+    std::unique_ptr<AST> m_expr;
+public:
+    ReturnAST(std::unique_ptr<AST> expr);
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -108,7 +119,7 @@ private:
     std::unique_ptr<BlockAST> m_else;
 public:
     IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
@@ -122,6 +133,6 @@ private:
     std::unique_ptr<BlockAST> m_body;
 public:
     ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::unique_ptr<AST> end, std::unique_ptr<AST> step, std::unique_ptr<BlockAST> body);
-    llvm::Value* codegen() override;
+    Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
