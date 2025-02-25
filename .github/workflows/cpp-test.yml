@@ -19,7 +19,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ make llvm clang libffi-dev libncurses5-dev libncursesw5-dev
+          sudo apt-get install -y cmake ninja-build build-essential clang-19 llvm-19-dev libllvm19 llvm-19-tools lld-19 libclang-19-dev zlib1g-dev libzstd-dev
+          sudo apt remove llvm-16 llvm-16-dev llvm-16-tools
 
       - name: Create build directory
         run: mkdir -p build
