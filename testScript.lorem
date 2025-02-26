@@ -1,7 +1,5 @@
-numerus b = V
-
 numerus foo = λ(numerus a, numerus b):
-    a = II + X * b == III
-    foo()
+    a = II + X * b
+    foo(VI, a)
     retro a
 ;

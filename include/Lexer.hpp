@@ -20,7 +20,8 @@ inline static const std::vector<std::u8string> KEYWORDS = {
     u8"finio", 
     u8"∑(∞)",
     u8"si", 
-    u8"ni"
+    u8"ni",
+    u8"apere",
 };
 
 inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {

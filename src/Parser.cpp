@@ -71,8 +71,13 @@ std::unique_ptr<AST> Parser::parseType() {
     }
     getNextToken(); // eat =
 
-    if (m_currentToken.type == TokenType::KEYWORD && m_currentToken.value == u8"λ") {
-        return parseFunction(type, identifier);
+    if (m_currentToken.type == TokenType::KEYWORD) {
+        if (m_currentToken.value == u8"λ") {
+            return parseFunction(type, identifier);
+        }
+        if (m_currentToken.value == u8"apere") {
+            return parsePrototype(type, identifier);
+        }
     }
 
     auto expression = parseExpression();
@@ -130,11 +135,7 @@ std::unique_ptr<AST> Parser::parseKeyword() {
         return parseIf();
     } else if (m_currentToken.value == u8"retro") {
         getNextToken(); // eat "retro"
-        auto expr = parseExpression();
-        if (expr) {
-            return std::make_unique<ReturnAST>(std::move(expr));
-        }
-        return nullptr;
+        return std::make_unique<ReturnAST>(std::move(parseExpression()));
     }
 
     // u8"retro", 
@@ -220,13 +221,8 @@ std::unique_ptr<AST> Parser::parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lh
     }
 }
 
-std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnType, const std::u8string& funcName) {
-    getNextToken(); // eat λ
-    
-    if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
-        std::cerr << RED << "Error: Expected '(' in function declaration" << RESET << std::endl;
-        return nullptr;
-    }
+std::unique_ptr<FunctionPrototypeAST> Parser::parsePrototype(const std::u8string& returnType, const std::u8string& funcName)
+{
     getNextToken(); // eat (
 
     std::vector<std::unique_ptr<VariableDeclarationAST>> arguments;
@@ -256,9 +252,21 @@ std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnTy
             }
         }
 
-        std::cerr << RED << "Error: Expected ')' in function call" << RESET << std::endl;
+        std::cerr << RED << "Error: Expected ')' in function declaration" << RESET << std::endl;
         return nullptr;
     }
+    return std::make_unique<FunctionPrototypeAST>(returnType, funcName, std::move(arguments));
+}
+
+std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnType, const std::u8string& funcName) {
+    getNextToken(); // eat λ
+    
+    if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8"(") {
+        std::cerr << RED << "Error: Expected '(' in function declaration" << RESET << std::endl;
+        return nullptr;
+    }
+    
+    auto prototype = parsePrototype(returnType, funcName);
 
     if (m_currentToken.type != TokenType::PUNCTUATION || m_currentToken.value != u8":") {
         std::cerr << RED << "Error: Expected ':' after function declaration" << RESET << std::endl;
@@ -267,7 +275,7 @@ std::unique_ptr<FunctionAST> Parser::parseFunction(const std::u8string& returnTy
     // Don't eat ':' before parsing Block
     auto block = parseBlock();
     if (block) {
-        return std::make_unique<FunctionAST>(returnType, funcName, std::move(arguments), std::move(block));
+        return std::make_unique<FunctionAST>(std::move(prototype), std::move(block));
     }
     return nullptr;
 }

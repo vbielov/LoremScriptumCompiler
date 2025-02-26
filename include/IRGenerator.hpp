@@ -5,8 +5,10 @@
 class IRGenerator {
 private:
     AST* m_root;
+    LLVMStructs m_llvmStructs;
+
 public:
     IRGenerator(const std::unique_ptr<AST>& rootBlock);
 
-    void generateIR();
+    std::string generateIRCode();
 };

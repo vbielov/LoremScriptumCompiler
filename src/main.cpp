@@ -5,6 +5,7 @@
 #include <locale>
 #include "Lexer.hpp"
 #include "Parser.hpp"
+#include "IRGenerator.hpp"
 
 std::u8string readFileToU8String(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
@@ -42,7 +43,7 @@ int main(int argc, const char** argv) {
     // Parser
     std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl << std::endl;
     Parser parser = Parser(lexer);
-    auto tree = parser.parseBlock();
+    std::unique_ptr<AST> tree = parser.parseBlock();
     if (tree) {
         tree->printTree("", false);
     } else {
@@ -51,8 +52,14 @@ int main(int argc, const char** argv) {
     std::cout << std::endl;
 
     // Generate IR
-
-    // End?
+    if (tree) {
+        std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
+        IRGenerator codeGenerator = IRGenerator(tree);
+        std::string llvmCode = codeGenerator.generateIRCode();
+        std::cout << llvmCode << std::endl;
+        std::cout << std::endl;
+    }
+   // End?
 
     return 0;
 }

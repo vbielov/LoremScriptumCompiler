@@ -54,6 +54,7 @@ public:
     VariableDeclarationAST(const std::u8string& type, const std::u8string& name);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
+    const std::u8string& getName() const;
 };
 
 
@@ -89,14 +90,27 @@ public:
 };
 
 
-class FunctionAST : public AST {
+// Function declaration
+class FunctionPrototypeAST : public AST {
 private:
     std::u8string m_returnType;
     std::u8string m_name;
-    std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;    
+    std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;   
+public:
+    FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args);
+    Value* codegen(LLVMStructs& llvmStructs) override;
+    void printTree(const std::string& indent, bool isLast) const override;
+    const std::u8string& getName() const;
+};
+
+
+// Whole function
+class FunctionAST : public AST {
+private:
+    std::unique_ptr<FunctionPrototypeAST> m_prototype;
     std::unique_ptr<BlockAST> m_body;
 public:
-    FunctionAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args, std::unique_ptr<BlockAST> body);
+    FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };

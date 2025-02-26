@@ -58,6 +58,8 @@ private:
 
     std::unique_ptr<AST> parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lhs);
 
+    std::unique_ptr<FunctionPrototypeAST> parsePrototype(const std::u8string& returnType, const std::u8string& funcName);
+
     // It is a function
     std::unique_ptr<FunctionAST> parseFunction(const std::u8string& returnType, const std::u8string& funcName);
 

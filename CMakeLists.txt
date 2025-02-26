@@ -5,9 +5,6 @@ project(lsc C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(LLVM_LINK_LLVM_DYLIB ON)
-
-# set(CMAKE_BUILD_TYPE Debug)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
     set(CMAKE_DEBUG_POSTFIX "_debug")
@@ -17,68 +14,56 @@ else()
     set(CMAKE_RELEASE_POSTFIX "_release")
 endif()
 
-add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
-
 set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(PROJECT_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/include/)
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
 
-find_package(LLVM REQUIRED CONFIG)
+if(NOT DEFINED BUILD_TESTS)
+    add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
+    find_package(LLVM REQUIRED CONFIG)
 
-message(STATUS "Found LLVM: ${LLVM_DIR}")
-message(STATUS "Using LLVM version: ${LLVM_VERSION}")
+    message(STATUS "Found LLVM: ${LLVM_DIR}")
+    message(STATUS "Using LLVM version: ${LLVM_VERSION}")
 
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
+    include_directories(${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
 
-llvm_map_components_to_libnames(LLVM_LIBS core irreader support)
+    llvm_map_components_to_libnames(LLVM_LIBS core irreader support)
 
-# 1. Put app.ico in directory.
+    # 1. Put app.ico in directory.
 
-# 2. Create app.rc in same directory with one line:
-# IDI_ICON1               ICON        DISCARDABLE            "app.ico"
+    # 2. Create app.rc in same directory with one line:
+    # IDI_ICON1               ICON        DISCARDABLE            "app.ico"
 
-# 3. Run command (Warning: it's app.o, not app.res, how it is mentioned in other manuals!)
-# windres app.rc -o app.o
+    # 3. Run command (Warning: it's app.o, not app.res, how it is mentioned in other manuals!)
+    # windres app.rc -o app.o
 
-# 4. add_executable(app
-#   ...
-#   app.o
-# )
+    # 4. add_executable(app
+    #   ...
+    #   app.o
+    # )
 
-# 5. Proofit!
+    # 5. Proofit!
 
-if(WIN32)
-    set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
-endif(WIN32)
+    if(WIN32)
+        set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
+    endif(WIN32)
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${WINDOWS_RESOURCES}) 
+    add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${WINDOWS_RESOURCES}) 
 
-target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
+    target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
+    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
-if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        LLVMCore
-        LLVMExecutionEngine
-        LLVMMCJIT
-        LLVMOrcJIT
-        # LLVMNative (I don't have it. Do I need it? idk)
-        LLVMSupport
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LINK_SEARCH_START_STATIC ON
+        LINK_SEARCH_END_STATIC ON
     )
-endif(WIN32)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_SEARCH_START_STATIC ON
-    LINK_SEARCH_END_STATIC ON
-)
-
 # ---------------------------- TESTING ----------------------------
-if(BUILD_TESTS)
+else()
     # Download and unpack googletest at configure time
     configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
     execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}"

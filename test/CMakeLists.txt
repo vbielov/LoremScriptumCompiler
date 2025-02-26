@@ -13,6 +13,7 @@ if (APPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
 
+add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
 find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM: ${LLVM_DIR}")
