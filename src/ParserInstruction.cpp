@@ -1,4 +1,4 @@
-#include "parser/Parser.hpp"
+#include "Parser.hpp"
 
 /**
  * An Instruction changes data. It can be a declaration or expression
@@ -48,7 +48,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     auto expression = parseExpression();
     if (expression == nullptr) return nullptr;
 
-    return std::make_unique<BinaryOperatorAST>(u8"=", declaration, expression);
+    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(declaration), std::move(expression));
 }
 
 /**
@@ -71,7 +71,7 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(std::u8string identifier
     if (expression == nullptr || !isToken(TokenType::NEW_LINE)) return nullptr;
 
     auto varReference = std::make_unique<VariableReferenceAST>(identifier);
-    return std::make_unique<BinaryOperatorAST>(u8"=", varReference, expression);
+    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(varReference), std::move(expression));
 }
 
 /**
@@ -144,7 +144,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8
         getNextToken();
         if (!isToken(TokenType::IDENTIFIER)) return nullptr;
 
-        auto arg = std::make_unique<VariableDeclarationAST>(u8"=", type, m_currentToken.value);
+        auto arg = std::make_unique<VariableDeclarationAST>(type, m_currentToken.value);
         args.push_back(std::move(arg));
 
         getNextToken();
@@ -165,5 +165,5 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8
     auto funcBlock = parseBlock();
     if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
 
-    return std::make_unique<FunctionAST>(type, identifier, std::move(args), funcBlock);
+    return std::make_unique<FunctionAST>(type, identifier, std::move(args), std::move(funcBlock));
 }

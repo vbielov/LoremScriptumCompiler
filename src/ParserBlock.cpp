@@ -1,4 +1,4 @@
-#include "parser/Parser.hpp"
+#include "Parser.hpp"
 
 /**
  * A block contains statements
@@ -14,9 +14,8 @@
 std::unique_ptr<BlockAST> Parser::parseBlock() {
     std::vector<std::unique_ptr<AST>> statements;
 
+    getNextToken();
     while (!isFinishedBlock()) {
-        getNextToken();
-
         if (isToken(TokenType::NEW_LINE)) continue;
 
         auto statement = parseStatement();
@@ -25,6 +24,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         } else {
             printUnknownTokenError();
         }
+        getNextToken();
     }
 
     return std::make_unique<BlockAST>(std::move(statements));

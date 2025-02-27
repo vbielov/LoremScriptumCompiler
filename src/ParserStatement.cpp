@@ -1,4 +1,4 @@
-#include "parser/Parser.hpp"
+#include "Parser.hpp"
 
 /**
  * A statement can be an instuction or a flow statement like for, if, break, return
@@ -85,7 +85,9 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     std::unique_ptr<BlockAST> elseBlock;
     getNextToken();
     if (isToken(TokenType::KEYWORD, u8"nisi")) {
-        elseBlock = std::make_unique<BlockAST>(std::vector<std::unique_ptr<AST>>{parseStatementBranching()});  // TODO: Is this correct?
+        auto pseudoIf = std::vector<std::unique_ptr<AST>>();
+        pseudoIf.emplace_back(parseStatementBranching());
+        elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));  // TODO: Is this correct?
     } else if (isToken(TokenType::KEYWORD, u8"ni")) {
         getNextToken();
 
@@ -96,7 +98,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
         return nullptr;  // TODO: set default elseBlock
     }
 
-    return std::make_unique<IfAST>(condition, ifBlock, elseBlock);
+    return std::make_unique<IfAST>(std::move(condition), std::move(ifBlock), std::move(elseBlock));
 }
 
 /**
@@ -118,10 +120,10 @@ std::unique_ptr<ForAST> Parser::parseStatementLooping() {
     if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
 
     // TODO: add these
-    std::u8string m_varName = nullptr;
-    std::unique_ptr<AST> m_start = nullptr;
-    std::unique_ptr<AST> m_end = nullptr;
-    std::unique_ptr<AST> m_step = nullptr;
+    std::u8string varName = nullptr;
+    std::unique_ptr<AST> start = nullptr;
+    std::unique_ptr<AST> end = nullptr;
+    std::unique_ptr<AST> step = nullptr;
 
-    return std::make_unique<ForAST>(m_varName, m_start, m_end, m_step, loopBlock);
+    return std::make_unique<ForAST>(varName, std::move(start), std::move(end), std::move(step), std::move(loopBlock));
 }

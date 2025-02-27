@@ -1,4 +1,5 @@
-#include "parser/Parser.hpp"
+#include "Parser.hpp"
+#include "RomanNumber.hpp"
 
 /**
  * An Expression always calculates a value of some type. Expression end on new line or unopend ')'
@@ -37,7 +38,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
 
     getNextToken();
     if (isExpressionEnd()) {
-        return std::make_unique<BinaryOperatorAST>(op, left, right);
+        return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
     }
 
     if (!isToken(TokenType::OPERATOR)) return nullptr;
@@ -48,11 +49,11 @@ std::unique_ptr<AST> Parser::parseExpression() {
     if (nextExpression == nullptr) return nullptr;
 
     if (op.second <= nextOp.second) {
-        auto priorityOp = std::make_unique<BinaryOperatorAST>(op, left, right);
-        return std::make_unique<BinaryOperatorAST>(nextOp, priorityOp, nextExpression);
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
+        return std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(priorityOp), std::move(nextExpression));
     } else {
-        auto priorityOp = std::make_unique<BinaryOperatorAST>(op, right, nextExpression);
-        return std::make_unique<BinaryOperatorAST>(nextOp, left, priorityOp);
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(op.first, std::move(right), std::move(nextExpression));
+        return std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(left), std::move(priorityOp));
     }
 }
 
@@ -83,14 +84,16 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
         // TODO: Create a UnaryOperatorAST
         auto lhs = std::make_unique<NumberAST>(0);
-        return std::make_unique<BinaryOperatorAST>(sign, lhs, value);
+        return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
     }
 
     if (isToken(TokenType::NUMBER)) {
-        value = std::make_unique<NumberAST>(m_currentToken.value);
+        int intValue;
+        if (!toArabicConverter(m_currentToken.value, &intValue)) return nullptr;
+        value = std::make_unique<NumberAST>(intValue);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
-        value = std::make_unique<CharAST>(m_currentToken.value);  // TODO: is this correct?
+        value = std::make_unique<CharAST>(m_currentToken.value[0]);  // TODO: is this correct?
         getNextToken();
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
@@ -99,7 +102,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         if (isToken(TokenType::PUNCTUATION, u8"(")) {
             value = parseInstructionFunctionCall(identifier);
         } else {
-            value = std::make_unique<VariableReferenceAST>(identifier);
+            value = std::make_unique<VariableReferenceAST>(std::move(identifier));
         }
     } else if (isToken(TokenType::OPERATOR, u8"(")) {
         getNextToken();
