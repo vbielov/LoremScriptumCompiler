@@ -16,14 +16,15 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     getNextToken();
     while (!isFinishedBlock()) {
-        if (isToken(TokenType::NEW_LINE)) continue;
-
-        auto statement = parseStatement();
-        if (statement != nullptr) {
-            statements.emplace_back(std::move(statement));
-        } else {
-            printUnknownTokenError();
+        if (!isToken(TokenType::NEW_LINE)) {
+            auto statement = parseStatement();
+            if (statement != nullptr) {
+                statements.emplace_back(std::move(statement));
+            } else {
+                printUnknownTokenError();
+            }
         }
+
         getNextToken();
     }
 

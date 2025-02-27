@@ -1,6 +1,6 @@
 #include "AST.hpp"
 
-void printIndent(const std::string &indent, bool isLast) {
+void printIndent(const std::string& indent, bool isLast) {
     std::cout << indent;
     if (isLast) {
         std::cout << "└── ";
@@ -60,7 +60,7 @@ void VariableDeclarationAST::printTree(const std::string& indent, bool isLast) c
               << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
-VariableReferenceAST::VariableReferenceAST(const std::u8string &name)
+VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
     : m_name(std::move(name)) {}
 
 Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
@@ -77,7 +77,7 @@ void VariableReferenceAST::printTree(const std::string& indent, bool isLast) con
     std::cout << "VariableReferenceAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
-BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
+BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS)
     : m_op(std::move(op)), m_LHS(std::move(LHS)), m_RHS(std::move(RHS)) {}
 
 Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
@@ -171,4 +171,3 @@ void ForAST::printTree(const std::string& indent, bool isLast) const {
     m_step->printTree(newIndent, false);
     m_body->printTree(newIndent, true);
 }
-

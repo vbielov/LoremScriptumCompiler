@@ -52,29 +52,6 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 }
 
 /**
- * An Assignment is a BinaryOperation that sets an identifier to an expression. Function reassign is not possible
- *
- * currentToken is at SECOND token of assignment. It is always '='
- *
- * Examples:
- *      - var = I
- *      - var = I + I
- *      - var = I - (I + I)
- *      - var = var + I
- *      - var = I + func()
- *            ^ we are always here
- */
-std::unique_ptr<AST> Parser::parseInstructionAssignment(std::u8string identifier) {
-    getNextToken();
-
-    auto expression = parseExpression();
-    if (expression == nullptr || !isToken(TokenType::NEW_LINE)) return nullptr;
-
-    auto varReference = std::make_unique<VariableReferenceAST>(identifier);
-    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(varReference), std::move(expression));
-}
-
-/**
  * A Function call can have many args and is surrounded by ( )
  *
  * currentToken is at SECOND token of function call. It is always '('. An arg is an expression
@@ -92,11 +69,11 @@ std::unique_ptr<FuncCallAST> Parser::parseInstructionFunctionCall(std::u8string 
     getNextToken();
 
     std::vector<std::unique_ptr<AST>> args;
-    while (true) {
+    while (!isToken(TokenType::PUNCTUATION, u8")")) {
         auto expression = parseExpression();
-        if (expression) {
-            args.push_back(std::move(expression));
-        }
+        if (expression == nullptr) return nullptr;
+
+        args.push_back(std::move(expression));
 
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();

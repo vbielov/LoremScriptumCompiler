@@ -77,13 +77,17 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     getNextToken();
 
     auto condition = parseExpression();
+    if (condition == nullptr) return nullptr;
 
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     auto ifBlock = parseBlock();
-    if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
+    if (!isToken(TokenType::PUNCTUATION, u8";") || ifBlock == nullptr) return nullptr;
 
     std::unique_ptr<BlockAST> elseBlock;
-    getNextToken();
+
+    do getNextToken();
+    while (isToken(TokenType::NEW_LINE));
+
     if (isToken(TokenType::KEYWORD, u8"nisi")) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
         pseudoIf.emplace_back(parseStatementBranching());
@@ -93,7 +97,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 
         if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
         elseBlock = parseBlock();
-        if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, u8";") || elseBlock == nullptr) return nullptr;
     } else if (!isToken(TokenType::NEW_LINE)) {
         return nullptr;  // TODO: set default elseBlock
     }

@@ -5,7 +5,7 @@ bool Parser::isInsideLoop() {
 }
 
 bool Parser::isExpressionEnd() {
-    return isToken(TokenType::NEW_LINE) || isToken(TokenType::PUNCTUATION, u8")");
+    return isToken(TokenType::NEW_LINE) || isToken(TokenType::PUNCTUATION);
 }
 
 bool Parser::isToken(TokenType type) {

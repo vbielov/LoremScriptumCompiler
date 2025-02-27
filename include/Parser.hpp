@@ -81,7 +81,6 @@ class Parser {
     std::unique_ptr<AST> parseInstructionDeclaration();
     std::unique_ptr<FunctionAST> parseInstructionDeclarationFunction(std::u8string type, std::u8string identifier);
     std::unique_ptr<FuncCallAST> parseInstructionFunctionCall(std::u8string identifier);
-    std::unique_ptr<AST> parseInstructionAssignment(std::u8string identifier);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();

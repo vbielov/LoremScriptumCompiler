@@ -26,17 +26,15 @@ std::unique_ptr<AST> Parser::parseExpression() {
     auto left = parseExpressionSingle();
     if (left == nullptr) return nullptr;
 
-    getNextToken();
     if (isExpressionEnd()) return left;
 
     if (!isToken(TokenType::OPERATOR)) return nullptr;
     auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
-
     getNextToken();
+
     auto right = parseExpressionSingle();
-    if (right) return nullptr;
+    if (right == nullptr) return nullptr;
 
-    getNextToken();
     if (isExpressionEnd()) {
         return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
     }
@@ -52,8 +50,8 @@ std::unique_ptr<AST> Parser::parseExpression() {
         std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
         return std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(priorityOp), std::move(nextExpression));
     } else {
-        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(op.first, std::move(right), std::move(nextExpression));
-        return std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(left), std::move(priorityOp));
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(right), std::move(nextExpression));
+        return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(priorityOp));
     }
 }
 
