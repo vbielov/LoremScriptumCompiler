@@ -8,8 +8,15 @@ IRGenerator::IRGenerator(const std::unique_ptr<AST>& rootBlock)
         std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext)
     } {}
 
-std::string IRGenerator::generateIRCode() {
+void IRGenerator::generateIRCode() {
     m_root->codegen(m_llvmStructs);
+}
+
+Module* IRGenerator::getModule() {
+    return m_llvmStructs.theModule.get();
+}
+
+std::string IRGenerator::getIRCodeString() {
     std::string IRCode;
     llvm::raw_string_ostream outStream(IRCode);
     m_llvmStructs.theModule->print(outStream, nullptr);

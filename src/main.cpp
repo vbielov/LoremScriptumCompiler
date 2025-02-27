@@ -6,6 +6,7 @@
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
+#include "Assembler.hpp"
 
 std::u8string readFileToU8String(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
@@ -43,7 +44,7 @@ int main(int argc, const char** argv) {
     // Parser
     std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl << std::endl;
     Parser parser = Parser(lexer);
-    std::unique_ptr<AST> tree = parser.parseBlock();
+    std::unique_ptr<AST> tree = parser.parseProgram();
     if (tree) {
         tree->printTree("", false);
     } else {
@@ -51,15 +52,20 @@ int main(int argc, const char** argv) {
     }
     std::cout << std::endl;
 
-    // Generate IR
-    if (tree) {
-        std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
-        IRGenerator codeGenerator = IRGenerator(tree);
-        std::string llvmCode = codeGenerator.generateIRCode();
-        std::cout << llvmCode << std::endl;
-        std::cout << std::endl;
+    if (!tree) {
+        return 1;
     }
-   // End?
+
+    // Generate IR
+    std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
+    IRGenerator codeGenerator = IRGenerator(tree);
+    codeGenerator.generateIRCode();
+    std::cout << codeGenerator.getIRCodeString()<< std::endl;
+
+
+    std::cout << "----------------------- Object file: ----------------------- " << std::endl << std::endl;
+    Assembler assembler;
+    assembler.compileToObjectFile("testScript.o", codeGenerator.getModule()); 
 
     return 0;
 }

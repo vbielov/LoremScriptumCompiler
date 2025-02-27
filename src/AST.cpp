@@ -221,10 +221,13 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
 Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
     std::string str = (const char*)m_name.c_str();
     Value* value = llvmStructs.namedValues[str];
+    // reference by value, not a pointer
+    return llvmStructs.builder->CreateLoad(getVariableType(u8"numerus", llvmStructs), value, "loadtmp");
+
     if (!value) {
         std::cerr << RED << "Error: Unknown variable name" << RESET << std::endl;
     }
-    return value;
+    return nullptr;
 }
 
 Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {

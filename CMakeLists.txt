@@ -24,13 +24,37 @@ if(NOT DEFINED BUILD_TESTS)
     add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
     find_package(LLVM REQUIRED CONFIG)
 
-    message(STATUS "Found LLVM: ${LLVM_DIR}")
-    message(STATUS "Using LLVM version: ${LLVM_VERSION}")
+    # Get LLVM compile and link flags from llvm-config
+    execute_process(COMMAND llvm-config --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND llvm-config --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND llvm-config --system-libs --libs all OUTPUT_VARIABLE LLVM_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    # Print found values (for debugging)
+    message(STATUS "LLVM CXXFLAGS: ${LLVM_CXXFLAGS}")
+    message(STATUS "LLVM LDFLAGS: ${LLVM_LDFLAGS}")
+    message(STATUS "LLVM LIBS: ${LLVM_LIBS}")
+
 
     include_directories(${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
 
-    llvm_map_components_to_libnames(LLVM_LIBS core irreader support)
+    # llvm_map_components_to_libnames(LLVM_LIBS core irreader support target )
+    # set(LLVM_LIBS
+    #    LLVMCore
+    #    LLVMSupport
+    #    LLVMTarget
+    #    LLVMTargetParser
+    # #    LLVMX86TargetInfo
+    # #    LLVMX86Target
+    # #    LLVMARMTargetInfo
+    # #    LLVMARMTarget
+    # #    LLVMAArch64TargetInfo
+    # #    LLVMAArch64Target
+    #    LLVMAsmPrinter
+    #    LLVMAsmParser
+    #    LLVMCodeGen
+    #    LLVMMC
+    # )
 
     # 1. Put app.ico in directory.
 
@@ -55,7 +79,8 @@ if(NOT DEFINED BUILD_TESTS)
 
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${LLVM_CXXFLAGS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS})
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
     set_target_properties(${PROJECT_NAME} PROPERTIES

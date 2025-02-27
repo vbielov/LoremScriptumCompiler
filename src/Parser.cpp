@@ -3,6 +3,10 @@
 Parser::Parser(Lexer& lexer) 
     : m_lexer(&lexer) {}
 
+std::unique_ptr<BlockAST> Parser::parseProgram() {
+    return parseBlock();
+}
+
 // this function eat ':' that opens block
 std::unique_ptr<BlockAST> Parser::parseBlock() {
     getNextToken();
@@ -12,7 +16,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     while(m_currentToken.value != u8";" && m_currentToken.type != TokenType::EOF_TOKEN) {
         // Empty line
         if (m_currentToken.type == TokenType::NEW_LINE || m_currentToken.type == TokenType::COMMENT) {
-            getNextToken(); // eat \n
+            getNextToken(); // eat comment or empty line
             continue;
         }
         switch (m_currentToken.type) {
@@ -38,6 +42,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
                 break;
         }
     }
+    getNextToken(); // eat last token that is ';' or EOF
 
     return std::make_unique<BlockAST>(std::move(instructions));
 }

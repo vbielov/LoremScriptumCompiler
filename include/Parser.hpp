@@ -35,10 +35,11 @@ private:
 
 public:
     Parser(Lexer& lexer);
-
-    std::unique_ptr<BlockAST> parseBlock();
+    std::unique_ptr<BlockAST> parseProgram();
 
 private:
+    std::unique_ptr<BlockAST> parseBlock();
+
     /// @brief Get the precedence of the pending binary operator token.
     int getTokenPrecedence() const;
 

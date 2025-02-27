@@ -10,5 +10,7 @@ private:
 public:
     IRGenerator(const std::unique_ptr<AST>& rootBlock);
 
-    std::string generateIRCode();
+    void generateIRCode();
+    Module* getModule();
+    std::string getIRCodeString();
 };
