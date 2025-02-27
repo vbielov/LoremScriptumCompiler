@@ -1,6 +1,7 @@
 #include "Parser.hpp"
 
-Parser::Parser(Lexer& lexer) : m_lexer(&lexer) {}
+Parser::Parser(Lexer& lexer) 
+    : m_lexer(&lexer) {}
 
 // this function eat ':' that opens block
 std::unique_ptr<BlockAST> Parser::parseBlock() {
@@ -10,7 +11,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     // while it's not the end of current scope and not eof, search for next instr
     while(m_currentToken.value != u8";" && m_currentToken.type != TokenType::EOF_TOKEN) {
         // Empty line
-        if (m_currentToken.type == TokenType::NEW_LINE) {
+        if (m_currentToken.type == TokenType::NEW_LINE || m_currentToken.type == TokenType::COMMENT) {
             getNextToken(); // eat \n
             continue;
         }
@@ -76,6 +77,7 @@ std::unique_ptr<AST> Parser::parseType() {
             return parseFunction(type, identifier);
         }
         if (m_currentToken.value == u8"apere") {
+            getNextToken(); // eat apere
             return parsePrototype(type, identifier);
         }
     }

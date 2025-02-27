@@ -6,6 +6,10 @@
 #define RED     "\033[31m"
 #define RESET   "\033[0m"
 
+void printIndent(const std::string& indent, bool isLast); 
+
+llvm::Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs);
+
 /// @brief Abstract Syntax Tree: Base class for all expression node.
 /// NOTE(Vlad): It is interface
 class AST {
@@ -15,7 +19,6 @@ public:
     virtual void printTree(const std::string& indent, bool isLast) const = 0;
 };
 
-void printIndent(const std::string& indent, bool isLast); 
 
 class BlockAST : public AST {
 private:
@@ -25,6 +28,7 @@ public:
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };
+
 
 class NumberAST : public AST {
 private:
@@ -55,6 +59,7 @@ public:
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
     const std::u8string& getName() const;
+    const std::u8string& getType() const;
 };
 
 
