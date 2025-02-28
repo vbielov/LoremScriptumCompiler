@@ -114,6 +114,13 @@ class ReturnAST : public AST {
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
+class BreakAST : public AST {
+   public:
+    BreakAST();
+    Value* codegen(LLVMStructs& llvmStructs) override;
+    void printTree(const std::string& indent, bool isLast) const override;
+};
+
 class IfAST : public AST {
    private:
     std::unique_ptr<AST> m_cond;
@@ -126,16 +133,12 @@ class IfAST : public AST {
     void printTree(const std::string& indent, bool isLast) const override;
 };
 
-class ForAST : public AST {
+class LoopAST : public AST {
    private:
-    std::u8string m_varName;
-    std::unique_ptr<AST> m_start;
-    std::unique_ptr<AST> m_end;
-    std::unique_ptr<AST> m_step;
     std::unique_ptr<BlockAST> m_body;
 
    public:
-    ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::unique_ptr<AST> end, std::unique_ptr<AST> step, std::unique_ptr<BlockAST> body);
+    LoopAST(std::unique_ptr<BlockAST> body);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
 };

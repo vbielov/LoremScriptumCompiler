@@ -71,7 +71,7 @@ class Parser {
     std::unique_ptr<AST> parseStatement();
     std::unique_ptr<AST> parseStatementFlow();
     std::unique_ptr<IfAST> parseStatementBranching();
-    std::unique_ptr<ForAST> parseStatementLooping();
+    std::unique_ptr<AST> parseStatementLooping();
 
     // --- Declaration section ---
     std::unique_ptr<AST> parseDeclaration();

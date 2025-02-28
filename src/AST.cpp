@@ -139,6 +139,18 @@ void ReturnAST::printTree(const std::string& indent, bool isLast) const {
     m_expr->printTree(newIndent, true);
 }
 
+BreakAST::BreakAST() {}
+
+Value* BreakAST::codegen(LLVMStructs& llvmStructs) {
+    return nullptr;
+}
+
+void BreakAST::printTree(const std::string& indent, bool isLast) const {
+    printIndent(indent, isLast);
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    std::cout << "BreakAST" << std::endl;
+}
+
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
     : m_cond(std::move(cond)), m_then(std::move(then)), m_else(std::move(_else)) {}
 
@@ -155,19 +167,15 @@ void IfAST::printTree(const std::string& indent, bool isLast) const {
     if (m_else) m_else->printTree(newIndent, true);
 }
 
-ForAST::ForAST(const std::u8string& varName, std::unique_ptr<AST> start, std::unique_ptr<AST> end, std::unique_ptr<AST> step, std::unique_ptr<BlockAST> body)
-    : m_varName(std::move(varName)), m_start(std::move(start)), m_end(std::move(end)), m_step(std::move(step)), m_body(std::move(body)) {}
+LoopAST::LoopAST(std::unique_ptr<BlockAST> body) : m_body(std::move(body)) {}
 
-Value* ForAST::codegen(LLVMStructs& llvmStructs) {
+Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void ForAST::printTree(const std::string& indent, bool isLast) const {
+void LoopAST::printTree(const std::string& indent, bool isLast) const {
     printIndent(indent, isLast);
-    std::cout << "ForAST(" << std::string(m_varName.begin(), m_varName.end()) << ")" << std::endl;
+    std::cout << "LoopAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    m_start->printTree(newIndent, false);
-    m_end->printTree(newIndent, false);
-    m_step->printTree(newIndent, false);
     m_body->printTree(newIndent, true);
 }

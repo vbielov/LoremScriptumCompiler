@@ -47,8 +47,7 @@ std::unique_ptr<AST> Parser::parseStatementFlow() {
             return nullptr;
         }
 
-        // TODO: Add finio AST
-        return nullptr;
+        return std::make_unique<BreakAST>();
     }
 
     if (isToken(u8"retro")) {
@@ -56,7 +55,7 @@ std::unique_ptr<AST> Parser::parseStatementFlow() {
         return std::make_unique<ReturnAST>(parseExpression());
     }
     if (isToken(u8"si")) return parseStatementBranching();
-    if (isToken(u8"∑(∞)")) return parseStatementLooping();
+    if (isToken(u8"∑")) return parseStatementLooping();
     return nullptr;
 }
 
@@ -92,7 +91,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     if (isToken(TokenType::KEYWORD, u8"nisi")) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
         pseudoIf.emplace_back(parseStatementBranching());
-        elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));  // TODO: Is this correct?
+        elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));
     } else if (isToken(TokenType::KEYWORD, u8"ni")) {
         getNextToken();
 
@@ -107,28 +106,82 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 }
 
 /**
- *  Looping structure ∑(∞): ... ;
+ *  There are four possible Looping structures: ∑(declaration, bool expression, expression): ... ;   ∑(bool expression, expression): ... ;   ∑(bool expression): ... ;   ∑(): ... ;
  *
- *  currentToken is always at '∑(∞)' token
+ *  currentToken is always at '∑' token
  *
- *  - ∑(∞): [Block] ;
+ *  All variants:
+ *  1. ∑(numerus i = I, i > X, i = i + 1): [Block] ;
+ *  2. ∑(numerus i = I, i > X)           : [Block] ;
+ *  3. ∑(numerus i = I)                  : [Block] ;
+ *  4. ∑(i > X, i = i + 1)               : [Block] ;
+ *  5. ∑(i > X)                          : [Block] ;
+ *  6. ∑()                               : [Block] ;
  *
- *  Side note: If we enter loop block we increase m_loopCount. If the exit loop block we decrease. Necessary, because 'finio' can only be called inside loop
+ *  Side notes:
+ *      - If we enter loop block we increase m_loopCount. If the exit loop block we decrease. Necessary, because 'finio' can only be called inside loop
+ *      - Header will generate pseudo wrapper that is executed before block
  */
-std::unique_ptr<ForAST> Parser::parseStatementLooping() {
+std::unique_ptr<AST> Parser::parseStatementLooping() {
     getNextToken();
+    if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 
+    std::unique_ptr<AST> declaration, endExpression, stepExpression;
+
+    getNextToken();
+    if (isToken(TokenType::TYPE)) {
+        declaration = parseDeclaration();
+        if (declaration == nullptr) return nullptr;
+    }
+
+    if (!isToken(TokenType::PUNCTUATION, u8")")) {
+        if (isToken(TokenType::PUNCTUATION, u8",")) getNextToken();
+
+        endExpression = parseExpression();
+        if (endExpression == nullptr) return nullptr;
+
+        if (isToken(TokenType::PUNCTUATION, u8",")) {
+            getNextToken();
+            stepExpression = parseExpression();
+        }
+
+        if (!isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
+    }
+
+    getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     m_loopCount++;
     auto loopBlock = parseBlock();
     m_loopCount--;
     if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
 
-    // TODO: add these
-    std::u8string varName = nullptr;
-    std::unique_ptr<AST> start = nullptr;
-    std::unique_ptr<AST> end = nullptr;
-    std::unique_ptr<AST> step = nullptr;
+    // build pseudo wrapper block
 
-    return std::make_unique<ForAST>(varName, std::move(start), std::move(end), std::move(step), std::move(loopBlock));
+    auto loopWrapper = std::vector<std::unique_ptr<AST>>();
+    if (endExpression != nullptr) {
+        auto elseBlockInstr = std::vector<std::unique_ptr<AST>>();
+        std::unique_ptr<AST> breakAst = std::make_unique<BreakAST>();
+        elseBlockInstr.emplace_back(std::move(breakAst));
+        auto elseBlock = std::make_unique<BlockAST>(std::move(elseBlockInstr));
+        auto endAST = std::make_unique<IfAST>(std::move(endExpression), std::move(loopBlock), std::move(elseBlock));
+        loopWrapper.emplace_back(std::move(endAST));
+    }
+
+    if (stepExpression != nullptr) {
+        loopWrapper.emplace_back(std::move(stepExpression));
+    }
+
+    if (!loopWrapper.empty()) {
+        loopBlock = std::make_unique<BlockAST>(std::move(loopWrapper));
+    }
+    auto loopAST = std::make_unique<LoopAST>(std::move(loopBlock));
+
+    if (declaration != nullptr) {
+        auto outerLoopWrapper = std::vector<std::unique_ptr<AST>>();
+        outerLoopWrapper.emplace_back(std::move(declaration));
+        outerLoopWrapper.emplace_back(std::move(loopAST));
+        return std::make_unique<BlockAST>(std::move(outerLoopWrapper));
+    } else {
+        return loopAST;
+    }
 }
