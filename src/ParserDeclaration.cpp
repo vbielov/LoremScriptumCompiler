@@ -46,14 +46,8 @@ std::unique_ptr<AST> Parser::parseDeclaration() {
  *      - nihil func   = λ(numerus a): [Block] ;
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                       ^ we are always here
- *
- *
- *  std::u8string m_returnType;
-    std::u8string m_name;
-    std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;
-    std::unique_ptr<BlockAST> m_body;
  */
-std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string type, std::u8string identifier) {
+std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string& type, std::u8string& identifier) {
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 

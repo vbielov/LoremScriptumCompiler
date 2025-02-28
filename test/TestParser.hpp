@@ -9,7 +9,9 @@ std::string runParser(std::u8string& input) {
     auto block = parser.parseBlock();
 
     std::ostringstream oss;
-    block->printTree(oss, "", false);
+    if (block != nullptr) {
+        block->printTree(oss, "", false);
+    } else oss << "block is nullptr";
 
     return oss.str();
 }
@@ -20,7 +22,9 @@ std::string runParserInvalid(std::u8string& input) {
     auto block = parser.parseBlock();
 
     std::ostringstream oss;
-    block->printTree(oss, "", false);
+    if (block != nullptr) {
+        block->printTree(oss, "", false);
+    } else oss << "block is nullptr";
 
     return parser.isValid() ? oss.str() : "INVALID";
 }

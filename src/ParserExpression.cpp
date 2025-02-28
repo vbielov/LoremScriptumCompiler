@@ -23,16 +23,19 @@
  *  a >  b:  I + (II  * III)
  */
 std::unique_ptr<AST> Parser::parseExpression() {
-    auto left = parseExpressionSingle();
+    bool canAssignFirst = false;
+    auto left = parseExpressionSingle(&canAssignFirst);
     if (left == nullptr) return nullptr;
-
+    
     if (isExpressionEnd()) return left;
-
+    
     if (!isToken(TokenType::OPERATOR)) return nullptr;
+    if (!canAssignFirst && isToken(TokenType::OPERATOR, u8"=")) return nullptr;
     auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
     getNextToken();
-
-    auto right = parseExpressionSingle();
+    
+    bool canAssignSecond = false;
+    auto right = parseExpressionSingle(&canAssignSecond);
     if (right == nullptr) return nullptr;
 
     if (isExpressionEnd()) {
@@ -40,6 +43,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
     }
 
     if (!isToken(TokenType::OPERATOR)) return nullptr;
+    if (isToken(TokenType::OPERATOR, u8"=")) return nullptr;
     auto nextOp = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
 
     getNextToken();
@@ -71,14 +75,16 @@ std::unique_ptr<AST> Parser::parseExpression() {
  * Trick of sign number -I -> 0 - I
  *
  */
-std::unique_ptr<AST> Parser::parseExpressionSingle() {
+std::unique_ptr<AST> Parser::parseExpressionSingle(bool* canAssign) {
     std::unique_ptr<AST> value;
+
+    *canAssign = false;
 
     if (isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-")) {
         auto sign = m_currentToken.value;
 
         getNextToken();
-        value = parseExpressionSingle();
+        value = parseExpressionSingle(canAssign);
 
         // TODO: Create a UnaryOperatorAST
         auto lhs = std::make_unique<NumberAST>(0);
@@ -95,17 +101,17 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         getNextToken();
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
-
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8"(")) {
             value = parseExpressionFunctionCall(identifier);
         } else {
+            *canAssign = true;
             value = std::make_unique<VariableReferenceAST>(std::move(identifier));
         }
-    } else if (isToken(TokenType::OPERATOR, u8"(")) {
+    } else if (isToken(TokenType::PUNCTUATION, u8"(")) {
         getNextToken();
         value = parseExpression();
-        if (!isToken(TokenType::OPERATOR, u8")")) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
         getNextToken();
     } else {
         return nullptr;
@@ -128,7 +134,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
  *      - func(var + (I - II))
  *            ^ we are always here
  */
-std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string identifier) {
+std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string& identifier) {
     getNextToken();
 
     std::vector<std::unique_ptr<AST>> args;
@@ -140,10 +146,10 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string i
 
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
+            if (isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
             continue;
         }
         if (isToken(TokenType::PUNCTUATION, u8")")) {
-            getNextToken();
             break;
         }
 
@@ -151,5 +157,6 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string i
         return nullptr;
     }
 
+    getNextToken();
     return std::make_unique<FuncCallAST>(identifier, std::move(args));
 }

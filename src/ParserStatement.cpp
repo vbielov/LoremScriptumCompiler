@@ -88,7 +88,9 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 
     if (isToken(TokenType::KEYWORD, u8"nisi")) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
-        pseudoIf.emplace_back(parseStatementBranching());
+        auto elifBranch = parseStatementBranching();
+        if (elifBranch == nullptr) return nullptr;
+        pseudoIf.emplace_back(std::move(elifBranch));
         elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));
     } else if (isToken(TokenType::KEYWORD, u8"ni")) {
         getNextToken();
@@ -97,7 +99,9 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
         elseBlock = parseBlock();
         if (!isToken(TokenType::PUNCTUATION, u8";") || elseBlock == nullptr) return nullptr;
     } else if (!isToken(TokenType::NEW_LINE)) {
-        return nullptr;  // TODO: set default elseBlock
+        elseBlock = std::make_unique<BlockAST>(std::vector<std::unique_ptr<AST>>());
+    } else {
+        return nullptr; 
     }
 
     return std::make_unique<IfAST>(std::move(condition), std::move(ifBlock), std::move(elseBlock));

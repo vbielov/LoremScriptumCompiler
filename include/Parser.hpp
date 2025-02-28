@@ -14,6 +14,7 @@ class Parser {
     Token m_currentToken;
 
     int m_loopCount = 0;
+    int m_blockCount = -1;
     bool m_isValid = true;
     bool m_isTest;
 
@@ -79,10 +80,10 @@ class Parser {
 
     // --- Declaration section ---
     std::unique_ptr<AST> parseDeclaration();
-    std::unique_ptr<FunctionAST> parseDeclarationFunction(std::u8string type, std::u8string identifier);
+    std::unique_ptr<FunctionAST> parseDeclarationFunction(std::u8string& type, std::u8string& identifier);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();
-    std::unique_ptr<AST> parseExpressionSingle();
-    std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(std::u8string identifier);
+    std::unique_ptr<AST> parseExpressionSingle(bool* canAssign);
+    std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(std::u8string& identifier);
 };
