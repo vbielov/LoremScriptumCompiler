@@ -67,22 +67,18 @@ class Parser {
     void printError(std::string error);
     void printUnknownTokenError();
 
-    // Anything that starts with a type is some declaration of something
-    std::unique_ptr<AST> parseType();
-
     // --- Statement section ---
     std::unique_ptr<AST> parseStatement();
     std::unique_ptr<AST> parseStatementFlow();
     std::unique_ptr<IfAST> parseStatementBranching();
     std::unique_ptr<ForAST> parseStatementLooping();
 
-    // --- Instruction section ---
-    std::unique_ptr<AST> parseInstruction();
-    std::unique_ptr<AST> parseInstructionDeclaration();
-    std::unique_ptr<FunctionAST> parseInstructionDeclarationFunction(std::u8string type, std::u8string identifier);
-    std::unique_ptr<FuncCallAST> parseInstructionFunctionCall(std::u8string identifier);
+    // --- Declaration section ---
+    std::unique_ptr<AST> parseDeclaration();
+    std::unique_ptr<FunctionAST> parseDeclarationFunction(std::u8string type, std::u8string identifier);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();
     std::unique_ptr<AST> parseExpressionSingle();
+    std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(std::u8string identifier);
 };

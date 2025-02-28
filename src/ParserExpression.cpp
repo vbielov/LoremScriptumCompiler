@@ -98,7 +98,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8"(")) {
-            value = parseInstructionFunctionCall(identifier);
+            value = parseExpressionFunctionCall(identifier);
         } else {
             value = std::make_unique<VariableReferenceAST>(std::move(identifier));
         }
@@ -112,4 +112,44 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     }
 
     return value;
+}
+
+/**
+ * A Function call can have many args and is surrounded by ( )
+ *
+ * currentToken is at SECOND token of function call. It is always '('. An arg is an expression
+ *
+ * Examples:
+ *      - func()
+ *      - func(I)
+ *      - func(I, I)
+ *      - func(var)
+ *      - func(func())
+ *      - func(var + (I - II))
+ *            ^ we are always here
+ */
+std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string identifier) {
+    getNextToken();
+
+    std::vector<std::unique_ptr<AST>> args;
+    while (!isToken(TokenType::PUNCTUATION, u8")")) {
+        auto expression = parseExpression();
+        if (expression == nullptr) return nullptr;
+
+        args.push_back(std::move(expression));
+
+        if (isToken(TokenType::PUNCTUATION, u8",")) {
+            getNextToken();
+            continue;
+        }
+        if (isToken(TokenType::PUNCTUATION, u8")")) {
+            getNextToken();
+            break;
+        }
+
+        printError("Error: Expected ) in function call");
+        return nullptr;
+    }
+
+    return std::make_unique<FuncCallAST>(identifier, std::move(args));
 }

@@ -20,8 +20,9 @@
 std::unique_ptr<AST> Parser::parseStatement() {
     switch (m_currentToken.type) {
         case TokenType::IDENTIFIER:
+            return parseExpression();
         case TokenType::TYPE:
-            return parseInstruction();
+            return parseDeclaration();
         case TokenType::KEYWORD:
             return parseStatementFlow();
         default:

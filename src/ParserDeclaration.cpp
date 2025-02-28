@@ -1,21 +1,6 @@
 #include "Parser.hpp"
 
 /**
- * An Instruction changes data. It can be a declaration or expression
- *
- * currentToken is at first token of instruction. It is always TYPE or IDENTIFIER
- *
- * Examples:
- *    - numerus var = I
- *    - var = var + I
- *    - func(...)
- */
-std::unique_ptr<AST> Parser::parseInstruction() {
-    if (isToken(TokenType::TYPE)) return parseInstructionDeclaration();
-    return parseExpression();
-}
-
-/**
  * A Declaration can be just init or init and assign. It can also be a function declaration
  *
  * currentToken is at first token of declaration. It is always TYPE
@@ -26,7 +11,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
  *    - numerus var = λ(...): [Block] ;
  *    - nihil   var = λ(...): [Block] ;
  */
-std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
+std::unique_ptr<AST> Parser::parseDeclaration() {
     auto type = m_currentToken.value;
 
     getNextToken();
@@ -42,53 +27,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (!isToken(TokenType::OPERATOR, u8"=")) return nullptr;
 
     getNextToken();
-    if (isToken(TokenType::KEYWORD, u8"λ")) return parseInstructionDeclarationFunction(type, identifier);
+    if (isToken(TokenType::KEYWORD, u8"λ")) return parseDeclarationFunction(type, identifier);
 
     auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
     auto expression = parseExpression();
     if (expression == nullptr) return nullptr;
 
     return std::make_unique<BinaryOperatorAST>(u8"=", std::move(declaration), std::move(expression));
-}
-
-/**
- * A Function call can have many args and is surrounded by ( )
- *
- * currentToken is at SECOND token of function call. It is always '('. An arg is an expression
- *
- * Examples:
- *      - func()
- *      - func(I)
- *      - func(I, I)
- *      - func(var)
- *      - func(func())
- *      - func(var + (I - II))
- *            ^ we are always here
- */
-std::unique_ptr<FuncCallAST> Parser::parseInstructionFunctionCall(std::u8string identifier) {
-    getNextToken();
-
-    std::vector<std::unique_ptr<AST>> args;
-    while (!isToken(TokenType::PUNCTUATION, u8")")) {
-        auto expression = parseExpression();
-        if (expression == nullptr) return nullptr;
-
-        args.push_back(std::move(expression));
-
-        if (isToken(TokenType::PUNCTUATION, u8",")) {
-            getNextToken();
-            continue;
-        }
-        if (isToken(TokenType::PUNCTUATION, u8")")) {
-            getNextToken();
-            break;
-        }
-
-        printError("Error: Expected ) in function call");
-        return nullptr;
-    }
-
-    return std::make_unique<FuncCallAST>(identifier, std::move(args));
 }
 
 /**
@@ -108,7 +53,7 @@ std::unique_ptr<FuncCallAST> Parser::parseInstructionFunctionCall(std::u8string 
     std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;
     std::unique_ptr<BlockAST> m_body;
  */
-std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8string type, std::u8string identifier) {
+std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string type, std::u8string identifier) {
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 
