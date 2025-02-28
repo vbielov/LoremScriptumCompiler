@@ -1,5 +1,9 @@
 #include "Parser.hpp"
 
+bool Parser::isValid() {
+    return m_isValid;
+}
+
 bool Parser::isInsideLoop() {
     return m_loopCount > 0;
 }
@@ -21,11 +25,13 @@ bool Parser::isToken(TokenType type, std::u8string value) {
 }
 
 void Parser::printUnknownTokenError() {
+    if (m_isTest) return;
     std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)]
               << " " << (const char*)(m_currentToken.value.c_str()) << RESET << std::endl;
 }
 
 void Parser::printError(std::string error) {
+    if (m_isTest) return;
     std::cerr << RED << error << RESET << std::endl;
 }
 
@@ -33,4 +39,11 @@ Token& Parser::getNextToken() {
     return m_currentToken = m_lexer->getNextToken();
 }
 
-Parser::Parser(Lexer& lexer) : m_lexer(&lexer) {}
+Parser::Parser(Lexer& lexer) : m_lexer(&lexer) {
+    m_isTest = false;
+}
+
+Parser::Parser(Lexer& lexer, bool isTest) : m_lexer(&lexer) {
+    m_isTest = isTest;
+}
+

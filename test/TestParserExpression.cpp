@@ -1,14 +1,31 @@
-#include <Parser.hpp>
+#include "TestParser.hpp"
 
-#include "TestLexer.hpp"
+INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, ParserTestValid, ::testing::Values(
+    std::make_pair(
+        u8"I + I",
+        "├── BlockAST\n"
+        "│   └── BinaryOperatorAST('+')\n"
+        "│       ├── NumberAST(1)\n"
+        "│       └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"I - I",
+        "├── BlockAST\n"
+        "│   └── BinaryOperatorAST('-')\n"
+        "│       ├── NumberAST(1)\n"
+        "│       └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"I * I",
+        "├── BlockAST\n"
+        "│   └── BinaryOperatorAST('*')\n"
+        "│       ├── NumberAST(1)\n"
+        "│       └── NumberAST(1)\n"
+    )
+));
 
-TEST(ParserTest, TestParserExpression) {
-    Lexer lexer = Lexer(u8"I + I");
-    Parser parser = Parser(lexer);
-    auto block = parser.parseBlock();
 
-    std::ostringstream oss;
-    block->printTree(oss, "", false);
-
-    EXPECT_EQ(1, 1);
-}
+INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, ParserTestInvalid, ::testing::Values(
+    u8"I + (I",
+    u8"I + I + "
+));

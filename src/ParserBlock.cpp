@@ -21,7 +21,14 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
             if (statement != nullptr) {
                 statements.emplace_back(std::move(statement));
             } else {
+                m_isValid = false;
                 printUnknownTokenError();
+
+                // Error on this line detected. Go to next line and try to do business as usual
+                while (!isFinishedBlock() && !isToken(TokenType::NEW_LINE)) {
+                    getNextToken();
+                }
+                continue;
             }
         }
 
@@ -32,5 +39,5 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 }
 
 bool Parser::isFinishedBlock() {
-    return m_currentToken.type == TokenType::EOF_TOKEN || (m_currentToken.type == TokenType::PUNCTUATION && m_currentToken.value == u8";");
+    return isToken(TokenType::EOF_TOKEN) || isToken(TokenType::PUNCTUATION, u8";");
 }

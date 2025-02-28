@@ -14,6 +14,8 @@ class Parser {
     Token m_currentToken;
 
     int m_loopCount = 0;
+    bool m_isValid = true;
+    bool m_isTest;
 
     // source: https://en.wikipedia.org/wiki/Order_of_operations
     // smaller number means higher priority
@@ -48,7 +50,9 @@ class Parser {
 
    public:
     Parser(Lexer& lexer);
+    Parser(Lexer& lexer, bool isTest);
 
+    bool isValid();
     std::unique_ptr<BlockAST> parseBlock();
 
    private:
