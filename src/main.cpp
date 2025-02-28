@@ -7,6 +7,7 @@
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
+#include <cstdlib>
 
 std::u8string readFileToU8String(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
@@ -20,7 +21,7 @@ std::u8string readFileToU8String(const std::string& filePath) {
 
 int main(int argc, const char** argv) {
     if (argc < 2) {
-        std::cerr << "Usage: lsc <input_file.ls>" << std::endl;
+        std::cerr << "Usage: lsc <input_file.lorem>" << std::endl;
         return 2;
     }
 
@@ -66,6 +67,7 @@ int main(int argc, const char** argv) {
     std::cout << "----------------------- Object file: ----------------------- " << std::endl << std::endl;
     Assembler assembler;
     assembler.compileToObjectFile("testScript.o", codeGenerator.getModule()); 
-
+    assembler.compileToExecutable("ala.exe", codeGenerator.getModule());
+    std::exit(0);
     return 0;
 }

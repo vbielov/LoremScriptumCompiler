@@ -22,8 +22,9 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/sr
 
 if(NOT DEFINED BUILD_TESTS)
     add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
-    find_package(LLVM REQUIRED CONFIG)
+    find_package(LLD REQUIRED CONFIG)
 
+    find_package(LLVM REQUIRED CONFIG)
     # Get LLVM compile and link flags from llvm-config
     execute_process(COMMAND llvm-config --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND llvm-config --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -36,6 +37,7 @@ if(NOT DEFINED BUILD_TESTS)
 
 
     include_directories(${LLVM_INCLUDE_DIRS})
+    include_directories(${LLD_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
 
     # llvm_map_components_to_libnames(LLVM_LIBS core irreader support target )
@@ -80,7 +82,7 @@ if(NOT DEFINED BUILD_TESTS)
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
     target_compile_options(${PROJECT_NAME} PRIVATE ${LLVM_CXXFLAGS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -llldCommon -llldMinGW ${LLVM_LIBS} ${LLVM_LDFLAGS})
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
     set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -1,6 +1,9 @@
+nihil ___chkstk_ms = apere() // https://www.reddit.com/r/C_Programming/comments/1ac62ll/comment/kjtttcg
+
 numerus putchar = apere(numerus char) // https://man7.org/linux/man-pages/man3/puts.3.html
 
 numerus main = λ():
+    ___chkstk_ms()
     putchar('H')
     putchar('e')
     putchar('l')

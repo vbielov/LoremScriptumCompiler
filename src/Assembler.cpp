@@ -52,3 +52,39 @@ void Assembler::compileToObjectFile(const char* objectFileName, Module* module) 
     pass.run(*module);
     dest.flush();
 }
+
+
+void Assembler::compileToExecutable(const char* executableFileName, Module* srcModule) {
+    // LLD expects arguments just like command-line linking
+    const char* args[] = {
+        "ld", "../lib/crt2.o", "testScript.o", "-o", "output_binary.exe", 
+        "../lib/libgcc.a", 
+        "../lib/libmingw32.a", 
+        "../lib/libmingwex.a", 
+        "../lib/libmsvcrt.a", 
+        "../lib/libkernel32.a",
+        nullptr
+    };
+
+    // Define the drivers, including the GNU linker driver
+    const lld::DriverDef drivers[] = {
+        {lld::MinGW, &lld::mingw::link}
+    };
+
+    lld::Result result = lld::lldMain(args, llvm::outs(), llvm::errs(), drivers);
+
+    if (result.retCode != 0) {
+        llvm::errs() << "Error: Linking failed with return code " << result.retCode << "\n";
+        return;
+    }
+
+    if (!result.canRunAgain) {
+        llvm::errs() << "Error: Linker cannot run again, exiting...\n"; 
+        lld::exitLld(result.retCode);
+        return;
+    }
+
+    llvm::outs().flush();
+    llvm::errs().flush();
+    std::cout << "Linked successfuly" << std::endl;
+}

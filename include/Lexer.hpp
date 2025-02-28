@@ -21,6 +21,7 @@ inline static const std::vector<std::u8string> KEYWORDS = {
     u8"∑(∞)",
     u8"si", 
     u8"ni",
+    u8"nisi",
     u8"apere",
 };
 
