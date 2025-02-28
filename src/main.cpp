@@ -64,10 +64,24 @@ int main(int argc, const char** argv) {
     std::cout << codeGenerator.getIRCodeString()<< std::endl;
 
 
-    std::cout << "----------------------- Object file: ----------------------- " << std::endl << std::endl;
+    std::cout << "----------------------- Assembly: ----------------------- " << std::endl << std::endl;
+    
+    std::string inputFilePathStr = inputFilePath;
+    size_t lastindex = inputFilePathStr.find_last_of("."); 
+    std::string rawname = inputFilePathStr.substr(0, lastindex);
+    std::string objFileName = rawname + ".o";
+    std::string asmFileName = rawname + ".asm";
+    std::string exeFileName = rawname + ".exe"; // TODO: don't add extension, but add a flag on linux
+    
     Assembler assembler;
-    assembler.compileToObjectFile("testScript.o", codeGenerator.getModule()); 
-    assembler.compileToExecutable("ala.exe", codeGenerator.getModule());
-    std::exit(0);
+    assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
+    assembler.compileToObjectFile(asmFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::AssemblyFile);
+
+    std::u8string assembly = readFileToU8String(asmFileName);
+    std::cout << (const char*)(assembly.c_str()) << std::endl;
+
+    assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), codeGenerator.getModule());
+
+    lld::exitLld(0); // NOTE: it should not be used like this...
     return 0;
 }

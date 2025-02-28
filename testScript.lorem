@@ -9,5 +9,14 @@ numerus main = λ():
     putchar('l')
     putchar('l')
     putchar('o')
+    putchar(' ')
+    putchar('W')
+    putchar('o')
+    putchar('r')
+    putchar('l')
+    putchar('d')
+    putchar('!')
+    putchar(X) // 10 is code for \n newline
+    putchar(X)
     retro O
 ;

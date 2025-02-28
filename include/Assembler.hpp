@@ -26,6 +26,6 @@ private:
     const std::string* m_irCode;
 
 public:
-    void compileToObjectFile(const char* objectFileName, Module* module);
-    void compileToExecutable(const char* executableFileName, Module* srcModule);
+    void compileToObjectFile(const char* objectFileName, Module* module, CodeGenFileType fileType);
+    void compileToExecutable(const char* objectFilePath, const char* executableFilePath, Module* srcModule);
 };

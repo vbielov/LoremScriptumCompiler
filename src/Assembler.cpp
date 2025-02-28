@@ -1,6 +1,6 @@
 #include "Assembler.hpp"
 
-void Assembler::compileToObjectFile(const char* objectFileName, Module* module) {
+void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, CodeGenFileType fileType) {
     // Initialize the target registry etc.
     InitializeAllTargetInfos();
     InitializeAllTargets();
@@ -34,7 +34,7 @@ void Assembler::compileToObjectFile(const char* objectFileName, Module* module) 
     module->setDataLayout(TheTargetMachine->createDataLayout());
 
     std::error_code EC;
-    raw_fd_ostream dest(objectFileName, EC, sys::fs::OF_None);
+    raw_fd_ostream dest(objectFilePath, EC, sys::fs::OF_None);
 
     if (EC) {
       errs() << "Could not open file: " << EC.message();
@@ -42,9 +42,8 @@ void Assembler::compileToObjectFile(const char* objectFileName, Module* module) 
     }
 
     legacy::PassManager pass;
-    auto FileType = CodeGenFileType::ObjectFile;
 
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
       errs() << "TheTargetMachine can't emit a file of this type";
       return;
     }
@@ -53,11 +52,10 @@ void Assembler::compileToObjectFile(const char* objectFileName, Module* module) 
     dest.flush();
 }
 
-
-void Assembler::compileToExecutable(const char* executableFileName, Module* srcModule) {
+void Assembler::compileToExecutable(const char* objectFilePath, const char* executableFilePath, Module* srcModule) {
     // LLD expects arguments just like command-line linking
     const char* args[] = {
-        "ld", "../lib/crt2.o", "testScript.o", "-o", "output_binary.exe", 
+        "ld", "../lib/crt2.o", objectFilePath, "-o", executableFilePath, 
         "../lib/libgcc.a", 
         "../lib/libmingw32.a", 
         "../lib/libmingwex.a", 
