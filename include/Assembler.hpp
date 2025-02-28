@@ -19,7 +19,11 @@ using namespace llvm;
 using namespace llvm::sys;
 using namespace llvm::object;
 
-LLD_HAS_DRIVER(mingw)
+#if defined(_WIN32)
+    LLD_HAS_DRIVER(mingw)
+#elif defined(__linux__)
+    LLD_HAS_DRIVER(elf)
+#endif
 
 class Assembler {
 private:

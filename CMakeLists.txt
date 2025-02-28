@@ -22,6 +22,8 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/sr
 
 if(NOT DEFINED BUILD_TESTS)
     add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
+    
+    set(LLD_DIR "/home/bielov/Desktop/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/cmake/lld")
     find_package(LLD REQUIRED CONFIG)
 
     find_package(LLVM REQUIRED CONFIG)
@@ -82,7 +84,7 @@ if(NOT DEFINED BUILD_TESTS)
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
     target_compile_options(${PROJECT_NAME} PRIVATE ${LLVM_CXXFLAGS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -llldCommon -llldMinGW ${LLVM_LIBS} ${LLVM_LDFLAGS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
     set_target_properties(${PROJECT_NAME} PROPERTIES

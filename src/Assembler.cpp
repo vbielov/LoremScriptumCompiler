@@ -1,88 +1,103 @@
 #include "Assembler.hpp"
 
 void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, CodeGenFileType fileType) {
-    // Initialize the target registry etc.
-    InitializeAllTargetInfos();
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmParsers();
-    InitializeAllAsmPrinters();
+	// Initialize the target registry etc.
+	InitializeAllTargetInfos();
+	InitializeAllTargets();
+	InitializeAllTargetMCs();
+	InitializeAllAsmParsers();
+	InitializeAllAsmPrinters();
 
-    // TODO: Detect platform that user is using and compile for it
-    // auto TargetTriple = sys::getDefaultTargetTriple(); // default is linux for some reason
-    auto TargetTriple = "x86_64-pc-windows-msvc"; 
-    module->setTargetTriple(TargetTriple);
+	std::string targetTriple;
 
-    std::string Error;
-    auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
+	// Detect platform that user is using and compile for it
+	#if defined(_WIN32)
+		targetTriple = "x86_64-pc-windows-msvc"; 
+	#elif defined(__linux__)
+		targetTriple = sys::getDefaultTargetTriple();
+	#endif
+	
+	module->setTargetTriple(targetTriple);
 
-    // Print an error and exit if we couldn't find the requested target.
-    // This generally occurs if we've forgotten to initialise the
-    // TargetRegistry or we have a bogus target triple.
-    if (!Target) {
-      errs() << Error;
-      return;
-    }
+	std::string Error;
+	auto Target = TargetRegistry::lookupTarget(targetTriple, Error);
 
-    auto CPU = "generic";
-    auto Features = "";
+	// Print an error and exit if we couldn't find the requested target.
+	// This generally occurs if we've forgotten to initialise the
+	// TargetRegistry or we have a bogus target triple.
+	if (!Target) {
+		llvm::errs() << Error;
+		return;
+	}
 
-    TargetOptions opt;
-    auto TheTargetMachine = Target->createTargetMachine(
-        TargetTriple, CPU, Features, opt, Reloc::PIC_);
+	auto cpu = "generic";
+	auto features = "";
 
-    module->setDataLayout(TheTargetMachine->createDataLayout());
+	TargetOptions opt;
+	auto TheTargetMachine = Target->createTargetMachine(targetTriple, cpu, features, opt, Reloc::PIC_);
 
-    std::error_code EC;
-    raw_fd_ostream dest(objectFilePath, EC, sys::fs::OF_None);
+	module->setDataLayout(TheTargetMachine->createDataLayout());
 
-    if (EC) {
-      errs() << "Could not open file: " << EC.message();
-      return;
-    }
+	std::error_code errorCode;
+	raw_fd_ostream dest(objectFilePath, errorCode, sys::fs::OF_None);
 
-    legacy::PassManager pass;
+	if (errorCode) {
+		llvm::errs() << "Could not open file: " << errorCode.message();
+		return;
+	}
 
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
-      errs() << "TheTargetMachine can't emit a file of this type";
-      return;
-    }
+	legacy::PassManager pass;
 
-    pass.run(*module);
-    dest.flush();
+	if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
+		llvm::errs() << "TheTargetMachine can't emit a file of this type";
+		return;
+	}
+
+	pass.run(*module);
+	dest.flush();
 }
 
 void Assembler::compileToExecutable(const char* objectFilePath, const char* executableFilePath, Module* srcModule) {
-    // LLD expects arguments just like command-line linking
-    const char* args[] = {
-        "ld", "../lib/crt2.o", objectFilePath, "-o", executableFilePath, 
-        "../lib/libgcc.a", 
-        "../lib/libmingw32.a", 
-        "../lib/libmingwex.a", 
-        "../lib/libmsvcrt.a", 
-        "../lib/libkernel32.a",
-        nullptr
-    };
+	lld::Result result;
+	#if defined(_WIN32)
+		const char* WINDOWS_ARGS[] = {
+			"ld", 
+			"../lib/windows/crt2.o", 
+			objectFilePath, "-o", executableFilePath, 
+			"../lib/windows/libgcc.a", "../lib/windows/libmingw32.a", "../lib/windows/libmingwex.a", 
+			"../lib/windows/libmsvcrt.a", "../lib/windows/libkernel32.a",
+			nullptr
+		};
+		const lld::DriverDef WINDOWS_DRIVERS[] = {
+			{lld::MinGW, &lld::mingw::link}
+		};
+		result = lld::lldMain(WINDOWS_ARGS, llvm::outs(), llvm::errs(), WINDOWS_DRIVERS);
+	#elif defined(__linux__)
+		const char* LINUX_ARGS[] = {
+			"ld.lld", 
+			"../lib/linux/crt1.o", "../lib/linux/crti.o", "../lib/linux/crtn.o",
+			objectFilePath, "-o", executableFilePath,
+			"../lib/linux/libc.a", "../lib/linux/libgcc_eh.a", "../lib/linux/libgcc.a",
+			nullptr
+		};
+		const lld::DriverDef LINUX_DRIVER[] = {
+			{lld::Gnu, &lld::elf::link}
+		};
+		result = lld::lldMain(LINUX_ARGS, llvm::outs(), llvm::errs(), LINUX_DRIVER);
+	#endif
 
-    // Define the drivers, including the GNU linker driver
-    const lld::DriverDef drivers[] = {
-        {lld::MinGW, &lld::mingw::link}
-    };
+	if (result.retCode != 0) {
+		llvm::errs() << "Error: Linking failed with return code " << result.retCode << "\n";
+		return;
+	}
 
-    lld::Result result = lld::lldMain(args, llvm::outs(), llvm::errs(), drivers);
+	if (!result.canRunAgain) {
+		llvm::errs() << "Error: Linker cannot run again, exiting...\n"; 
+		lld::exitLld(result.retCode);
+		return;
+	}
 
-    if (result.retCode != 0) {
-        llvm::errs() << "Error: Linking failed with return code " << result.retCode << "\n";
-        return;
-    }
-
-    if (!result.canRunAgain) {
-        llvm::errs() << "Error: Linker cannot run again, exiting...\n"; 
-        lld::exitLld(result.retCode);
-        return;
-    }
-
-    llvm::outs().flush();
-    llvm::errs().flush();
-    std::cout << "Linked successfuly" << std::endl;
+	llvm::outs().flush();
+	llvm::errs().flush();
+	std::cout << "Linked successfuly" << std::endl;
 }

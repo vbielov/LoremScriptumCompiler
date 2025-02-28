@@ -1,53 +1,46 @@
 	.text
-	.def	@feat.00;
-	.scl	3;
-	.type	0;
-	.endef
-	.globl	@feat.00
-.set @feat.00, 0
 	.file	"my cool jit"
-	.def	main;
-	.scl	2;
-	.type	32;
-	.endef
 	.globl	main
 	.p2align	4, 0x90
+	.type	main,@function
 main:
-.seh_proc main
-	subq	$40, %rsp
-	.seh_stackalloc 40
-	.seh_endprologue
-	callq	___chkstk_ms
-	movb	$72, %cl
-	callq	putchar
-	movb	$101, %cl
-	callq	putchar
-	movb	$108, %cl
-	callq	putchar
-	movb	$108, %cl
-	callq	putchar
-	movb	$111, %cl
-	callq	putchar
-	movb	$32, %cl
-	callq	putchar
-	movb	$87, %cl
-	callq	putchar
-	movb	$111, %cl
-	callq	putchar
-	movb	$114, %cl
-	callq	putchar
-	movb	$108, %cl
-	callq	putchar
-	movb	$100, %cl
-	callq	putchar
-	movb	$33, %cl
-	callq	putchar
-	movl	$10, %ecx
-	callq	putchar
-	movl	$10, %ecx
-	callq	putchar
+	.cfi_startproc
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movl	$72, %edi
+	callq	putchar@PLT
+	movl	$101, %edi
+	callq	putchar@PLT
+	movl	$108, %edi
+	callq	putchar@PLT
+	movl	$108, %edi
+	callq	putchar@PLT
+	movl	$111, %edi
+	callq	putchar@PLT
+	movl	$32, %edi
+	callq	putchar@PLT
+	movl	$87, %edi
+	callq	putchar@PLT
+	movl	$111, %edi
+	callq	putchar@PLT
+	movl	$114, %edi
+	callq	putchar@PLT
+	movl	$108, %edi
+	callq	putchar@PLT
+	movl	$100, %edi
+	callq	putchar@PLT
+	movl	$33, %edi
+	callq	putchar@PLT
+	movl	$10, %edi
+	callq	putchar@PLT
+	movl	$10, %edi
+	callq	putchar@PLT
 	xorl	%eax, %eax
-	addq	$40, %rsp
+	popq	%rcx
+	.cfi_def_cfa_offset 8
 	retq
-	.seh_endproc
+.Lfunc_end0:
+	.size	main, .Lfunc_end0-main
+	.cfi_endproc
 
+	.section	".note.GNU-stack","",@progbits
