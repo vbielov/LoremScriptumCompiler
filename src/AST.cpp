@@ -1,11 +1,11 @@
 #include "AST.hpp"
 
-void printIndent(const std::string& indent, bool isLast) {
-    std::cout << indent;
+void printIndent(std::ostream& ostr, const std::string& indent, bool isLast) {
+    ostr << indent;
     if (isLast) {
-        std::cout << "└── ";
+        ostr << "└── ";
     } else {
-        std::cout << "├── ";
+        ostr << "├── ";
     }
 }
 
@@ -16,12 +16,12 @@ Value* BlockAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void BlockAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "BlockAST" << std::endl;
+void BlockAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "BlockAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_instructions.size(); i++) {
-        m_instructions[i]->printTree(newIndent, i == m_instructions.size() - 1);
+        m_instructions[i]->printTree(ostr, newIndent, i == m_instructions.size() - 1);
     }
 }
 
@@ -31,9 +31,9 @@ Value* NumberAST::codegen(LLVMStructs& llvmStructs) {
     return ConstantInt::get(*llvmStructs.theContext, APInt(32, m_value, true));
 }
 
-void NumberAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "NumberAST(" << m_value << ")" << std::endl;
+void NumberAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "NumberAST(" << m_value << ")" << std::endl;
 }
 
 CharAST::CharAST(char8_t character) : m_char(character) {}
@@ -42,9 +42,9 @@ Value* CharAST::codegen(LLVMStructs& llvmStructs) {
     return ConstantInt::get(*llvmStructs.theContext, APInt(8, m_char, false));
 }
 
-void CharAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "CharAST('" << (char)m_char << "')" << std::endl;
+void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "CharAST('" << (char)m_char << "')" << std::endl;
 }
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
@@ -54,10 +54,10 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void VariableDeclarationAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "VariableDeclarationAST(" << std::string(m_type.begin(), m_type.end()) << " "
-              << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+void VariableDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "VariableDeclarationAST(" << std::string(m_type.begin(), m_type.end()) << " "
+         << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
@@ -72,9 +72,9 @@ Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
     return value;
 }
 
-void VariableReferenceAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "VariableReferenceAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+void VariableReferenceAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "VariableReferenceAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS)
@@ -84,12 +84,12 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void BinaryOperatorAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "BinaryOperatorAST('" << std::string(m_op.begin(), m_op.end()) << "')" << std::endl;
+void BinaryOperatorAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "BinaryOperatorAST('" << std::string(m_op.begin(), m_op.end()) << "')" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    m_LHS->printTree(newIndent, false);
-    m_RHS->printTree(newIndent, true);
+    m_LHS->printTree(ostr, newIndent, false);
+    m_RHS->printTree(ostr, newIndent, true);
 }
 
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args)
@@ -99,12 +99,12 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void FuncCallAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "FuncCallAST(" << std::string(m_calleeIdentifier.begin(), m_calleeIdentifier.end()) << ")" << std::endl;
+void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "FuncCallAST(" << std::string(m_calleeIdentifier.begin(), m_calleeIdentifier.end()) << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
-        m_args[i]->printTree(newIndent, i == m_args.size() - 1);
+        m_args[i]->printTree(ostr, newIndent, i == m_args.size() - 1);
     }
 }
 
@@ -115,15 +115,15 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void FunctionAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "FunctionAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " "
-              << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+void FunctionAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "FunctionAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " "
+         << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
-        m_args[i]->printTree(newIndent, i == m_args.size() - 1);
+        m_args[i]->printTree(ostr, newIndent, i == m_args.size() - 1);
     }
-    m_body->printTree(newIndent, true);
+    m_body->printTree(ostr, newIndent, true);
 }
 
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr) : m_expr(std::move(expr)) {}
@@ -132,11 +132,11 @@ Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void ReturnAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
+void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    std::cout << "ReturnAST" << std::endl;
-    m_expr->printTree(newIndent, true);
+    ostr << "ReturnAST" << std::endl;
+    m_expr->printTree(ostr, newIndent, true);
 }
 
 BreakAST::BreakAST() {}
@@ -145,10 +145,10 @@ Value* BreakAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void BreakAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
+void BreakAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    std::cout << "BreakAST" << std::endl;
+    ostr << "BreakAST" << std::endl;
 }
 
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
@@ -158,13 +158,13 @@ Value* IfAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void IfAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "IfAST" << std::endl;
+void IfAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "IfAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    m_cond->printTree(newIndent, false);
-    m_then->printTree(newIndent, m_else == nullptr);
-    if (m_else) m_else->printTree(newIndent, true);
+    m_cond->printTree(ostr, newIndent, false);
+    m_then->printTree(ostr, newIndent, m_else == nullptr);
+    if (m_else) m_else->printTree(ostr, newIndent, true);
 }
 
 LoopAST::LoopAST(std::unique_ptr<BlockAST> body) : m_body(std::move(body)) {}
@@ -173,9 +173,9 @@ Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-void LoopAST::printTree(const std::string& indent, bool isLast) const {
-    printIndent(indent, isLast);
-    std::cout << "LoopAST" << std::endl;
+void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "LoopAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
-    m_body->printTree(newIndent, true);
+    m_body->printTree(ostr, newIndent, true);
 }
