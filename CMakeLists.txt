@@ -23,57 +23,21 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/sr
 if(NOT DEFINED BUILD_TESTS)
     add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
     
-    set(LLD_DIR "/home/bielov/Desktop/clang+llvm-18.1.8-x86_64-linux-gnu-ubuntu-18.04/lib/cmake/lld")
     find_package(LLD REQUIRED CONFIG)
-
     find_package(LLVM REQUIRED CONFIG)
-    # Get LLVM compile and link flags from llvm-config
+
+    # Get all LLVM's modules and libraries 
     execute_process(COMMAND llvm-config --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND llvm-config --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND llvm-config --system-libs --libs all OUTPUT_VARIABLE LLVM_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    # Print found values (for debugging)
     message(STATUS "LLVM CXXFLAGS: ${LLVM_CXXFLAGS}")
     message(STATUS "LLVM LDFLAGS: ${LLVM_LDFLAGS}")
     message(STATUS "LLVM LIBS: ${LLVM_LIBS}")
 
-
     include_directories(${LLVM_INCLUDE_DIRS})
     include_directories(${LLD_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
-
-    # llvm_map_components_to_libnames(LLVM_LIBS core irreader support target )
-    # set(LLVM_LIBS
-    #    LLVMCore
-    #    LLVMSupport
-    #    LLVMTarget
-    #    LLVMTargetParser
-    # #    LLVMX86TargetInfo
-    # #    LLVMX86Target
-    # #    LLVMARMTargetInfo
-    # #    LLVMARMTarget
-    # #    LLVMAArch64TargetInfo
-    # #    LLVMAArch64Target
-    #    LLVMAsmPrinter
-    #    LLVMAsmParser
-    #    LLVMCodeGen
-    #    LLVMMC
-    # )
-
-    # 1. Put app.ico in directory.
-
-    # 2. Create app.rc in same directory with one line:
-    # IDI_ICON1               ICON        DISCARDABLE            "app.ico"
-
-    # 3. Run command (Warning: it's app.o, not app.res, how it is mentioned in other manuals!)
-    # windres app.rc -o app.o
-
-    # 4. add_executable(app
-    #   ...
-    #   app.o
-    # )
-
-    # 5. Proofit!
 
     if(WIN32)
         set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
@@ -84,6 +48,7 @@ if(NOT DEFINED BUILD_TESTS)
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
     target_compile_options(${PROJECT_NAME} PRIVATE ${LLVM_CXXFLAGS})
+    # NOTE: On windows LLD_EXPORTED_TARGETS contains lld library which doesn't come with mingw, and we don't need it.
     target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 

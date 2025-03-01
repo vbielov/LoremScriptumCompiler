@@ -15,7 +15,8 @@ CharAST::CharAST(char8_t character)
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
     : m_type(type)
-    , m_name(name) {}
+    , m_name(name)
+    , m_isGlobal(false) {}
 
 const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
@@ -23,6 +24,10 @@ const std::u8string& VariableDeclarationAST::getName() const {
 
 const std::u8string &VariableDeclarationAST::getType() const {
     return m_type;
+}
+
+bool VariableDeclarationAST::isGlobal() const {
+    return m_isGlobal;
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string &name)
@@ -175,13 +180,23 @@ void ForAST::printTree(const std::string& indent, bool isLast) const {
 // Code Generation 
 //===----------------------------------------------------------------------===//
 
-llvm::Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs) {
-    if (typeStr == u8"numerus") {
-        return llvm::Type::getInt32Ty(*(llvmStructs.theContext));
-    } else if (typeStr == u8"littera") {
-        return llvm::Type::getInt8Ty(*(llvmStructs.theContext));
-    } else if (typeStr == u8"nihil") {
-        return llvm::Type::getVoidTy(*(llvmStructs.theContext));
+llvm::Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs, bool isPointer) {
+    if (!isPointer) {
+        if (typeStr == u8"numerus") {
+            return llvm::Type::getInt32Ty(*(llvmStructs.theContext));
+        } else if (typeStr == u8"littera") {
+            return llvm::Type::getInt8Ty(*(llvmStructs.theContext));
+        } else if (typeStr == u8"nihil") {
+            return llvm::Type::getVoidTy(*(llvmStructs.theContext));
+        }
+    } else {
+        if (typeStr == u8"numerus") {
+            return llvm::PointerType::getInt32Ty(*(llvmStructs.theContext));
+        } else if (typeStr == u8"littera") {
+            return llvm::PointerType::getInt8Ty(*(llvmStructs.theContext));
+        } else if (typeStr == u8"nihil") {
+            return llvm::PointerType::getVoidTy(*(llvmStructs.theContext));
+        }
     }
 }
 
@@ -204,30 +219,50 @@ Value* CharAST::codegen(LLVMStructs& llvmStructs) {
 }
 
 Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
+    Type* type = getVariableType(m_type, llvmStructs, false);
     // get scope
-    llvm::Function* theFunction = llvmStructs.builder->GetInsertBlock()->getParent();
-    llvm::IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
-
-    // stack allocation
-    llvm::AllocaInst* alloca = tmpB.CreateAlloca(
-        getVariableType(m_type, llvmStructs), nullptr, (const char*)(m_name.c_str())
+    auto insertBlock = llvmStructs.builder->GetInsertBlock();
+    if (insertBlock != nullptr) {
+        // it's a stack allocated variable
+        llvm::Function* theFunction = insertBlock->getParent();
+        llvm::IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
+        // stack allocation
+        llvm::AllocaInst* alloca = tmpB.CreateAlloca(
+            type, nullptr, (const char*)(m_name.c_str())
+        );
+        // store name in name table
+        llvmStructs.namedValues[(const char*)(m_name.c_str())] = alloca;
+        return alloca;
+    }
+    // it's a global variable
+    // NOTE(Vlad): why the hell it's "new", do I have to delete it?
+    GlobalVariable* globalVariable = new GlobalVariable(
+        *llvmStructs.theModule, 
+        type, 
+        false, 
+        GlobalValue::WeakAnyLinkage, 
+        ConstantPointerNull::get(PointerType::get(type, 0)), 
+        (const char*)(m_name.c_str())
     );
-
-    // store name in name table
-    llvmStructs.namedValues[(const char*)(m_name.c_str())] = alloca;
-    return alloca;
+    llvmStructs.namedValues[(const char*)(m_name.c_str())] = globalVariable;
+    m_isGlobal = true;
+    return globalVariable;
 }
 
 Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
-    std::string str = (const char*)m_name.c_str();
-    Value* value = llvmStructs.namedValues[str];
-    // reference by value, not a pointer
-    return llvmStructs.builder->CreateLoad(getVariableType(u8"numerus", llvmStructs), value, "loadtmp");
-
+    Value* value = llvmStructs.namedValues[(const char*)m_name.c_str()];
+    bool isGlobal = false;
     if (!value) {
-        std::cerr << RED << "Error: Unknown variable name" << RESET << std::endl;
+        value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+        isGlobal = true;
     }
-    return nullptr;
+    if (!value) {
+        std::cerr << RED << "Error: Unknown variable name: " << (const char*)(m_name.c_str()) << RESET << std::endl;
+        return nullptr;
+    }
+
+    // reference by a pointer
+    return value;
 }
 
 Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
@@ -235,6 +270,27 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     Value* right = m_RHS->codegen(llvmStructs);
     if (!left || !right) {
         return nullptr;
+    }
+
+    if(m_op == u8"=") {
+       auto insertBlock = llvmStructs.builder->GetInsertBlock();
+        if (insertBlock != nullptr) {
+            llvmStructs.builder->CreateStore(right, left); // because left is a variable
+            return nullptr;
+        }
+        // it must be a global assigment
+        if (dynamic_cast<VariableDeclarationAST*>(m_LHS.get()) || dynamic_cast<VariableReferenceAST*>(m_LHS.get())) {
+            ((GlobalVariable*)left)->setInitializer((Constant*)right); // how the fuck do I check if right side is a constant...
+        }
+        return nullptr;
+    }
+
+    // Load variables to registers
+    if (left->getType()->isPointerTy()) {
+        left = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), left, "loadtmp");
+    }
+    if (right->getType()->isPointerTy()) {
+        right = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), right, "loadtmp");
     }
 
     // TODO: Add more types, operators
@@ -246,8 +302,6 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
         return llvmStructs.builder->CreateMul(left, right, "multmp");
     } else if (m_op == u8"<") {
         return llvmStructs.builder->CreateICmpULT(left, right, "cmptmp");
-    } else if (m_op == u8"=") {
-        llvmStructs.builder->CreateStore(right, left); // because left is a variable
     } else {
        std::cerr << RED << "Error: Invalid binary operator" << RESET << std::endl;
     }
@@ -270,7 +324,18 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
 
     std::vector<Value*> argsV;
     for (auto& arg : m_args) {
-        argsV.push_back(arg->codegen(llvmStructs));
+        Value* value = arg->codegen(llvmStructs);
+        if (!(value->getType()->isPointerTy())) {
+            // it's a stack allocated temporary variable to call the function
+            llvm::Function* theFunction = llvmStructs.builder->GetInsertBlock()->getParent();
+            llvm::IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
+            llvm::AllocaInst* alloca = tmpB.CreateAlloca(value->getType(), nullptr, "tempVar");
+            llvmStructs.namedValues["tempVar"] = alloca;
+
+            llvmStructs.builder->CreateStore(value, alloca);
+            value = alloca;
+        }
+        argsV.push_back(value);
         if (!argsV.back()) {
             return nullptr;
         }
@@ -283,10 +348,10 @@ Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {
     std::vector<Type*> argTypes;
     argTypes.reserve(m_args.size());
     for (const auto& arg : m_args) {
-        argTypes.push_back(getVariableType(arg->getType(), llvmStructs));
+        argTypes.push_back(PointerType::get(IntegerType::get(llvmStructs.theModule->getContext(), 32), 0));
     }     
 
-    FunctionType* funcType = FunctionType::get(getVariableType(m_returnType, llvmStructs), argTypes, false);
+    FunctionType* funcType = FunctionType::get(getVariableType(m_returnType, llvmStructs, false), argTypes, false);
     Function* func = Function::Create(funcType, Function::ExternalLinkage, (const char*)m_name.c_str(), llvmStructs.theModule.get());
  
     int index = 0;
@@ -337,9 +402,14 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
 Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
     if (m_expr) {
-        auto v = m_expr->codegen(llvmStructs);
-        if (v) {
-            return llvmStructs.builder->CreateRet(v);
+        auto value = m_expr->codegen(llvmStructs);
+        // if it's a pointer, load it's value
+        if (dynamic_cast<VariableReferenceAST*>(m_expr.get())) {
+            // TODO(Vlad): Somehow determine elementary type of the value, because it's a pointer.
+            value = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), value, "loadtmp");
+        }
+        if (value) {
+            return llvmStructs.builder->CreateRet(value);
         }
         return nullptr;
     }

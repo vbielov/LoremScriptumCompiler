@@ -8,7 +8,7 @@
 
 void printIndent(const std::string& indent, bool isLast); 
 
-llvm::Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs);
+llvm::Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs, bool isPointer);
 
 /// @brief Abstract Syntax Tree: Base class for all expression node.
 /// NOTE(Vlad): It is interface
@@ -54,12 +54,14 @@ class VariableDeclarationAST : public AST {
 private:
     std::u8string m_type;
     std::u8string m_name;
+    bool m_isGlobal;
 public:
     VariableDeclarationAST(const std::u8string& type, const std::u8string& name);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(const std::string& indent, bool isLast) const override;
     const std::u8string& getName() const;
     const std::u8string& getType() const;
+    bool isGlobal() const;
 };
 
 

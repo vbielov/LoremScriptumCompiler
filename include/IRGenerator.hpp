@@ -8,7 +8,7 @@ private:
     LLVMStructs m_llvmStructs;
 
 public:
-    IRGenerator(const std::unique_ptr<AST>& rootBlock);
+    IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootBlock);
 
     void generateIRCode();
     Module* getModule();

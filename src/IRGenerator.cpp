@@ -1,10 +1,10 @@
 #include "IRGenerator.hpp"
 
-IRGenerator::IRGenerator(const std::unique_ptr<AST>& rootBlock) 
+IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootBlock) 
     : m_root(rootBlock.get())
     , m_llvmStructs{
         std::make_unique<LLVMContext>(),
-        std::make_unique<Module>("my cool jit", *m_llvmStructs.theContext),
+        std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
         std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext)
     } {}
 

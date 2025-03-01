@@ -1,46 +1,37 @@
 	.text
-	.file	"my cool jit"
+	.def	@feat.00;
+	.scl	3;
+	.type	0;
+	.endef
+	.globl	@feat.00
+.set @feat.00, 0
+	.file	"testScript"
+	.def	main;
+	.scl	2;
+	.type	32;
+	.endef
 	.globl	main
 	.p2align	4, 0x90
-	.type	main,@function
 main:
-	.cfi_startproc
-	pushq	%rax
-	.cfi_def_cfa_offset 16
-	movl	$72, %edi
-	callq	putchar@PLT
-	movl	$101, %edi
-	callq	putchar@PLT
-	movl	$108, %edi
-	callq	putchar@PLT
-	movl	$108, %edi
-	callq	putchar@PLT
-	movl	$111, %edi
-	callq	putchar@PLT
-	movl	$32, %edi
-	callq	putchar@PLT
-	movl	$87, %edi
-	callq	putchar@PLT
-	movl	$111, %edi
-	callq	putchar@PLT
-	movl	$114, %edi
-	callq	putchar@PLT
-	movl	$108, %edi
-	callq	putchar@PLT
-	movl	$100, %edi
-	callq	putchar@PLT
-	movl	$33, %edi
-	callq	putchar@PLT
-	movl	$10, %edi
-	callq	putchar@PLT
-	movl	$10, %edi
-	callq	putchar@PLT
+.seh_proc main
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movb	$72, 47(%rsp)
+	movb	$101, 48(%rsp)
+	movb	$108, 49(%rsp)
+	movb	$108, 50(%rsp)
+	movb	$111, 51(%rsp)
+	movl	$0, 52(%rsp)
+	leaq	47(%rsp), %rcx
+	callq	puts
 	xorl	%eax, %eax
-	popq	%rcx
-	.cfi_def_cfa_offset 8
+	addq	$56, %rsp
 	retq
-.Lfunc_end0:
-	.size	main, .Lfunc_end0-main
-	.cfi_endproc
+	.seh_endproc
 
-	.section	".note.GNU-stack","",@progbits
+	.data
+	.weak	global
+global:
+	.long	5
+

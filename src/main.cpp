@@ -3,6 +3,7 @@
 #include <fstream>
 #include <codecvt>
 #include <locale>
+#include <filesystem>
 #include "Lexer.hpp"
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
@@ -12,7 +13,7 @@
 std::u8string readFileToU8String(const std::string& filePath) {
     std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
     if (!file) {
-        throw std::runtime_error("Failed to open file");
+        return u8"";
     }
 
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -22,12 +23,27 @@ std::u8string readFileToU8String(const std::string& filePath) {
 int main(int argc, const char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: lsc <input_file.lorem>" << std::endl;
-        return 2;
+        return 1;
     }
 
     // Read File
     const char* inputFilePath = argv[1];
+    std::string inputFilePathStr = inputFilePath;
+    size_t lastindex = inputFilePathStr.find_last_of("."); 
+    std::string rawFilePath = inputFilePathStr.substr(0, lastindex);
+    std::string objFileName = rawFilePath + ".o";
+    std::string asmFileName = rawFilePath + ".asm";
+    std::string exeFileName = rawFilePath;
+    std::string fileName = std::filesystem::path(inputFilePathStr).stem().string();
+    #if defined(_WIN32)
+        exeFileName += ".exe";
+    #endif
+
     std::u8string sourceCode = readFileToU8String(inputFilePath);
+    if (sourceCode.empty()) {
+        std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
+        return 1;
+    }
 
     std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
     std::cout << (const char*)(sourceCode.c_str()) << std::endl << std::endl;
@@ -49,7 +65,7 @@ int main(int argc, const char** argv) {
     if (tree) {
         tree->printTree("", false);
     } else {
-        std::cerr << "Error: Nothing parsed :(" << std::endl;
+        std::cerr << "Error: Nothing is parsed" << std::endl;
     }
     std::cout << std::endl;
 
@@ -59,23 +75,16 @@ int main(int argc, const char** argv) {
 
     // Generate IR
     std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
-    IRGenerator codeGenerator = IRGenerator(tree);
+    IRGenerator codeGenerator = IRGenerator(fileName.c_str(), tree);
     codeGenerator.generateIRCode();
     std::cout << codeGenerator.getIRCodeString()<< std::endl;
 
-
+    // Assembler
     std::cout << "----------------------- Assembly: ----------------------- " << std::endl << std::endl;
     
-    std::string inputFilePathStr = inputFilePath;
-    size_t lastindex = inputFilePathStr.find_last_of("."); 
-    std::string rawname = inputFilePathStr.substr(0, lastindex);
-    std::string objFileName = rawname + ".o";
-    std::string asmFileName = rawname + ".asm";
-    std::string exeFileName = rawname + ".exe"; // TODO: don't add extension, but add a flag on linux
-    
     Assembler assembler;
-    assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
     assembler.compileToObjectFile(asmFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::AssemblyFile);
+    assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
 
     std::u8string assembly = readFileToU8String(asmFileName);
     std::cout << (const char*)(assembly.c_str()) << std::endl;
