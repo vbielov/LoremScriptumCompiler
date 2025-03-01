@@ -48,6 +48,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         m_isValid = false;
         return nullptr;
     }
+    if (isToken(TokenType::PUNCTUATION, u8";")) getNextToken();
 
     return std::make_unique<BlockAST>(std::move(statements));
 }

@@ -1,6 +1,52 @@
 #include "Parser.hpp"
 
 /**
+ * An Instruction can be a declaration, assignment or function call
+ * 
+ * currentToken is at first token of instruction
+ * 
+ * Examples:
+ *      - numerus var = I
+ *      - var = I
+ *      - func()
+ */
+std::unique_ptr<AST> Parser::parseInstruction() { 
+    if (isToken(TokenType::TYPE)) {
+        return parseInstructionDeclaration();
+    }
+    if (isToken(TokenType::IDENTIFIER)) {
+        auto identifier = m_currentToken.value;
+        getNextToken();
+        if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
+        if (isToken(TokenType::OPERATOR, u8"=")) return parseInstructionAssignment(identifier);
+    }
+    return nullptr;
+}
+
+
+/**
+ * An Assignment sets an identifer to the value of an expression
+ * 
+ * currentToken is at second token of assignment. It is always '='
+ * 
+ * Examples:
+ *      - var = I
+ *      - var = I + I
+ *      - var = (I + I)
+ *      - var = func()
+ *            ^ we are always here
+ */
+std::unique_ptr<AST> Parser::parseInstructionAssignment(std::u8string& identifier) {
+    getNextToken();
+    auto expression = parseExpression();
+    if (expression == nullptr) return nullptr;
+    
+    std::unique_ptr<AST> reference = std::make_unique<VariableReferenceAST>(identifier);
+    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(reference), std::move(expression));
+}
+
+
+/**
  * A Declaration can be just init or init and assign. It can also be a function declaration
  *
  * currentToken is at first token of declaration. It is always TYPE
@@ -11,7 +57,7 @@
  *    - numerus var = λ(...): [Block] ;
  *    - nihil   var = λ(...): [Block] ;
  */
-std::unique_ptr<AST> Parser::parseDeclaration() {
+std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     auto type = m_currentToken.value;
 
     getNextToken();
@@ -27,8 +73,10 @@ std::unique_ptr<AST> Parser::parseDeclaration() {
     if (!isToken(TokenType::OPERATOR, u8"=")) return nullptr;
 
     getNextToken();
-    if (isToken(TokenType::KEYWORD, u8"λ")) return parseDeclarationFunction(type, identifier);
-
+    if (isToken(TokenType::KEYWORD, u8"λ")) {
+        return parseInstructionDeclarationFunction(type, identifier);
+    }   
+    
     auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
     auto expression = parseExpression();
     if (expression == nullptr) return nullptr;
@@ -47,7 +95,12 @@ std::unique_ptr<AST> Parser::parseDeclaration() {
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                       ^ we are always here
  */
-std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string& type, std::u8string& identifier) {
+std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8string& type, std::u8string& identifier) {
+    if (m_blockCount != 0) {
+        printError("Function Declaration is only allowed at top-level");
+        return nullptr;
+    }
+
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 
@@ -66,6 +119,7 @@ std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string& typ
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
+            if (isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
             continue;
         }
         if (isToken(TokenType::PUNCTUATION, u8")")) {
@@ -79,7 +133,7 @@ std::unique_ptr<FunctionAST> Parser::parseDeclarationFunction(std::u8string& typ
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     auto funcBlock = parseBlock();
-    if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
+    if (funcBlock == nullptr) return nullptr;
 
     return std::make_unique<FunctionAST>(type, identifier, std::move(args), std::move(funcBlock));
 }

@@ -5,7 +5,7 @@
  *
  * currentToken is at first token of statement
  *
- * Instructions - always start with IDENTIFIER or TYPE
+ * Instructions - always start with IDENTIFIER or TYPE (is checked inside parseInstruction())
  *  - numerus id = I
  *  - id = id + V
  *  - func()
@@ -18,14 +18,8 @@
 
  */
 std::unique_ptr<AST> Parser::parseStatement() {
-    switch (m_currentToken.type) {
-        case TokenType::TYPE:
-            return parseDeclaration();
-        case TokenType::KEYWORD:
-            return parseStatementFlow();
-        default:
-            return parseExpression();
-    }
+    if (isToken(TokenType::KEYWORD)) return parseStatementFlow();
+    return parseInstruction();
 }
 
 /**
@@ -132,7 +126,7 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
 
     getNextToken();
     if (isToken(TokenType::TYPE)) {
-        declaration = parseDeclaration();
+        declaration = parseInstructionDeclaration();
         if (declaration == nullptr) return nullptr;
     }
 

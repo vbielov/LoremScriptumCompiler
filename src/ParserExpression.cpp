@@ -2,7 +2,8 @@
 #include "RomanNumber.hpp"
 
 /**
- * An Expression always calculates a value of some type. Expression end on new line or unopend ')'
+ * An Expression always calculates a value of some type. Expression end on new line, eof or punctuation.
+ * Operator '=' is not allowed - it is handled by parseInstructionAssignment()
  *
  * currentToken is at first token of expression.
  *
@@ -23,27 +24,23 @@
  *  a >  b:  I + (II  * III)
  */
 std::unique_ptr<AST> Parser::parseExpression() {
-    bool canAssignFirst = false;
-    auto left = parseExpressionSingle(&canAssignFirst);
+    auto left = parseExpressionSingle();
     if (left == nullptr) return nullptr;
     
     if (isExpressionEnd()) return left;
     
-    if (!isToken(TokenType::OPERATOR)) return nullptr;
-    if (!canAssignFirst && isToken(TokenType::OPERATOR, u8"=")) return nullptr;
+    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, u8"=")) return nullptr;
     auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
     getNextToken();
     
-    bool canAssignSecond = false;
-    auto right = parseExpressionSingle(&canAssignSecond);
+    auto right = parseExpressionSingle();
     if (right == nullptr) return nullptr;
 
     if (isExpressionEnd()) {
         return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
     }
 
-    if (!isToken(TokenType::OPERATOR)) return nullptr;
-    if (isToken(TokenType::OPERATOR, u8"=")) return nullptr;
+    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, u8"=")) return nullptr;
     auto nextOp = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
 
     getNextToken();
@@ -75,16 +72,14 @@ std::unique_ptr<AST> Parser::parseExpression() {
  * Trick of sign number -I -> 0 - I
  *
  */
-std::unique_ptr<AST> Parser::parseExpressionSingle(bool* canAssign) {
+std::unique_ptr<AST> Parser::parseExpressionSingle() {
     std::unique_ptr<AST> value;
-
-    *canAssign = false;
 
     if (isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-")) {
         auto sign = m_currentToken.value;
 
         getNextToken();
-        value = parseExpressionSingle(canAssign);
+        value = parseExpressionSingle();
 
         // TODO: Create a UnaryOperatorAST
         auto lhs = std::make_unique<NumberAST>(0);
@@ -105,7 +100,6 @@ std::unique_ptr<AST> Parser::parseExpressionSingle(bool* canAssign) {
         if (isToken(TokenType::PUNCTUATION, u8"(")) {
             value = parseExpressionFunctionCall(identifier);
         } else {
-            *canAssign = true;
             value = std::make_unique<VariableReferenceAST>(std::move(identifier));
         }
     } else if (isToken(TokenType::PUNCTUATION, u8"(")) {

@@ -78,12 +78,14 @@ class Parser {
     std::unique_ptr<IfAST> parseStatementBranching();
     std::unique_ptr<AST> parseStatementLooping();
 
-    // --- Declaration section ---
-    std::unique_ptr<AST> parseDeclaration();
-    std::unique_ptr<FunctionAST> parseDeclarationFunction(std::u8string& type, std::u8string& identifier);
+    // --- Instruction section ---
+    std::unique_ptr<AST> parseInstruction();
+    std::unique_ptr<AST> parseInstructionAssignment(std::u8string& identifier);
+    std::unique_ptr<AST> parseInstructionDeclaration();
+    std::unique_ptr<FunctionAST> parseInstructionDeclarationFunction(std::u8string& type, std::u8string& identifier);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();
-    std::unique_ptr<AST> parseExpressionSingle(bool* canAssign);
+    std::unique_ptr<AST> parseExpressionSingle();
     std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(std::u8string& identifier);
 };
