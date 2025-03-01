@@ -73,12 +73,11 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     auto ifBlock = parseBlock();
-    if (!isToken(TokenType::PUNCTUATION, u8";") || ifBlock == nullptr) return nullptr;
+    if (ifBlock == nullptr) return nullptr;
 
     std::unique_ptr<BlockAST> elseBlock;
 
-    do getNextToken();
-    while (isToken(TokenType::NEW_LINE));
+    while (isToken(TokenType::NEW_LINE)) getNextToken();
 
     if (isToken(TokenType::KEYWORD, u8"nisi")) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
@@ -91,7 +90,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 
         if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
         elseBlock = parseBlock();
-        if (!isToken(TokenType::PUNCTUATION, u8";") || elseBlock == nullptr) return nullptr;
+        if (elseBlock == nullptr) return nullptr;
     } else if (!isToken(TokenType::NEW_LINE)) {
         elseBlock = std::make_unique<BlockAST>(std::vector<std::unique_ptr<AST>>());
     } else {
@@ -102,15 +101,15 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 }
 
 /**
- *  There are four possible Looping structures: ∑(declaration, bool expression, expression): ... ;   ∑(bool expression, expression): ... ;   ∑(bool expression): ... ;   ∑(): ... ;
+ *  There are four possible Looping structures: ∑(declaration, expression, assignment): ... ;   ∑(bool expression, expression): ... ;   ∑(bool expression): ... ;   ∑(): ... ;
  *
  *  currentToken is always at '∑' token
  *
  *  All variants:
- *  1. ∑(numerus i = I, i > X, i = i + 1): [Block] ;
+ *  1. ∑(numerus i = I, i > X, i = i + I): [Block] ;
  *  2. ∑(numerus i = I, i > X)           : [Block] ;
  *  3. ∑(numerus i = I)                  : [Block] ;
- *  4. ∑(i > X, i = i + 1)               : [Block] ;
+ *  4. ∑(i > X, i = i + I)               : [Block] ;
  *  5. ∑(i > X)                          : [Block] ;
  *  6. ∑()                               : [Block] ;
  *
@@ -128,17 +127,18 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     if (isToken(TokenType::TYPE)) {
         declaration = parseInstructionDeclaration();
         if (declaration == nullptr) return nullptr;
+        if (isToken(TokenType::PUNCTUATION, u8",")) getNextToken();
     }
 
     if (!isToken(TokenType::PUNCTUATION, u8")")) {
-        if (isToken(TokenType::PUNCTUATION, u8",")) getNextToken();
-
         endExpression = parseExpression();
         if (endExpression == nullptr) return nullptr;
 
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
-            stepExpression = parseExpression();
+            if (isToken(TokenType::TYPE)) return nullptr;
+            stepExpression = parseInstruction();
+            if (stepExpression == nullptr) return nullptr;
         }
 
         if (!isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
@@ -149,7 +149,7 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     m_loopCount++;
     auto loopBlock = parseBlock();
     m_loopCount--;
-    if (!isToken(TokenType::PUNCTUATION, u8";")) return nullptr;
+    if (loopBlock == nullptr) return nullptr;
 
     // build pseudo wrapper block
 
