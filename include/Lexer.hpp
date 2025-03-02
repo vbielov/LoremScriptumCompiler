@@ -29,26 +29,26 @@ inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
     u8"numerus", 
     u8"littera", 
     u8"nihil",
-    // u8"asertio",
+    u8"asertio",
     // u8"rerum",
 };
 
 inline static const std::vector<std::u8string> OPERATORS = {
     u8"==", 
-    u8"=",
+    u8"=", // := was assign in many languages: https://en.wikipedia.org/wiki/ALGOL
     u8"≠",
     u8">", 
     u8"<", 
-    u8">=", 
-    u8"<=", 
+    u8">=", // ≥ 
+    u8"<=", // ≤
     u8"+", 
     u8"-", 
-    u8"*", 
-    u8"/", 
-    u8"%", 
+    u8"*", // ×
+    u8"/", // ÷
+    u8"%", // (mod n)
     u8"^",
     u8"¬",
-    u8"!"
+    u8"!",
 };
 
 class Lexer {

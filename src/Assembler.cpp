@@ -1,7 +1,6 @@
 #include "Assembler.hpp"
 
 void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, CodeGenFileType fileType) {
-	// Initialize the target registry etc.
 	InitializeAllTargetInfos();
 	InitializeAllTargets();
 	InitializeAllTargetMCs();
@@ -20,12 +19,9 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 	module->setTargetTriple(targetTriple);
 
 	std::string Error;
-	auto Target = TargetRegistry::lookupTarget(targetTriple, Error);
+	auto target = TargetRegistry::lookupTarget(targetTriple, Error);
 
-	// Print an error and exit if we couldn't find the requested target.
-	// This generally occurs if we've forgotten to initialise the
-	// TargetRegistry or we have a bogus target triple.
-	if (!Target) {
+	if (!target) {
 		llvm::errs() << Error;
 		return;
 	}
@@ -34,7 +30,7 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 	auto features = "";
 
 	TargetOptions opt;
-	auto TheTargetMachine = Target->createTargetMachine(targetTriple, cpu, features, opt, Reloc::PIC_);
+	auto TheTargetMachine = target->createTargetMachine(targetTriple, cpu, features, opt, Reloc::PIC_);
 
 	module->setDataLayout(TheTargetMachine->createDataLayout());
 
