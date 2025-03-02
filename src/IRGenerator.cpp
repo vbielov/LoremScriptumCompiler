@@ -6,7 +6,8 @@ IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootB
         std::make_unique<LLVMContext>(),
         std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
         std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext),
-        std::map<std::string, Value*>()
+        std::map<std::string, Value*>(),
+        {}
     } {}
 
 void IRGenerator::generateIRCode() {
@@ -199,6 +200,12 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
         }
     }
 
+    // don't store result of a void function
+    if (calleeF->getReturnType() == Type::getVoidTy(*(llvmStructs.theContext))) {
+        llvmStructs.builder->CreateCall(calleeF, argsV);
+        return nullptr;
+    }
+
     return llvmStructs.builder->CreateCall(calleeF, argsV, "calltmp");
 }
 
@@ -249,11 +256,19 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
     }
 
     m_body->codegen(llvmStructs);
-    if(verifyFunction(*func)) {
+    
+    // NOTE(Vlad): If you do this, then user has no ability to create custom return, 
+    // because terminator will go in the middle of a basic block.
+    // if(m_prototype->getReturnType() == u8"nihil") {
+        // llvmStructs.builder->CreateRetVoid(); // for some reason functions with void type NEED to have a return
+    // }
+
+    if(verifyFunction(*func, &(llvm::errs()))) {
         // We had error reading the body => remove function
         func->eraseFromParent();
         return nullptr;
     }
+
     return func;
 }
 
@@ -274,14 +289,77 @@ Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
 }
 
 Value* IfAST::codegen(LLVMStructs& llvmStructs) {
+    Value* condition = m_cond->codegen(llvmStructs);
+    if (!condition) {
+        return nullptr;
+    }
+
+    condition = llvmStructs.builder->CreateICmpNE(condition, ConstantInt::get(*(llvmStructs.theContext), APInt(1, 0, false)), "ifcond");
+
+    Function* function = llvmStructs.builder->GetInsertBlock()->getParent();
+    BasicBlock* thenBlock = BasicBlock::Create(*(llvmStructs.theContext), "then", function);
+    BasicBlock* elseBlock = BasicBlock::Create(*(llvmStructs.theContext), "else");
+    BasicBlock* mergeBlock = BasicBlock::Create(*(llvmStructs.theContext), "ifcont");
+
+    llvmStructs.builder->CreateCondBr(condition, thenBlock, elseBlock);
+
+    // Then
+    llvmStructs.builder->SetInsertPoint(thenBlock);
+
+    Value* thenValue = m_then->codegen(llvmStructs);
+
+    // NOTE(Vlad): I don't know if it's legal.
+    if (!llvmStructs.builder->GetInsertBlock()->getTerminator()) {
+        llvmStructs.builder->CreateBr(mergeBlock);
+    }
+    thenBlock = llvmStructs.builder->GetInsertBlock();
+
+    // Else
+    function->insert(function->end(), elseBlock);
+    llvmStructs.builder->SetInsertPoint(elseBlock);
+    
+    Value* elseValue = m_else->codegen(llvmStructs);
+
+    // NOTE(Vlad): I don't know if it's legal.
+    if (!llvmStructs.builder->GetInsertBlock()->getTerminator()) {
+        llvmStructs.builder->CreateBr(mergeBlock);
+    }
+
+    elseBlock = llvmStructs.builder->GetInsertBlock();
+
+    // Merge
+    function->insert(function->end(), mergeBlock);
+    llvmStructs.builder->SetInsertPoint(mergeBlock);
     return nullptr;
 }
 
 Value* BreakAST::codegen(LLVMStructs& llvmStructs) {
+    BasicBlock* returnBlock = llvmStructs.afterLoop.top();
+    if (!returnBlock) {
+        std::cerr << RED << "Error: there is no point for break to return" << RESET << std::endl;
+        return nullptr;
+    }
+    llvmStructs.builder->CreateBr(returnBlock);
     return nullptr;
 }
 
 Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
+    Function* function = llvmStructs.builder->GetInsertBlock()->getParent();
+    BasicBlock* loopBlock = BasicBlock::Create(*(llvmStructs.theContext), "loop", function);
+    BasicBlock* afterBlock = BasicBlock::Create(*(llvmStructs.theContext), "afterLoop");
+    llvmStructs.afterLoop.push(afterBlock);
+
+    llvmStructs.builder->CreateBr(loopBlock);
+    llvmStructs.builder->SetInsertPoint(loopBlock);
+
+    m_body->codegen(llvmStructs);
+    llvmStructs.builder->CreateBr(loopBlock);
+    loopBlock = llvmStructs.builder->GetInsertBlock(); // do I have to do this?
+
+    function->insert(function->end(), afterBlock);
+    llvmStructs.builder->SetInsertPoint(afterBlock);
+
+    llvmStructs.afterLoop.pop();
     return nullptr;
 }
 

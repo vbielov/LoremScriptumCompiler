@@ -1,15 +1,30 @@
 numerus puts = apere(littera str) 
 
-littera global = V 
+nihil printYes = λ():
+    littera a = 'Y'
+    littera b = 'e'
+    littera c = 's'
+    numerus d = O
+    puts(a)
+    retro
+;
+
+nihil printNo = λ():
+    littera a = 'N'
+    littera b = 'o'
+    numerus c = O
+    puts(a)
+    retro
+;
 
 numerus main = λ():
-    littera a = 'H'
-    littera b = 'e'
-    littera c = 'l'
-    littera d = 'l'
-    littera e = 'o'
-    numerus f =  O 
-
-    puts(a)
+    ∑(numerus i = O, i < X, i = i + I):
+        si(i < V):
+            printYes()
+        ;
+        ni:
+            printNo()
+        ;
+    ;
     retro O 
 ;

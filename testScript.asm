@@ -6,6 +6,49 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"testScript"
+	.def	printYes;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	printYes
+	.p2align	4, 0x90
+printYes:
+.seh_proc printYes
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movb	$89, 33(%rsp)
+	movb	$101, 34(%rsp)
+	movb	$115, 35(%rsp)
+	movl	$0, 36(%rsp)
+	leaq	33(%rsp), %rcx
+	callq	puts
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	printNo;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	printNo
+	.p2align	4, 0x90
+printNo:
+.seh_proc printNo
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movb	$78, 34(%rsp)
+	movb	$111, 35(%rsp)
+	movl	$0, 36(%rsp)
+	leaq	34(%rsp), %rcx
+	callq	puts
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
 	.def	main;
 	.scl	2;
 	.type	32;
@@ -14,24 +57,29 @@
 	.p2align	4, 0x90
 main:
 .seh_proc main
-	subq	$56, %rsp
-	.seh_stackalloc 56
+	subq	$40, %rsp
+	.seh_stackalloc 40
 	.seh_endprologue
-	movb	$72, 47(%rsp)
-	movb	$101, 48(%rsp)
-	movb	$108, 49(%rsp)
-	movb	$108, 50(%rsp)
-	movb	$111, 51(%rsp)
-	movl	$0, 52(%rsp)
-	leaq	47(%rsp), %rcx
-	callq	puts
+	movl	$0, 36(%rsp)
+	cmpl	$9, 36(%rsp)
+	jle	.LBB2_2
+	jmp	.LBB2_5
+	.p2align	4, 0x90
+.LBB2_3:
+	callq	printYes
+	incl	36(%rsp)
+	cmpl	$9, 36(%rsp)
+	jg	.LBB2_5
+.LBB2_2:
+	cmpl	$4, 36(%rsp)
+	jle	.LBB2_3
+	callq	printNo
+	incl	36(%rsp)
+	cmpl	$9, 36(%rsp)
+	jle	.LBB2_2
+.LBB2_5:
 	xorl	%eax, %eax
-	addq	$56, %rsp
+	addq	$40, %rsp
 	retq
 	.seh_endproc
-
-	.data
-	.weak	global
-global:
-	.long	5
 

@@ -51,6 +51,10 @@ const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
 }
 
+const std::u8string& FunctionPrototypeAST::getReturnType() const {
+    return m_returnType;
+}
+
 FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body)
     : m_prototype(std::move(prototype))
     , m_body(std::move(body)) {}
@@ -149,7 +153,9 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     ostr << "ReturnAST" << std::endl;
-    m_expr->printTree(ostr, newIndent, true);
+    if (m_expr) {
+        m_expr->printTree(ostr, newIndent, true);
+    }
 }
 
 
