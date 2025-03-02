@@ -13,7 +13,7 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "C:\\Program Files\\mingw64\\bin\\g++.exe",
+            "compilerPath": "C:\\mingw64\\bin\\g++.exe",
             "cStandard": "c99",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-gcc-x64",
@@ -25,7 +25,8 @@
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/test",
                 "${workspaceFolder}/build/googletest-src/googlemock/include/**",
-                "${workspaceFolder}/build/googletest-src/googletest/include/**"
+                "${workspaceFolder}/build/googletest-src/googletest/include/**",
+                "C:/mingw64/include"
             ],
             "defines": [
                 "_DEBUG"

@@ -1,10 +1,12 @@
 #pragma once
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include "Lexer.hpp"
 #include <vector>
 
-inline static const std::u8string SOURCE_CODE_TO_TEST = u8R"(
+#include "Lexer.hpp"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+inline static const std::u8string SOURCE_CODE_TO_TEST =
+    u8R"(
     numerus foo = λ(numerus a, numerus b):
         a = a + b
         b = a * II
@@ -14,7 +16,7 @@ inline static const std::u8string SOURCE_CODE_TO_TEST = u8R"(
 
     numerus cadabra = XVI
 
-    ∑(∞):
+    ∑():
         numerus abra = II
         abra = abra + abra
         
@@ -93,7 +95,9 @@ inline static const std::vector<Token> EXPECTED_TOKENS = {
     {TokenType::NUMBER, u8"XVI"},
     {TokenType::NEW_LINE, u8""},
     {TokenType::NEW_LINE, u8""},
-    {TokenType::KEYWORD, u8"∑(∞)"},
+    {TokenType::KEYWORD, u8"∑"},
+    {TokenType::PUNCTUATION, u8"("},
+    {TokenType::PUNCTUATION, u8")"},
     {TokenType::PUNCTUATION, u8":"},
     {TokenType::NEW_LINE, u8""},
     {TokenType::TYPE, u8"numerus"},
@@ -176,4 +180,3 @@ inline static const std::vector<Token> EXPECTED_TOKENS = {
 };
 
 class TestLexer : public ::testing::Test {};
-

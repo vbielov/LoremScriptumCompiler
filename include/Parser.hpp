@@ -1,70 +1,92 @@
 #pragma once
-#include "Lexer.hpp"
-#include "AST.hpp"
-#include "RomanNumber.hpp"
 #include <unordered_map>
+#include "AST.hpp"
+#include "Lexer.hpp"
+#include "RomanNumber.hpp"
 
 // TODO(Vlad): Just followed tutorial here, need to add types, single operators, controll flow and so much more.
 // https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html
 
 class Parser {
-private:
+   private:
     Lexer* m_lexer;
     Token m_currentToken;
 
-    // https://en.wikipedia.org/wiki/Order_of_operations
-    inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRECEDENCE = {
-        {u8"=", 1},
-        {u8"≠" , 2},
-        {u8"==", 2},
+    int m_loopCount = 0;
+    int m_blockCount = -1;
+    bool m_isValid = true;
+    bool m_isTest;
 
-        {u8">=", 10},
-        {u8"<=", 10},
-        {u8"<", 10},
-        {u8">", 10},
+    // source: https://en.wikipedia.org/wiki/Order_of_operations
+    // smaller number means higher priority
+    inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRIORITY = {
+        {u8"!", 2},
+        {u8"¬", 2},
+        {u8"-", 2},
+        {u8"+", 2},
+        {u8"^", 2},
 
-        {u8"+", 20},
-        {u8"-", 20},
+        {u8"*", 3},
+        {u8"/", 3},
+        {u8"%", 3},
 
-        {u8"*", 40},
-        {u8"/", 40},
-        {u8"%", 40},
+        {u8"+", 4},
+        {u8"-", 4},
 
-        {u8"^", 60},
+        {u8"<", 6},
+        {u8"<=", 6},
+        {u8">", 6},
+        {u8">=", 6},
+
+        {u8"==", 7},
+        {u8"≠", 7},
+
+        {u8"&&", 11},
+
+        {u8"||", 12},
+
+        {u8"=", 14},
     };
 
-public:
+   public:
     Parser(Lexer& lexer);
-    std::unique_ptr<BlockAST> parseProgram();
+    Parser(Lexer& lexer, bool isTest);
 
-private:
+    bool isValid();
     std::unique_ptr<BlockAST> parseBlock();
 
+   private:
     /// @brief Get the precedence of the pending binary operator token.
     int getTokenPrecedence() const;
 
     Token& getNextToken();
 
-    // Anything that starts with a type is some declaration of something
-    std::unique_ptr<AST> parseType();
+    bool isInsideLoop();
+    bool isFinishedBlock();
+    bool isExpressionEnd();
+    bool isToken(TokenType type);
+    bool isToken(TokenType type, std::u8string value);
+    bool isToken(std::u8string value);
 
-    // It can be veriable reference or a function call
-    std::unique_ptr<AST> parseIdentifier();
+    void printError(std::string error);
+    void printUnknownTokenError();
 
-    // It can be for-loop, if statement or any other.
-    std::unique_ptr<AST> parseKeyword();
+    // --- Statement section ---
+    std::unique_ptr<AST> parseStatement();
+    std::unique_ptr<AST> parseStatementFlow();
+    std::unique_ptr<IfAST> parseStatementBranching();
+    std::unique_ptr<AST> parseStatementLooping();
 
-    // It can be Identifier, constant value or some parantecies/binary operation
+    // --- Instruction section ---
+    std::unique_ptr<AST> parseInstruction();
+    std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
+    std::unique_ptr<AST> parseInstructionDeclaration();
+    std::unique_ptr<FunctionAST> parseInstructionDeclarationFunction(const std::u8string& type, const std::u8string& identifier);
+
+    // --- Expression section ---
     std::unique_ptr<AST> parseExpression();
-
-    std::unique_ptr<AST> parseBinOpRHS(int exprPrec, std::unique_ptr<AST> lhs);
+    std::unique_ptr<AST> parseExpressionSingle();
 
     std::unique_ptr<FunctionPrototypeAST> parsePrototype(const std::u8string& returnType, const std::u8string& funcName);
-
-    // It is a function
-    std::unique_ptr<FunctionAST> parseFunction(const std::u8string& returnType, const std::u8string& funcName);
-
-    std::unique_ptr<IfAST> parseIf();
-
-    std::unique_ptr<ForAST> parseFor();
+    std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(const std::u8string& identifier);
 };
