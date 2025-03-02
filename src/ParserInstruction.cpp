@@ -36,7 +36,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
  *      - var = func()
  *            ^ we are always here
  */
-std::unique_ptr<AST> Parser::parseInstructionAssignment(std::u8string& identifier) {
+std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& identifier) {
     getNextToken();
     auto expression = parseExpression();
     if (expression == nullptr) return nullptr;
@@ -74,8 +74,11 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     getNextToken();
     if (isToken(TokenType::KEYWORD, u8"λ")) {
-        return parseInstructionDeclarationFunction(type, identifier);
-    }   
+        return parseInstructionFunction(type, identifier);
+    } else if (isToken(TokenType::KEYWORD, u8"apere")) {
+        getNextToken(); // eat apere
+        return parseInstructionPrototype(type, identifier);
+    }
     
     auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
     auto expression = parseExpression();
@@ -85,26 +88,17 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 }
 
 /**
- * A function can have many args. args are variable declarations. type is return type and identifier is name of the function.
+ * A function prototype is a function declaration, 
+ * this function can be defined in our program or somewhere else in linked library
  *
- * currentToken is at λ.
+ * currentToken is at (.
  *
  * Examples:
- *      - numerus func = λ(): [Block] ;
- *      - nihil func   = λ(numerus a): [Block] ;
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
- *                       ^ we are always here
+ *                        ^ we are always here
  */
-std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8string& type, std::u8string& identifier) {
-    if (m_blockCount != 0) {
-        printError("Function Declaration is only allowed at top-level");
-        return nullptr;
-    }
-
-    getNextToken();
-    if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
-
-    getNextToken();
+std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier) {
+    getNextToken(); // eat '('
     std::vector<std::unique_ptr<VariableDeclarationAST>> args;
     while (!isToken(TokenType::PUNCTUATION, u8")")) {
         if (!isToken(TokenType::TYPE)) return nullptr;
@@ -131,9 +125,43 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionDeclarationFunction(std::u8
     }
 
     getNextToken();
-    if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
+
+    return std::make_unique<FunctionPrototypeAST>(type, identifier, std::move(args));
+}
+
+/**
+ * A function can have many args. args are variable declarations. type is return type and identifier is name of the function.
+ *
+ * currentToken is at λ.
+ *
+ * Examples:
+ *      - numerus func = λ(): [Block] ;
+ *      - nihil func   = λ(numerus a): [Block] ;
+ *      - numerus add  = λ(numerus a, numerus b): [Block] ;
+ *                       ^ we are always here
+ */
+std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8string& type, const std::u8string& identifier) {
+    if (m_blockCount != 0) {
+        printError("Function Declaration is only allowed at top-level");
+        return nullptr;
+    }
+
+    getNextToken(); // eat λ
+    if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
+
+    auto prototype = parseInstructionPrototype(type, identifier);
+
+    // for the case if : is on the next line
+    while(isToken(TokenType::NEW_LINE)) {
+        getNextToken();
+    }
+
+    if (!isToken(TokenType::PUNCTUATION, u8":")) {
+        printError("Expected ':' when parsin Block");
+        return nullptr;
+    }
     auto funcBlock = parseBlock();
     if (funcBlock == nullptr) return nullptr;
 
-    return std::make_unique<FunctionAST>(type, identifier, std::move(args), std::move(funcBlock));
+    return std::make_unique<FunctionAST>(std::move(prototype), std::move(funcBlock));
 }

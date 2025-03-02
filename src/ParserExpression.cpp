@@ -128,7 +128,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
  *      - func(var + (I - II))
  *            ^ we are always here
  */
-std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(std::u8string& identifier) {
+std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8string& identifier) {
     getNextToken();
 
     std::vector<std::unique_ptr<AST>> args;

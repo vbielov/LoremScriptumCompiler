@@ -1,5 +1,21 @@
 #include "Parser.hpp"
 
+Parser::Parser(Lexer& lexer) 
+    : m_lexer(&lexer)
+    , m_currentToken()
+    , m_loopCount(0)
+    , m_blockCount(-1)
+    , m_isValid(true)
+    , m_isTest(false) {}
+
+Parser::Parser(Lexer& lexer, bool isTest) 
+    : m_lexer(&lexer)
+    , m_currentToken()
+    , m_loopCount(0)
+    , m_blockCount(-1)
+    , m_isValid(true)
+    , m_isTest(isTest) {}
+
 bool Parser::isValid() {
     return m_isValid;
 }
@@ -38,12 +54,3 @@ void Parser::printError(std::string error) {
 Token& Parser::getNextToken() {
     return m_currentToken = m_lexer->getNextToken();
 }
-
-Parser::Parser(Lexer& lexer) : m_lexer(&lexer) {
-    m_isTest = false;
-}
-
-Parser::Parser(Lexer& lexer, bool isTest) : m_lexer(&lexer) {
-    m_isTest = isTest;
-}
-

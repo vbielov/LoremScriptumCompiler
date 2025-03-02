@@ -1,6 +1,6 @@
-numerus puts = apere(littera str) // https://man7.org/linux/man-pages/man3/puts.3.html
+numerus puts = apere(littera str) 
 
-littera global = V // only contants are allowed when initializing global variable
+littera global = V 
 
 numerus main = λ():
     littera a = 'H'
@@ -8,8 +8,8 @@ numerus main = λ():
     littera c = 'l'
     littera d = 'l'
     littera e = 'o'
-    numerus f =  O // that's \0
+    numerus f =  O 
 
     puts(a)
-    retro O // must exists!
+    retro O 
 ;

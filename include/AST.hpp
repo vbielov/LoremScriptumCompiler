@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <string>
-
 #include "LLVMStructs.hpp"
 #include "Lexer.hpp"
 #define RED "\033[31m"
@@ -17,7 +16,6 @@ class AST {
     virtual Value* codegen(LLVMStructs& llvmStructs) = 0;
     virtual void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const = 0;
 };
-
 
 
 class BlockAST : public AST {
@@ -41,6 +39,7 @@ class NumberAST : public AST {
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
 
+
 class CharAST : public AST {
    private:
     char8_t m_char;
@@ -50,6 +49,7 @@ class CharAST : public AST {
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
+
 
 class VariableDeclarationAST : public AST {
    private:
@@ -65,6 +65,7 @@ public:
     bool isGlobal() const;
 };
 
+
 class VariableReferenceAST : public AST {
    private:
     std::u8string m_name;
@@ -74,6 +75,7 @@ class VariableReferenceAST : public AST {
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
+
 
 class BinaryOperatorAST : public AST {
    private:
@@ -86,6 +88,7 @@ class BinaryOperatorAST : public AST {
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
 
+
 class FuncCallAST : public AST {
    private:
     std::u8string m_calleeIdentifier;
@@ -96,6 +99,7 @@ class FuncCallAST : public AST {
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
+
 
 // Function declaration
 class FunctionPrototypeAST : public AST {
@@ -122,6 +126,7 @@ public:
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
 
+
 class ReturnAST : public AST {
    private:
     std::unique_ptr<AST> m_expr;
@@ -132,12 +137,14 @@ class ReturnAST : public AST {
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
 
+
 class BreakAST : public AST {
    public:
     BreakAST();
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
+
 
 class IfAST : public AST {
    private:
@@ -150,6 +157,7 @@ class IfAST : public AST {
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
+
 
 class LoopAST : public AST {
    private:

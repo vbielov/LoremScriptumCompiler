@@ -5,7 +5,8 @@ IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootB
     , m_llvmStructs{
         std::make_unique<LLVMContext>(),
         std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
-        std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext)
+        std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext),
+        std::map<std::string, Value*>()
     } {}
 
 void IRGenerator::generateIRCode() {
@@ -52,7 +53,7 @@ Value* BlockAST::codegen(LLVMStructs& llvmStructs) {
     for(auto& node : m_instructions) {
         values.push_back(node->codegen(llvmStructs));
     }
-    return values.back();
+    return nullptr;
 }
 
 Value* NumberAST::codegen(LLVMStructs& llvmStructs) {
@@ -98,10 +99,8 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
 
 Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
     Value* value = llvmStructs.namedValues[(const char*)m_name.c_str()];
-    bool isGlobal = false;
     if (!value) {
         value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
-        isGlobal = true;
     }
     if (!value) {
         std::cerr << RED << "Error: Unknown variable name: " << (const char*)(m_name.c_str()) << RESET << std::endl;
@@ -207,7 +206,7 @@ Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {
     std::vector<Type*> argTypes;
     argTypes.reserve(m_args.size());
     for (const auto& arg : m_args) {
-        argTypes.push_back(PointerType::get(IntegerType::get(llvmStructs.theModule->getContext(), 32), 0));
+        argTypes.push_back(PointerType::get(getVariableType(arg->getType(), llvmStructs, false), 0));
     }     
 
     FunctionType* funcType = FunctionType::get(getVariableType(m_returnType, llvmStructs, false), argTypes, false);
@@ -249,14 +248,13 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
         llvmStructs.namedValues[std::string(arg.getName())] = &arg;
     }
 
-    if (Value* retVal = m_body->codegen(llvmStructs)) {
-        verifyFunction(*func);
-        return func;
+    m_body->codegen(llvmStructs);
+    if(verifyFunction(*func)) {
+        // We had error reading the body => remove function
+        func->eraseFromParent();
+        return nullptr;
     }
-
-    // We had error reading the body => remove function
-    func->eraseFromParent();
-    return nullptr;
+    return func;
 }
 
 Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
@@ -279,6 +277,11 @@ Value* IfAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
-Value* ForAST::codegen(LLVMStructs& llvmStructs) {
+Value* BreakAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
+
+Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
+    return nullptr;
+}
+

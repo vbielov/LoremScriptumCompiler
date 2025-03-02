@@ -3,7 +3,6 @@
 #include <iostream>
 #include <locale>
 #include <sstream>
-
 #include <filesystem>
 #include "Lexer.hpp"
 #include "Parser.hpp"
@@ -66,7 +65,7 @@ int main(int argc, const char** argv) {
     std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl
               << std::endl;
     Parser parser = Parser(lexer);
-    auto tree = parser.parseBlock();
+    std::unique_ptr<AST> tree = parser.parseBlock();
     if (tree) {
         tree->printTree(std::cout, "", false);
     } else {

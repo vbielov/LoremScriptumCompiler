@@ -63,12 +63,9 @@ IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::uni
     , m_then(std::move(then))
     , m_else(std::move(_else)) {}
 
+BreakAST::BreakAST() {}
 
 LoopAST::LoopAST(std::unique_ptr<BlockAST> body) : m_body(std::move(body)) {}
-
-Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
-    return nullptr;
-}
 
 //===----------------------------------------------------------------------===//
 // Printing AST Tree
@@ -155,7 +152,10 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     m_expr->printTree(ostr, newIndent, true);
 }
 
-void BreakAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+
+
+void BreakAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
+{
     printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     ostr << "BreakAST" << std::endl;

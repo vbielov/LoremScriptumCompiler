@@ -12,9 +12,9 @@ class Parser {
     Lexer* m_lexer;
     Token m_currentToken;
 
-    int m_loopCount = 0;
-    int m_blockCount = -1;
-    bool m_isValid = true;
+    int m_loopCount;
+    int m_blockCount;
+    bool m_isValid;
     bool m_isTest;
 
     // source: https://en.wikipedia.org/wiki/Order_of_operations
@@ -81,7 +81,9 @@ class Parser {
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionDeclaration();
-    std::unique_ptr<FunctionAST> parseInstructionDeclarationFunction(const std::u8string& type, const std::u8string& identifier);
+
+    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier);
+    std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& type, const std::u8string& identifier);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();

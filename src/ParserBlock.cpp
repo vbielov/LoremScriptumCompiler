@@ -16,9 +16,9 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     m_blockCount++;
 
-    getNextToken();
+    getNextToken(); // eat ':', or if it's a first block in the tree, read first token
     while (!isFinishedBlock()) {
-        if (isToken(TokenType::NEW_LINE)) {
+        if (isToken(TokenType::NEW_LINE) || isToken(TokenType::COMMENT)) {
             getNextToken();
             continue;
         }
@@ -34,7 +34,6 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         } else {
             m_isValid = false;
             printUnknownTokenError();
-
             // Error on this line detected. Go to next line and try to do business as usual
             while (!isFinishedBlock() && !isToken(TokenType::NEW_LINE)) {
                 getNextToken();
