@@ -47,6 +47,7 @@ Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStruc
             return PointerType::getInt1Ty(*(llvmStructs.theContext));
         }
     }
+    return nullptr;
 }
 
 Value* BlockAST::codegen(LLVMStructs& llvmStructs) {
@@ -133,8 +134,6 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
         return nullptr;
     }
 
-    // TODO(Vlad): Add ==, !, ^, ¬
-
     // Load variables to registers
     if (left->getType()->isPointerTy()) {
         left = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), left, "loadtmp");
@@ -143,24 +142,32 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
         right = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), right, "loadtmp");
     }
 
-    if (m_op == u8">") {
+    if (m_op == u8"⇔") {
+        return llvmStructs.builder->CreateICmpEQ(left, right, "eqtmp");
+    } else if (m_op == u8"≠") {
+        return llvmStructs.builder->CreateICmpNE(left, right, "neqtmp");
+    } else if (m_op == u8">") {
         return llvmStructs.builder->CreateICmpSGT(left, right, "cmptmp");
     } else if (m_op == u8"<") {
         return llvmStructs.builder->CreateICmpSLT(left, right, "cmptmp");
-    } else if (m_op == u8">=") {
+    } else if (m_op == u8"≥") {
         return llvmStructs.builder->CreateICmpSGE(left, right, "cmptmp");
-    } else if (m_op == u8"<=") {
+    } else if (m_op == u8"≤") {
         return llvmStructs.builder->CreateICmpSLE(left, right, "cmptmp");
     } else if (m_op == u8"+") {
         return llvmStructs.builder->CreateAdd(left, right, "addtmp");
     } else if (m_op == u8"-") {
         return llvmStructs.builder->CreateSub(left, right, "subtmp");
-    } else if (m_op == u8"*") {
+    } else if (m_op == u8"×") {
         return llvmStructs.builder->CreateMul(left, right, "multmp");
-    } else if (m_op == u8"/") {
+    } else if (m_op == u8"÷") {
         return llvmStructs.builder->CreateSDiv(left, right, "divtmp");
     } else if (m_op == u8"%") {
         return llvmStructs.builder->CreateSRem(left, right, "modtmp");
+    } else if (m_op == u8"∧") {
+        return llvmStructs.builder->CreateAnd(left, right, "andtmp");
+    } else if (m_op == u8"∨") {
+        return llvmStructs.builder->CreateOr(left, right, "ortmp");
     }
 
     std::cerr << RED << "Error: Invalid binary operator" << RESET << std::endl;
@@ -304,7 +311,7 @@ Value* IfAST::codegen(LLVMStructs& llvmStructs) {
     // Then
     llvmStructs.builder->SetInsertPoint(thenBlock);
 
-    Value* thenValue = m_then->codegen(llvmStructs);
+    m_then->codegen(llvmStructs);
 
     // NOTE(Vlad): I don't know if it's legal.
     if (!llvmStructs.builder->GetInsertBlock()->getTerminator()) {
@@ -316,7 +323,7 @@ Value* IfAST::codegen(LLVMStructs& llvmStructs) {
     function->insert(function->end(), elseBlock);
     llvmStructs.builder->SetInsertPoint(elseBlock);
     
-    Value* elseValue = m_else->codegen(llvmStructs);
+    m_else->codegen(llvmStructs);
 
     // NOTE(Vlad): I don't know if it's legal.
     if (!llvmStructs.builder->GetInsertBlock()->getTerminator()) {

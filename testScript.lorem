@@ -1,16 +1,17 @@
-numerus puts = apere(littera str) 
+numerus puts = apere(litera str) 
 
 nihil printYes = λ():
-    littera a = 'Y'
-    littera b = 'e'
-    littera c = 's'
-    numerus d = O
+    litera a = 'Y'
+    litera b = 'e'
+    litera c = 's'
+    litera d = '\n'
+    numerus e = O
     puts(a)
 ;
 
 nihil printNo = λ():
-    littera a = 'N'
-    littera b = 'o'
+    litera a = 'N'
+    litera b = 'o'
     numerus c = O
     puts(a)
 ;

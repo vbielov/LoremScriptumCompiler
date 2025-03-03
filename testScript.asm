@@ -17,11 +17,12 @@ printYes:
 	subq	$40, %rsp
 	.seh_stackalloc 40
 	.seh_endprologue
-	movb	$89, 33(%rsp)
-	movb	$101, 34(%rsp)
-	movb	$115, 35(%rsp)
+	movb	$89, 32(%rsp)
+	movb	$101, 33(%rsp)
+	movb	$115, 34(%rsp)
+	movb	$92, 35(%rsp)
 	movl	$0, 36(%rsp)
-	leaq	33(%rsp), %rcx
+	leaq	32(%rsp), %rcx
 	callq	puts
 	nop
 	addq	$40, %rsp
