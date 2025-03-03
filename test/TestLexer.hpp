@@ -27,7 +27,7 @@ inline static const std::u8string SOURCE_CODE_TO_TEST =
 
     scribor(abra)
 
-    literra test = '\n'
+    litera test = '\n'
 
     scribor(test)
 
@@ -131,7 +131,7 @@ inline static const std::vector<Token> EXPECTED_TOKENS = {
     {TokenType::PUNCTUATION, u8")"},
     {TokenType::NEW_LINE, u8""},
     {TokenType::NEW_LINE, u8""},
-    {TokenType::TYPE, u8"literra"},
+    {TokenType::TYPE, u8"litera"},
     {TokenType::IDENTIFIER, u8"test"},
     {TokenType::OPERATOR, u8"="},
     {TokenType::LITERAL, u8"\\n"},
