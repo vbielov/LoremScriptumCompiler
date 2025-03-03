@@ -19,14 +19,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential clang-19 llvm-19-dev libllvm19 llvm-19-tools lld-19 libclang-19-dev zlib1g-dev libzstd-dev
+          sudo apt-get install -y cmake ninja-build build-essential clang-19 llvm-19-dev libllvm19 llvm-19-tools lld-19 libclang-19-dev zlib1g-dev libzstd-dev liblld-19-dev
           sudo apt remove llvm-16 llvm-16-dev llvm-16-tools
 
       - name: Create build directory
         run: mkdir -p build
 
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+        run: cmake -S . -B build -DLLD_DIR=/usr/lib/llvm-19/lib/cmake/lld/ -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
 
       - name: Build project
         run: cmake --build build -- -j$(nproc)
