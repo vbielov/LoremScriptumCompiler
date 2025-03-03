@@ -12,6 +12,7 @@
 #include "llvm/IR/Verifier.h"
 #include <memory>
 #include <map>
+#include <stack>
 
 using namespace llvm;
 
@@ -20,4 +21,5 @@ struct LLVMStructs {
     std::unique_ptr<Module> theModule;
     std::unique_ptr<IRBuilder<>> builder;
     std::map<std::string, Value*> namedValues;
+    std::stack<BasicBlock*> afterLoop;
 };

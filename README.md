@@ -10,9 +10,9 @@ LoremScriptum is a basic programming language with Latin-inspired syntax and mat
 
 ## Requirements
 
-- C++20 Compiler
+- GCC/Clang C++20 Compiler
 - CMake, Make
-- LLVM
+- LLVM, LLD
 
 If you are on Windows, I recommend using MinGW from https://winlibs.com/
 
@@ -41,7 +41,7 @@ To build and use the LoremScriptum compiler, follow these steps:
 3. **Run the compiler:**
 
     ```bash
-    ./lsc <input_file.ls>
+    ./lsc <input_file.lorem>
     ```
 
 ## Language Syntax

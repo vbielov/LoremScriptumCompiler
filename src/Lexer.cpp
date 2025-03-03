@@ -1,7 +1,8 @@
 #include "Lexer.hpp"
 
 Lexer::Lexer(const std::u8string& sourceCode) 
-    : m_souceCode(&sourceCode), m_charIterator(0) {}
+    : m_souceCode(&sourceCode)
+    , m_charIterator(0) {}
 
 Token Lexer::getNextToken() {
     // ignore any whitespace, tab, ect.
