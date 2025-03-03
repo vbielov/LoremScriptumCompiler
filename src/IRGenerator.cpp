@@ -257,11 +257,9 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
     m_body->codegen(llvmStructs);
     
-    // NOTE(Vlad): If you do this, then user has no ability to create custom return, 
-    // because terminator will go in the middle of a basic block.
-    // if(m_prototype->getReturnType() == u8"nihil") {
-        // llvmStructs.builder->CreateRetVoid(); // for some reason functions with void type NEED to have a return
-    // }
+    if(m_prototype->getReturnType() == u8"nihil" && !llvmStructs.builder->GetInsertBlock()->getTerminator()) {
+        llvmStructs.builder->CreateRetVoid(); // for some reason functions with void type NEED to have a return
+    }
 
     if(verifyFunction(*func, &(llvm::errs()))) {
         // We had error reading the body => remove function

@@ -6,7 +6,6 @@ nihil printYes = λ():
     littera c = 's'
     numerus d = O
     puts(a)
-    retro
 ;
 
 nihil printNo = λ():
@@ -14,7 +13,6 @@ nihil printNo = λ():
     littera b = 'o'
     numerus c = O
     puts(a)
-    retro
 ;
 
 numerus main = λ():
