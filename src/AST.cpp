@@ -133,7 +133,7 @@ void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool 
 
 void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string &indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    std::cout << "FunctionPrototypeAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+    ostr << "FunctionPrototypeAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
@@ -157,8 +157,6 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
         m_expr->printTree(ostr, newIndent, true);
     }
 }
-
-
 
 void BreakAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
 {

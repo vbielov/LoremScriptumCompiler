@@ -29,7 +29,7 @@ Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStruc
     if (!isPointer) {
         if (typeStr == u8"numerus") {
             return Type::getInt32Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"littera") {
+        } else if (typeStr == u8"litera") {
             return Type::getInt8Ty(*(llvmStructs.theContext));
         } else if (typeStr == u8"nihil") {
             return Type::getVoidTy(*(llvmStructs.theContext));
@@ -39,7 +39,7 @@ Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStruc
     } else {
         if (typeStr == u8"numerus") {
             return PointerType::getInt32Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"littera") {
+        } else if (typeStr == u8"litera") {
             return PointerType::getInt8Ty(*(llvmStructs.theContext));
         } else if (typeStr == u8"nihil") {
             return PointerType::getVoidTy(*(llvmStructs.theContext));

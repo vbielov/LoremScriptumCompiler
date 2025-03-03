@@ -150,6 +150,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
     if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 
     auto prototype = parseInstructionPrototype(type, identifier);
+    if (prototype == nullptr) return nullptr;
 
     // for the case if : is on the next line
     while(isToken(TokenType::NEW_LINE)) {

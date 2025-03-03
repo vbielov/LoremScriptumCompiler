@@ -27,7 +27,7 @@ inline static const std::vector<std::u8string> KEYWORDS = {
 
 inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
     u8"numerus", 
-    u8"littera", 
+    u8"litera", 
     u8"nihil",
     u8"asertio",
     // u8"rerum",
