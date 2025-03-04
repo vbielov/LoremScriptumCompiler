@@ -99,8 +99,23 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8"(")) {
             value = parseExpressionFunctionCall(identifier);
+        } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
+            getNextToken(); // eat [
+
+            std::unique_ptr<AST> index = parseExpression();
+            if (!index) {
+                printError("Expected index for indexing array");
+                return nullptr;
+            }
+
+            if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+                printError("Expected ']' after array index accessing");
+                return nullptr;
+            }
+            getNextToken(); // eat ]
+            return std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
         } else {
-            value = std::make_unique<VariableReferenceAST>(std::move(identifier));
+            value = std::make_unique<VariableReferenceAST>(identifier);
         }
     } else if (isToken(TokenType::PUNCTUATION, u8"(")) {
         getNextToken();

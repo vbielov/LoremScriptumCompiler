@@ -1,4 +1,5 @@
 #include "IRGenerator.hpp"
+#include "AST.hpp"
 
 IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootBlock) 
     : m_root(rootBlock.get())
@@ -95,7 +96,6 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
         (const char*)(m_name.c_str())
     );
     llvmStructs.namedValues[(const char*)(m_name.c_str())] = globalVariable;
-    m_isGlobal = true;
     return globalVariable;
 }
 
@@ -124,7 +124,11 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     if(m_op == u8"=") {
        auto insertBlock = llvmStructs.builder->GetInsertBlock();
         if (insertBlock != nullptr) {
-            llvmStructs.builder->CreateStore(right, left); // because left is a variable
+            // if it's a pointer, copy value of it
+            if (right->getType()->isPointerTy()) {
+                right = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), right, "loadtmp");
+            }
+            llvmStructs.builder->CreateStore(right, left); // switched, because left is a variable
             return nullptr;
         }
         // it must be a global assigment
@@ -135,6 +139,7 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     }
 
     // Load variables to registers
+    // TODO(Vlad): what if I want to compare two chars, or check if a bool is true
     if (left->getType()->isPointerTy()) {
         left = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), left, "loadtmp");
     }
@@ -368,3 +373,59 @@ Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
     return nullptr;
 }
 
+// TODO(Vlad): it is identical to VariableDeclaration, except type...
+Value* ArrayAST::codegen(LLVMStructs& llvmStructs) {
+    Type* type = getVariableType(m_type, llvmStructs, false);
+    // get scope
+    auto insertBlock = llvmStructs.builder->GetInsertBlock();
+    if (insertBlock != nullptr) {
+        // it's a stack allocated variable
+        Function* theFunction = insertBlock->getParent();
+        IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
+        // stack allocation
+        AllocaInst* alloca = tmpB.CreateAlloca(
+            ArrayType::get(type, m_size), nullptr, (const char*)(m_name.c_str())
+        );
+        // store name in name table
+        llvmStructs.namedValues[(const char*)(m_name.c_str())] = alloca;
+        return alloca;
+    }
+    // it's a global variable
+    // NOTE(Vlad): why the hell it's "new", do I have to delete it?
+
+    GlobalVariable* globalVariable = new GlobalVariable(
+        *llvmStructs.theModule, 
+        type, 
+        false, 
+        GlobalValue::WeakAnyLinkage, 
+        ConstantPointerNull::get(PointerType::get(ArrayType::get(type, m_size), 0)), 
+        (const char*)(m_name.c_str())
+    );
+    llvmStructs.namedValues[(const char*)(m_name.c_str())] = globalVariable;
+    return globalVariable;
+}
+
+Value* AccessArrayElementAST::codegen(LLVMStructs& llvmStructs) {
+    Value* value = llvmStructs.namedValues[(const char*)m_name.c_str()];
+    if (!value) {
+        value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+    }
+    if (!value) {
+        std::cerr << RED << "Error: Unknown array variable name: " << (const char*)(m_name.c_str()) << RESET << std::endl;
+        return nullptr;
+    }
+    // TODO(Vlad): Determine type of the values inside array
+
+    Value* index = m_index->codegen(llvmStructs);
+    if (index->getType()->isPointerTy()) {
+        index = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), index, "loadtmp");
+    }
+    Value* zero = ConstantInt::get(Type::getInt32Ty(*(llvmStructs.theContext)), APInt(32, 0, true));
+
+    return llvmStructs.builder->CreateInBoundsGEP(
+        ArrayType::get(Type::getInt8Ty(*(llvmStructs.theContext)), 5),
+        value,
+        {zero, index}, 
+        "arrIdx"
+    );
+}

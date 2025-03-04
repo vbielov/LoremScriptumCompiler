@@ -1,29 +1,14 @@
-numerus puts = apere(litera str) 
-
-nihil printYes = λ():
-    litera a = 'Y'
-    litera b = 'e'
-    litera c = 's'
-    litera d = '\n'
-    numerus e = O
-    puts(a)
-;
-
-nihil printNo = λ():
-    litera a = 'N'
-    litera b = 'o'
-    numerus c = O
-    puts(a)
-;
+numerus puts = apere(litera str)
 
 numerus main = λ():
-    ∑(numerus i = O, i < X, i = i + I):
-        si(i < V):
-            printYes()
-        ;
-        ni:
-            printNo()
-        ;
-    ;
+    numerus terminator = O
+    litera[V] helloWorld
+    numerus terminator2 = O
+    helloWorld[O] = 'H'
+    helloWorld[I] = 'e'
+    helloWorld[II] = 'l'
+    helloWorld[III] = helloWorld[II] 
+    helloWorld[IV] = 'o'
+    puts(helloWorld)
     retro O 
 ;

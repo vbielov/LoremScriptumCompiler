@@ -12,6 +12,8 @@ inline static const std::vector<std::u8string> PUNCTUATION = {
     u8":",
     u8";",
     u8",",
+    u8"[",
+    u8"]"
 };
 
 inline static const std::vector<std::u8string> KEYWORDS = {

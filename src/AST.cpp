@@ -15,8 +15,7 @@ CharAST::CharAST(char8_t character)
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
     : m_type(type)
-    , m_name(name)
-    , m_isGlobal(false) {}
+    , m_name(name) {}
 
 const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
@@ -26,11 +25,7 @@ const std::u8string &VariableDeclarationAST::getType() const {
     return m_type;
 }
 
-bool VariableDeclarationAST::isGlobal() const {
-    return m_isGlobal;
-}
-
-VariableReferenceAST::VariableReferenceAST(const std::u8string &name)
+VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
     : m_name(std::move(name)) {}
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
@@ -69,13 +64,23 @@ IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::uni
 
 BreakAST::BreakAST() {}
 
-LoopAST::LoopAST(std::unique_ptr<BlockAST> body) : m_body(std::move(body)) {}
+LoopAST::LoopAST(std::unique_ptr<BlockAST> body) 
+    : m_body(std::move(body)) {}
+
+ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int size)
+    : m_type(type)
+    , m_name(name)
+    , m_size(size) {}
+
+AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
+    : m_name(name)
+    , m_index(std::move(index)) {}
 
 //===----------------------------------------------------------------------===//
 // Printing AST Tree
 //===----------------------------------------------------------------------===//
 
-void printIndent(std::ostream& ostr, const std::string &indent, bool isLast) {
+void printIndent(std::ostream& ostr, const std::string& indent, bool isLast) {
     ostr << indent;
     if (isLast) {
         ostr << "└── ";
@@ -131,7 +136,7 @@ void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool 
     }
 }
 
-void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string &indent, bool isLast) const {
+void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     ostr << "FunctionPrototypeAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 
@@ -158,7 +163,7 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     }
 }
 
-void BreakAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
+void BreakAST::printTree(std::ostream &ostr, const std::string& indent, bool isLast) const
 {
     printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
@@ -179,4 +184,14 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     ostr << "LoopAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     m_body->printTree(ostr, newIndent, true);
+}
+
+void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "ArrayAST(" << (const char*)(m_type.c_str()) << "[" << m_size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
+}
+
+void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "AccessArrayElement(" << std::string(m_name.begin(), m_name.end()) << "[" << m_index << "])" << std::endl;
 }

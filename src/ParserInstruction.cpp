@@ -17,6 +17,8 @@ std::unique_ptr<AST> Parser::parseInstruction() {
     if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
         getNextToken();
+
+        if (isToken(TokenType::PUNCTUATION, u8"[")) return parseInstructionArrayAssignment(identifier);
         if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
         if (isToken(TokenType::OPERATOR, u8"=")) return parseInstructionAssignment(identifier);
     }
@@ -45,6 +47,35 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
     return std::make_unique<BinaryOperatorAST>(u8"=", std::move(reference), std::move(expression));
 }
 
+// the same as above, but for arrays, current token is '['
+std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string& identifier)
+{
+    getNextToken(); // eat '['
+    
+    std::unique_ptr<AST> index = parseExpression();
+    if (!index) {
+        printError("Expected index for indexing array");
+        return nullptr;
+    }
+
+    if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+        printError("Expected ']' after array indexing");
+        return nullptr;
+    }
+    getNextToken(); // eat ']'
+
+    if (!isToken(TokenType::OPERATOR, u8"=")) {
+        printError("Why would you just access an array?, assign something to it!");
+        return nullptr;
+    }
+    getNextToken(); // eat '='
+    
+    std::unique_ptr<AST> expression = parseExpression();
+    if (expression == nullptr) return nullptr;
+    
+    std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
+    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(arrReference), std::move(expression));
+}
 
 /**
  * A Declaration can be just init or init and assign. It can also be a function declaration
@@ -61,23 +92,49 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     auto type = m_currentToken.value;
 
     getNextToken();
-    if (!isToken(TokenType::IDENTIFIER)) return nullptr;
 
-    auto identifier = m_currentToken.value;
-
-    getNextToken();
-    if (isToken(TokenType::NEW_LINE)) {
-        return std::make_unique<VariableDeclarationAST>(type, identifier);
+    bool isArray = false;
+    int arrSize = 0;
+    if (isToken(TokenType::PUNCTUATION, u8"[")) {
+        // it's array declaration
+        isArray = true;
+        getNextToken(); // eat '['
+        if (!isToken(TokenType::NUMBER)) {
+            printError("Expected number after [ for array declaration");
+            return nullptr; 
+        }
+        toArabicConverter(m_currentToken.value, &arrSize);
+        getNextToken(); // eat number
+        if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+            printError("Expected ']' in array declaration");
+            return nullptr;
+        }
+        getNextToken(); // eat ]
     }
 
+    if (!isToken(TokenType::IDENTIFIER)) return nullptr;
+    auto identifier = m_currentToken.value;
+    
+    getNextToken();
+    if (isToken(TokenType::NEW_LINE)) {
+        if (isArray) {
+            return std::make_unique<ArrayAST>(type, identifier, arrSize);
+        }
+        return std::make_unique<VariableDeclarationAST>(type, identifier);
+    }
+    
     if (!isToken(TokenType::OPERATOR, u8"=")) return nullptr;
-
+    
     getNextToken();
     if (isToken(TokenType::KEYWORD, u8"λ")) {
         return parseInstructionFunction(type, identifier);
     } else if (isToken(TokenType::KEYWORD, u8"apere")) {
         getNextToken(); // eat apere
         return parseInstructionPrototype(type, identifier);
+    } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
+        // TODO: Array initialization
+        printError("Array initialization is not implemented");
+        return nullptr;
     }
     
     auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
@@ -100,7 +157,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier) {
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<VariableDeclarationAST>> args;
-    while (!isToken(TokenType::PUNCTUATION, u8")")) {
+    while (!isToken(TokenType::PUNCTUATION, u8")") && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) return nullptr;
         auto type = m_currentToken.value;
 
@@ -113,7 +170,6 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
-            if (isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
             continue;
         }
         if (isToken(TokenType::PUNCTUATION, u8")")) {
