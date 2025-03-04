@@ -9,6 +9,8 @@
  *      - numerus var = I
  *      - var = I
  *      - func()
+ *      - var++
+ *      - var--
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
     if (isToken(TokenType::TYPE)) {
@@ -19,6 +21,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
         if (isToken(TokenType::OPERATOR, u8"=")) return parseInstructionAssignment(identifier);
+        if (isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-")) return parseInstructionIncrement(identifier);
     }
     return nullptr;
 }
@@ -45,6 +48,29 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
     return std::make_unique<BinaryOperatorAST>(u8"=", std::move(reference), std::move(expression));
 }
 
+
+/**
+ * An Increment instruction is a shorthand version of var = var -/+ 1
+ * 
+ * currentToken is at second token of assignment. It is always '+' OR '-'
+ * 
+ * Examples:
+ *      - var++
+ *      - var--
+ *           ^ we are always here
+ */
+std::unique_ptr<AST> Parser::parseInstructionIncrement(const std::u8string& identifier) {
+    auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
+    auto assign = *BINARY_OPERATION_PRIORITY.find(u8"=");
+
+    getNextToken();
+    if (!isToken(TokenType::OPERATOR) || op.first != m_currentToken.value) return nullptr;
+
+    getNextToken();
+
+    std::unique_ptr<AST> pseudoIncrement = std::make_unique<BinaryOperatorAST>(op.first, std::make_unique<VariableReferenceAST>(identifier), std::make_unique<NumberAST>(1));
+    return std::make_unique<BinaryOperatorAST>(assign.first, std::make_unique<VariableReferenceAST>(identifier), std::move(pseudoIncrement));
+}
 
 /**
  * A Declaration can be just init or init and assign. It can also be a function declaration

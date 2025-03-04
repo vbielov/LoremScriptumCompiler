@@ -80,8 +80,9 @@ class Parser {
 
     // --- Instruction section ---
     std::unique_ptr<AST> parseInstruction();
-    std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionDeclaration();
+    std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
+    std::unique_ptr<AST> parseInstructionIncrement(const std::u8string& identifier);
 
     std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier);
     std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& type, const std::u8string& identifier);

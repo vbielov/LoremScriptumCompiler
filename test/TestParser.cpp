@@ -168,34 +168,6 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
     )
 ));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testing::Values(
     u8"var = func(I,)",
     u8"var = ()",
@@ -395,6 +367,24 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentValid, TestParserValid, ::testing::
         "            └── BinaryOperatorAST('+')\n"
         "                ├── NumberAST(3)\n"
         "                └── NumberAST(4)\n"
+    ),
+    std::make_pair(
+        u8"id++",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(id)\n"
+        "        └── BinaryOperatorAST('+')\n"
+        "            ├── VariableReferenceAST(id)\n"
+        "            └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"id--",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(id)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── VariableReferenceAST(id)\n"
+        "            └── NumberAST(1)\n"
     )
 ));
 
@@ -419,7 +409,10 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var = I + \n I",
     u8"var = numerus",
     u8"var = si I == I: ;",
-    u8"var = finio"
+    u8"var+++",
+    u8"var---",
+    u8"var**",
+    u8"var++var = I"
 ));
 
 // --- Function call section ---
@@ -671,6 +664,24 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingValid, TestParserValid, ::testing::Val
     ),
     std::make_pair(
         u8"∑(i > V, i = i + I): ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            ├── IfAST\n"
+        "            │   ├── BinaryOperatorAST('>')\n"
+        "            │   │   ├── VariableReferenceAST(i)\n"
+        "            │   │   └── NumberAST(5)\n"
+        "            │   ├── BlockAST\n"
+        "            │   └── BlockAST\n"
+        "            │       └── BreakAST\n"
+        "            └── BinaryOperatorAST('=')\n"
+        "                ├── VariableReferenceAST(i)\n"
+        "                └── BinaryOperatorAST('+')\n"
+        "                    ├── VariableReferenceAST(i)\n"
+        "                    └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"∑(i > V, i++): ;",
         "└── BlockAST\n"
         "    └── LoopAST\n"
         "        └── BlockAST\n"
