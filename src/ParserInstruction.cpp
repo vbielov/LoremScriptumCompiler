@@ -20,8 +20,10 @@ std::unique_ptr<AST> Parser::parseInstruction() {
         auto identifier = m_currentToken.value;
         getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
-        if (isToken(TokenType::OPERATOR, u8"=")) return parseInstructionAssignment(identifier);
-        if (isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-")) return parseInstructionIncrement(identifier);
+        if (isToken(TokenType::OPERATOR)) {
+            if (isToken(u8"=")) return parseInstructionAssignment(identifier);
+            else return parseInstructionShorthand(identifier);
+        }
     }
     return nullptr;
 }
@@ -52,24 +54,38 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
 /**
  * An Increment instruction is a shorthand version of var = var -/+ 1
  * 
- * currentToken is at second token of assignment. It is always '+' OR '-'
+ * currentToken is at second token of assignment. It is always Operator but not '='
  * 
  * Examples:
  *      - var++
  *      - var--
+ *      - var-= I
+ *      - var*= I
  *           ^ we are always here
  */
-std::unique_ptr<AST> Parser::parseInstructionIncrement(const std::u8string& identifier) {
+std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
+    if (!isToken(u8"+") && !isToken(u8"-") && !isToken(u8"*") && !isToken(u8"/") && !isToken(u8"^")) return nullptr;
+
     auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
     auto assign = *BINARY_OPERATION_PRIORITY.find(u8"=");
 
     getNextToken();
-    if (!isToken(TokenType::OPERATOR) || op.first != m_currentToken.value) return nullptr;
+    if (!isToken(TokenType::OPERATOR)) return nullptr;
 
-    getNextToken();
+    std::unique_ptr<AST> expression;
+    if (op.first == m_currentToken.value && (op.first == u8"+" || op.first == u8"-")) {
+        // var++ or var--
+        getNextToken();
+        expression = std::make_unique<NumberAST>(1);
+    } else if (isToken(TokenType::OPERATOR, u8"=")) {
 
-    std::unique_ptr<AST> pseudoIncrement = std::make_unique<BinaryOperatorAST>(op.first, std::make_unique<VariableReferenceAST>(identifier), std::make_unique<NumberAST>(1));
-    return std::make_unique<BinaryOperatorAST>(assign.first, std::make_unique<VariableReferenceAST>(identifier), std::move(pseudoIncrement));
+        // var -= I
+        getNextToken();
+        expression = parseExpression();
+    } else return nullptr;
+
+    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(op.first, std::make_unique<VariableReferenceAST>(identifier), std::move(expression));
+    return std::make_unique<BinaryOperatorAST>(assign.first, std::make_unique<VariableReferenceAST>(identifier), std::move(rhs));
 }
 
 /**

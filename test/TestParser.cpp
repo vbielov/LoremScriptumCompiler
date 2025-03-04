@@ -385,6 +385,24 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentValid, TestParserValid, ::testing::
         "        └── BinaryOperatorAST('-')\n"
         "            ├── VariableReferenceAST(id)\n"
         "            └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"var -= X",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── VariableReferenceAST(var)\n"
+        "            └── NumberAST(10)\n"
+    ),
+    std::make_pair(
+        u8"var *= X",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('*')\n"
+        "            ├── VariableReferenceAST(var)\n"
+        "            └── NumberAST(10)\n"
     )
 ));
 
@@ -401,7 +419,6 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var (= I)",
     u8"var := I",
     u8"var := I;",
-    u8"var -= X",
     u8"var X",
     u8"var (X",
     u8"var = \n I",
@@ -412,7 +429,8 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var+++",
     u8"var---",
     u8"var**",
-    u8"var++var = I"
+    u8"var++var = I",
+    u8"var == var"
 ));
 
 // --- Function call section ---
