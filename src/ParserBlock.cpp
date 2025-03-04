@@ -18,7 +18,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     getNextToken(); // eat ':', or if it's a first block in the tree, read first token
     while (!isFinishedBlock()) {
-        if (isToken(TokenType::NEW_LINE) || isToken(TokenType::COMMENT)) {
+        if (isToken(TokenType::NEW_LINE)) {
             getNextToken();
             continue;
         }
