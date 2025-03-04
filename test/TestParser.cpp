@@ -156,8 +156,44 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
         "            │   ├── NumberAST(1)\n"
         "            │   └── NumberAST(2)\n"
         "            └── NumberAST(3)\n"
+    ),
+    std::make_pair(
+        u8"var = -var",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── NumberAST(0)\n"
+        "            └── VariableReferenceAST(var)\n"
     )
 ));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testing::Values(
@@ -196,7 +232,11 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testi
     u8"var = func() = X",
     u8"var = (var = I)",
     u8"var = (var = I) + I",
-    u8"var = I + (var = I)"
+    u8"var = I + (var = I)",
+    u8"var = ++var",
+    u8"var = var++",
+    u8"var = --var",
+    u8"var = var--"
 ));
 
 // --- Declaration section ---

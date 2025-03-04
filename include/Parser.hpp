@@ -67,6 +67,7 @@ class Parser {
     bool isToken(TokenType type);
     bool isToken(TokenType type, std::u8string value);
     bool isToken(std::u8string value);
+    bool isUnaryOperator();
 
     void printError(std::string error);
     void printUnknownTokenError();

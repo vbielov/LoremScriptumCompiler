@@ -46,5 +46,5 @@ INSTANTIATE_TEST_SUITE_P(TestParserDebugValid, TestParserDebugValid, ::testing::
 ));
 
 INSTANTIATE_TEST_SUITE_P(TestParserDebugInvalid, TestParserDebugInvalid, ::testing::Values(
-    u8"nihil foo = λ(numerus id,: ;"
+    u8"var = var++"
 ));

@@ -40,6 +40,10 @@ bool Parser::isToken(TokenType type, std::u8string value) {
     return m_currentToken.type == type && m_currentToken.value == value;
 }
 
+bool Parser::isUnaryOperator() {
+    return isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-") || isToken(TokenType::OPERATOR, u8"¬");
+}
+
 void Parser::printUnknownTokenError() {
     if (m_isTest) return;
     std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)]

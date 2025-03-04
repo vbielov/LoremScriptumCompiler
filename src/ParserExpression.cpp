@@ -58,6 +58,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
 
 /**
  * A single Expression is a value without using operators that need two values (e.g. addition)
+ * Can also be with unary operators, but only single. (vaid: -var   invalid: --var)
  *
  * currentToken is at first token of single expression.
  *
@@ -66,7 +67,8 @@ std::unique_ptr<AST> Parser::parseExpression() {
  *    - func()
  *    - -I
  *    - +var
- *    - ---var
+ *    - -var
+ *    - ¬bool
  *    - (I + II *IV)
  *
  * Trick of sign number -I -> 0 - I
@@ -75,15 +77,22 @@ std::unique_ptr<AST> Parser::parseExpression() {
 std::unique_ptr<AST> Parser::parseExpressionSingle() {
     std::unique_ptr<AST> value;
 
-    if (isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-")) {
+    if (isUnaryOperator()) {
         auto sign = m_currentToken.value;
 
         getNextToken();
+        if (isUnaryOperator()) return nullptr;
         value = parseExpressionSingle();
+        if (value == nullptr) return nullptr;
 
-        // TODO: Create a UnaryOperatorAST
-        auto lhs = std::make_unique<NumberAST>(0);
-        return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
+        if (sign == u8"+" || sign == u8"-") {
+            auto lhs = std::make_unique<NumberAST>(0);
+            return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
+        } else if (sign == u8"¬"){
+            // TODO: Add BoolAST
+            return nullptr;
+        }
+        return nullptr;
     }
 
     if (isToken(TokenType::NUMBER)) {
