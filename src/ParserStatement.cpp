@@ -39,6 +39,8 @@ std::unique_ptr<AST> Parser::parseStatementFlow() {
             return nullptr;
         }
 
+        getNextToken();
+        
         return std::make_unique<BreakAST>();
     }
 
@@ -71,6 +73,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     auto condition = parseExpression();
     if (condition == nullptr) return nullptr;
 
+    while (isToken(TokenType::NEW_LINE)) getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     auto ifBlock = parseBlock();
     if (ifBlock == nullptr) return nullptr;
@@ -88,13 +91,13 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     } else if (isToken(TokenType::KEYWORD, u8"ni")) {
         getNextToken();
 
+        while (isToken(TokenType::NEW_LINE)) getNextToken();
         if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
         elseBlock = parseBlock();
         if (elseBlock == nullptr) return nullptr;
-    } else if (!isToken(TokenType::NEW_LINE)) {
-        elseBlock = std::make_unique<BlockAST>(std::vector<std::unique_ptr<AST>>());
     } else {
-        return nullptr; 
+        auto emptyInstructions = std::vector<std::unique_ptr<AST>>();
+        elseBlock = std::make_unique<BlockAST>(std::move(emptyInstructions));
     }
 
     return std::make_unique<IfAST>(std::move(condition), std::move(ifBlock), std::move(elseBlock));
@@ -145,6 +148,7 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     }
 
     getNextToken();
+    while (isToken(TokenType::NEW_LINE)) getNextToken();
     if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
     m_loopCount++;
     auto loopBlock = parseBlock();

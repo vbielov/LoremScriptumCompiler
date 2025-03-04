@@ -695,6 +695,26 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingValid, TestParserValid, ::testing::Val
         "                    └── BinaryOperatorAST('+')\n"
         "                        ├── VariableReferenceAST(i)\n"
         "                        └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"∑(): finio ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            └── BreakAST\n"
+    ),
+    std::make_pair(
+        u8"∑(): si I == II: finio ; ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            └── IfAST\n"
+        "                ├── BinaryOperatorAST('==')\n"
+        "                │   ├── NumberAST(1)\n"
+        "                │   └── NumberAST(2)\n"
+        "                ├── BlockAST\n"
+        "                │   └── BreakAST\n"
+        "                └── BlockAST\n"
     )
 ));
 
