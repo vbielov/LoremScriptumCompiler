@@ -1,8 +1,8 @@
 numerus puts = apere(litera str)
 
 numerus main = λ():
+litera[V] helloWorld
     numerus terminator = O
-    litera[V] helloWorld
     numerus terminator2 = O
     helloWorld[O] = 'H'
     helloWorld[I] = 'e'

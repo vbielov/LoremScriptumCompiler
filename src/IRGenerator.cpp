@@ -7,7 +7,7 @@ IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootB
         std::make_unique<LLVMContext>(),
         std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
         std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext),
-        std::map<std::string, Value*>(),
+        std::map<std::u8string, NameTableEntry>(),
         {}
     } {}
 
@@ -26,27 +26,15 @@ std::string IRGenerator::getIRCodeString() {
     return outStream.str();
 }
 
-Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs, bool isPointer) {
-    if (!isPointer) {
-        if (typeStr == u8"numerus") {
-            return Type::getInt32Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"litera") {
-            return Type::getInt8Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"nihil") {
-            return Type::getVoidTy(*(llvmStructs.theContext));
-        } else if (typeStr == u8"asertio") {
-            return Type::getInt1Ty(*(llvmStructs.theContext));
-        }
-    } else {
-        if (typeStr == u8"numerus") {
-            return PointerType::getInt32Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"litera") {
-            return PointerType::getInt8Ty(*(llvmStructs.theContext));
-        } else if (typeStr == u8"nihil") {
-            return PointerType::getVoidTy(*(llvmStructs.theContext));
-        } else if (typeStr == u8"asertio") {
-            return PointerType::getInt1Ty(*(llvmStructs.theContext));
-        }
+Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs) {
+    if (typeStr == u8"numerus") {
+        return Type::getInt32Ty(*(llvmStructs.theContext));
+    } else if (typeStr == u8"litera") {
+        return Type::getInt8Ty(*(llvmStructs.theContext));
+    } else if (typeStr == u8"nihil") {
+        return Type::getVoidTy(*(llvmStructs.theContext));
+    } else if (typeStr == u8"asertio") {
+        return Type::getInt1Ty(*(llvmStructs.theContext));
     }
     return nullptr;
 }
@@ -70,7 +58,7 @@ Value* CharAST::codegen(LLVMStructs& llvmStructs) {
 }
 
 Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
-    Type* type = getVariableType(m_type, llvmStructs, false);
+    Type* type = getVariableType(m_type, llvmStructs);
     // get scope
     auto insertBlock = llvmStructs.builder->GetInsertBlock();
     if (insertBlock != nullptr) {
@@ -82,7 +70,10 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
             type, nullptr, (const char*)(m_name.c_str())
         );
         // store name in name table
-        llvmStructs.namedValues[(const char*)(m_name.c_str())] = alloca;
+        llvmStructs.namedValues[m_name] = {
+            .value = alloca,
+            .type = type
+        };
         return alloca;
     }
     // it's a global variable
@@ -95,13 +86,19 @@ Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
         ConstantPointerNull::get(PointerType::get(type, 0)), 
         (const char*)(m_name.c_str())
     );
-    llvmStructs.namedValues[(const char*)(m_name.c_str())] = globalVariable;
+    llvmStructs.namedValues[m_name] = {
+        .value = globalVariable,
+        .type = type
+    };
     return globalVariable;
 }
 
 Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
-    Value* value = llvmStructs.namedValues[(const char*)m_name.c_str()];
-    if (!value) {
+    Value* value;
+    auto iter = llvmStructs.namedValues.find(m_name);
+    if (iter != llvmStructs.namedValues.end()) {
+        value = iter->second.value;
+    } else {
         value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
     }
     if (!value) {
@@ -191,7 +188,7 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
         return nullptr;
     }
 
-    // TODO: Check if types are right
+    // TODO(Vlad): Check if types are right
 
     std::vector<Value*> argsV;
     for (auto& arg : m_args) {
@@ -201,8 +198,6 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
             Function* theFunction = llvmStructs.builder->GetInsertBlock()->getParent();
             IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
             AllocaInst* alloca = tmpB.CreateAlloca(value->getType(), nullptr, "tempVar");
-            llvmStructs.namedValues["tempVar"] = alloca;
-
             llvmStructs.builder->CreateStore(value, alloca);
             value = alloca;
         }
@@ -225,10 +220,10 @@ Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {
     std::vector<Type*> argTypes;
     argTypes.reserve(m_args.size());
     for (const auto& arg : m_args) {
-        argTypes.push_back(PointerType::get(getVariableType(arg->getType(), llvmStructs, false), 0));
+        argTypes.push_back(PointerType::get(getVariableType(arg->getType(), llvmStructs), 0));
     }     
 
-    FunctionType* funcType = FunctionType::get(getVariableType(m_returnType, llvmStructs, false), argTypes, false);
+    FunctionType* funcType = FunctionType::get(getVariableType(m_returnType, llvmStructs), argTypes, false);
     Function* func = Function::Create(funcType, Function::ExternalLinkage, (const char*)m_name.c_str(), llvmStructs.theModule.get());
  
     int index = 0;
@@ -263,8 +258,14 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
     // Record the function arguments in the namedValues map
     llvmStructs.namedValues.clear();
+    int i = 0;
     for (auto& arg : func->args()) {
-        llvmStructs.namedValues[std::string(arg.getName())] = &arg;
+        const std::u8string typeStr = m_prototype->getArgs()[i++]->getType();
+        Type* type = getVariableType(typeStr, llvmStructs);
+        llvmStructs.namedValues[std::u8string(arg.getName().begin(), arg.getName().end())] = {
+            .value = &arg,
+            .type = type
+        };
     }
 
     m_body->codegen(llvmStructs);
@@ -375,7 +376,7 @@ Value* LoopAST::codegen(LLVMStructs& llvmStructs) {
 
 // TODO(Vlad): it is identical to VariableDeclaration, except type...
 Value* ArrayAST::codegen(LLVMStructs& llvmStructs) {
-    Type* type = getVariableType(m_type, llvmStructs, false);
+    Type* type = getVariableType(m_type, llvmStructs);
     // get scope
     auto insertBlock = llvmStructs.builder->GetInsertBlock();
     if (insertBlock != nullptr) {
@@ -387,7 +388,10 @@ Value* ArrayAST::codegen(LLVMStructs& llvmStructs) {
             ArrayType::get(type, m_size), nullptr, (const char*)(m_name.c_str())
         );
         // store name in name table
-        llvmStructs.namedValues[(const char*)(m_name.c_str())] = alloca;
+        llvmStructs.namedValues[m_name] = {
+            .value = alloca,
+            .type = type,
+        };
         return alloca;
     }
     // it's a global variable
@@ -395,36 +399,57 @@ Value* ArrayAST::codegen(LLVMStructs& llvmStructs) {
 
     GlobalVariable* globalVariable = new GlobalVariable(
         *llvmStructs.theModule, 
-        type, 
+        ArrayType::get(type, m_size), 
         false, 
         GlobalValue::WeakAnyLinkage, 
         ConstantPointerNull::get(PointerType::get(ArrayType::get(type, m_size), 0)), 
         (const char*)(m_name.c_str())
     );
-    llvmStructs.namedValues[(const char*)(m_name.c_str())] = globalVariable;
+    llvmStructs.namedValues[m_name] = {
+        .value = globalVariable,
+        .type = type
+    };
     return globalVariable;
 }
 
 Value* AccessArrayElementAST::codegen(LLVMStructs& llvmStructs) {
-    Value* value = llvmStructs.namedValues[(const char*)m_name.c_str()];
-    if (!value) {
-        value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+    Value* arrPtr = nullptr;
+    uint64_t arrSize = 0;
+    Type* arrType = nullptr;
+
+    auto iter = llvmStructs.namedValues.find(m_name);
+    if (iter != llvmStructs.namedValues.end()) {
+        arrPtr = iter->second.value;
+        arrType = iter->second.type;
+        AllocaInst* stackArr = dyn_cast<AllocaInst>(arrPtr);
+        Type* tempType = stackArr->getAllocatedType();
+        ArrayType* tempType1 = dyn_cast<ArrayType>(tempType);
+        arrSize = tempType1->getNumElements();
+    } else {
+        arrPtr = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+        if (GlobalVariable* globalArr = dyn_cast<GlobalVariable>(arrPtr)) {
+            Type* tempType = globalArr->getValueType();
+            ArrayType* tempType1 = dyn_cast<ArrayType>(tempType);
+            arrSize = tempType1->getNumElements();
+            arrType = tempType1->getElementType();
+        } else {
+            arrPtr = nullptr;
+        }
     }
-    if (!value) {
+
+    if (!arrPtr) {
         std::cerr << RED << "Error: Unknown array variable name: " << (const char*)(m_name.c_str()) << RESET << std::endl;
         return nullptr;
     }
-    // TODO(Vlad): Determine type of the values inside array
 
     Value* index = m_index->codegen(llvmStructs);
     if (index->getType()->isPointerTy()) {
         index = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), index, "loadtmp");
     }
     Value* zero = ConstantInt::get(Type::getInt32Ty(*(llvmStructs.theContext)), APInt(32, 0, true));
-
     return llvmStructs.builder->CreateInBoundsGEP(
-        ArrayType::get(Type::getInt8Ty(*(llvmStructs.theContext)), 5),
-        value,
+        ArrayType::get(arrType, arrSize),
+        arrPtr,
         {zero, index}, 
         "arrIdx"
     );

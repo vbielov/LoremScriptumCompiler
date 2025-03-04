@@ -111,6 +111,7 @@ public:
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
     const std::u8string& getName() const;
     const std::u8string& getReturnType() const;
+    const std::vector<std::unique_ptr<VariableDeclarationAST>>& getArgs() const;
 };
 
 

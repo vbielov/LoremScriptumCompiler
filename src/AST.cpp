@@ -50,6 +50,10 @@ const std::u8string& FunctionPrototypeAST::getReturnType() const {
     return m_returnType;
 }
 
+const std::vector<std::unique_ptr<VariableDeclarationAST>>& FunctionPrototypeAST::getArgs() const {
+    return m_args;
+}
+
 FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body)
     : m_prototype(std::move(prototype))
     , m_body(std::move(body)) {}

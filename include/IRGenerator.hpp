@@ -1,6 +1,8 @@
 #pragma once
 #include "AST.hpp"
 
+Type* getVariableType(const std::u8string& typeStr, const LLVMStructs& llvmStructs);
+
 /// @brief Transforms Abstract syntax tree in Intermediate Representation of LLVM
 class IRGenerator {
 private:

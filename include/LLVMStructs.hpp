@@ -16,10 +16,15 @@
 
 using namespace llvm;
 
+struct NameTableEntry {
+    Value* value;
+    Type* type; // that's always an element type, of array/pointer
+};
+
 struct LLVMStructs {
     std::unique_ptr<LLVMContext> theContext;
     std::unique_ptr<Module> theModule;
     std::unique_ptr<IRBuilder<>> builder;
-    std::map<std::string, Value*> namedValues;
+    std::map<std::u8string, NameTableEntry> namedValues;
     std::stack<BasicBlock*> afterLoop;
 };
