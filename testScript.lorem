@@ -1,7 +1,12 @@
 numerus puts = apere(litera str)
 
+nihil changeArr = λ(litera[VI] arr):
+    arr[II] = 'i'
+;
+
 numerus main = λ():
     litera[VI] helloWorld = ['H', 'e', 'l', 'l', 'o', '\0']
+    changeArr(helloWorld)
     puts(helloWorld)
     retro O 
 ;

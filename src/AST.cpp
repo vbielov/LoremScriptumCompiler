@@ -4,14 +4,37 @@
 // AST
 //===----------------------------------------------------------------------===//
 
+const std::u8string& AST::getName() const {
+    assert(false && "This AST can't have a name.");
+    static std::u8string ilegal = u8"ilegal";
+    return ilegal;
+}
+
+Type* AST::getType(LLVMStructs& llvmStructs) const {
+    return this->getElementType(llvmStructs);
+}
+
+Type* AST::getElementType([[maybe_unused]] LLVMStructs& llvmStructs) const {
+    assert(false && "This AST can't have a type.");
+    return nullptr;
+}
+
 BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions)
     : m_instructions(std::move(instructions)) {}
 
 NumberAST::NumberAST(int value) 
     : m_value(value) {}
 
+Type* NumberAST::getElementType(LLVMStructs& llvmStructs) const {
+    return Type::getInt32Ty(*(llvmStructs.theContext));
+}
+
 CharAST::CharAST(char8_t character) 
     : m_char(character) {}
+
+Type* CharAST::getElementType(LLVMStructs& llvmStructs) const {
+    return Type::getInt8Ty(*(llvmStructs.theContext));
+}
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
     : m_type(type)
@@ -21,8 +44,12 @@ const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
 }
 
-const std::u8string &VariableDeclarationAST::getType() const {
-    return m_type;
+Type* VariableDeclarationAST::getType(LLVMStructs& LLVMStructs) const {
+    return ;
+}
+
+Type* VariableDeclarationAST::getElementType(LLVMStructs& llvmStructs) const {
+    return nullptr;
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
@@ -48,10 +75,6 @@ FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& returnType, cons
 
 const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
-}
-
-const std::u8string& FunctionPrototypeAST::getReturnType() const {
-    return m_returnType;
 }
 
 const std::vector<std::unique_ptr<VariableDeclarationAST>>& FunctionPrototypeAST::getArgs() const {
@@ -85,6 +108,10 @@ ArrayAST::ArrayAST(const std::u8string &type, const std::u8string &name, int siz
     , m_name(name)
     , m_size(size)
     , m_arrElements(std::move(arrElements)) {}
+
+const std::u8string& ArrayAST::getName() const {
+    return m_name;
+}
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
     : m_name(name)
