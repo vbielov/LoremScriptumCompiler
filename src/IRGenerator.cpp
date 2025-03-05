@@ -392,6 +392,14 @@ Value* ArrayAST::codegen(LLVMStructs& llvmStructs) {
             .value = alloca,
             .type = type,
         };
+
+        for (size_t i = 0; i < m_arrElements.size(); i++) {
+            auto arrReference = std::make_unique<AccessArrayElementAST>(m_name, std::make_unique<NumberAST>((int)i));
+            auto assign = std::make_unique<BinaryOperatorAST>(u8"=", std::move(arrReference), std::move(m_arrElements[i]));
+            assign->codegen(llvmStructs);
+        }
+        m_arrElements.clear(); // it's not valid anymore, because I have moved pointers and they should have been cleaned.
+
         return alloca;
     }
     // it's a global variable

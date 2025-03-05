@@ -98,6 +98,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (isToken(TokenType::PUNCTUATION, u8"[")) {
         // it's array declaration
         isArray = true;
+        // TODO(Vlad): maybe thats can be a more then a number?
         getNextToken(); // eat '['
         if (!isToken(TokenType::NUMBER)) {
             printError("Expected number after [ for array declaration");
@@ -132,9 +133,26 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         getNextToken(); // eat apere
         return parseInstructionPrototype(type, identifier);
     } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
-        // TODO: Array initialization
-        printError("Array initialization is not implemented");
-        return nullptr;
+        getNextToken(); // eat '['
+        std::vector<std::unique_ptr<AST>> elements;
+        while (!isToken(TokenType::PUNCTUATION, u8"]") && !isToken(TokenType::EOF_TOKEN)) {
+            std::unique_ptr<AST> element = parseExpression();
+            elements.push_back(std::move(element));
+            if (!elements.back() || isToken(TokenType::EOF_TOKEN)) {
+                printError("Error when parsing elements of array initialization");
+                return nullptr;
+            }
+            if (isToken(TokenType::PUNCTUATION, u8",")) {
+                getNextToken(); // eat ','
+            }
+        }
+        if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+            printError("Expected ] in array initalization");
+            return nullptr;
+        }
+        getNextToken(); // eat ']'
+
+        return std::make_unique<ArrayAST>(type, identifier, arrSize, std::move(elements));
     }
     
     auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);

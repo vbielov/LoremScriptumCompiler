@@ -92,7 +92,13 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         value = std::make_unique<NumberAST>(intValue);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
-        value = std::make_unique<CharAST>(m_currentToken.value[0]);  // TODO: is this correct?
+        char letter = m_currentToken.value[0];
+        if(m_currentToken.value == u8"\\0") letter = '\0';
+        if(m_currentToken.value == u8"\\n") letter = '\n';
+        if(m_currentToken.value == u8"\\t") letter = '\t';
+        if(m_currentToken.value == u8"\\r") letter = '\r';
+        
+        value = std::make_unique<CharAST>(letter);
         getNextToken();
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;

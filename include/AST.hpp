@@ -175,9 +175,11 @@ private:
     std::u8string m_type;
     std::u8string m_name;
     int m_size;
+    std::vector<std::unique_ptr<AST>> m_arrElements;
 
 public:
     ArrayAST(const std::u8string& type, const std::u8string& name, int size);
+    ArrayAST(const std::u8string& type, const std::u8string& name, int size, std::vector<std::unique_ptr<AST>> arrElements);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };

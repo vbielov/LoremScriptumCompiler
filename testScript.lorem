@@ -1,14 +1,7 @@
 numerus puts = apere(litera str)
 
 numerus main = λ():
-litera[V] helloWorld
-    numerus terminator = O
-    numerus terminator2 = O
-    helloWorld[O] = 'H'
-    helloWorld[I] = 'e'
-    helloWorld[II] = 'l'
-    helloWorld[III] = helloWorld[II] 
-    helloWorld[IV] = 'o'
+    litera[VI] helloWorld = ['H', 'e', 'l', 'l', 'o', '\0']
     puts(helloWorld)
     retro O 
 ;

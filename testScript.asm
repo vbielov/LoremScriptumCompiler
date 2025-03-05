@@ -14,20 +14,15 @@
 	.p2align	4, 0x90
 main:
 .seh_proc main
-	subq	$56, %rsp
-	.seh_stackalloc 56
+	subq	$40, %rsp
+	.seh_stackalloc 40
 	.seh_endprologue
-	movl	$0, 48(%rsp)
-	movl	$0, 52(%rsp)
-	movw	$25928, 43(%rsp)
-	movb	$108, 45(%rsp)
-	movl	45(%rsp), %eax
-	movl	%eax, 46(%rsp)
-	movb	$111, 47(%rsp)
-	leaq	43(%rsp), %rcx
+	movl	$1819043144, 34(%rsp)
+	movw	$111, 38(%rsp)
+	leaq	34(%rsp), %rcx
 	callq	puts
 	xorl	%eax, %eax
-	addq	$56, %rsp
+	addq	$40, %rsp
 	retq
 	.seh_endproc
 

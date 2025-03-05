@@ -76,6 +76,12 @@ ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int siz
     , m_name(name)
     , m_size(size) {}
 
+ArrayAST::ArrayAST(const std::u8string &type, const std::u8string &name, int size, std::vector<std::unique_ptr<AST>> arrElements)
+    : m_type(type)
+    , m_name(name)
+    , m_size(size)
+    , m_arrElements(std::move(arrElements)) {}
+
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
     : m_name(name)
     , m_index(std::move(index)) {}
@@ -193,6 +199,10 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     ostr << "ArrayAST(" << (const char*)(m_type.c_str()) << "[" << m_size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    for (const auto& element : m_arrElements) {
+        element->printTree(ostr, newIndent, element == *m_arrElements.end());
+    }
 }
 
 void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
