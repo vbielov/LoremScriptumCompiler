@@ -26,11 +26,6 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         auto statement = parseStatement();
         if (statement != nullptr) {
             statements.emplace_back(std::move(statement));
-
-            if (!isFinishedBlock() && !isToken(TokenType::NEW_LINE)) {
-                m_isValid = false;
-                return nullptr;
-            }
         } else {
             m_isValid = false;
             printUnknownTokenError();
