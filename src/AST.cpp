@@ -4,6 +4,20 @@
 // AST
 //===----------------------------------------------------------------------===//
 
+Type* getTypeFromStr(const std::u8string& typeStr, const LLVMStructs& llvmStructs)
+{
+    if (typeStr == u8"numerus") {
+        return Type::getInt32Ty(*(llvmStructs.theContext));
+    } else if (typeStr == u8"litera") {
+        return Type::getInt8Ty(*(llvmStructs.theContext));
+    } else if (typeStr == u8"nihil") {
+        return Type::getVoidTy(*(llvmStructs.theContext));
+    } else if (typeStr == u8"asertio") {
+        return Type::getInt1Ty(*(llvmStructs.theContext));
+    }
+    return nullptr;
+}
+
 const std::u8string& AST::getName() const {
     assert(false && "This AST can't have a name.");
     static std::u8string ilegal = u8"ilegal";
@@ -44,12 +58,12 @@ const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
 }
 
-Type* VariableDeclarationAST::getType(LLVMStructs& LLVMStructs) const {
-    return ;
+Type* VariableDeclarationAST::getType(LLVMStructs& llvmStructs) const {
+    return PointerType::getUnqual(getElementType(llvmStructs));
 }
 
 Type* VariableDeclarationAST::getElementType(LLVMStructs& llvmStructs) const {
-    return nullptr;
+    return getTypeFromStr(m_type, llvmStructs);
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
@@ -59,14 +73,55 @@ const std::u8string& VariableReferenceAST::getName() const {
     return m_name;
 }
 
+Type* VariableReferenceAST::getType(LLVMStructs& llvmStructs) const {
+    auto iter = llvmStructs.namedValues.find(m_name);
+    if (iter == llvmStructs.namedValues.end()) {
+        std::cerr << RED << "Error: Variable " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
+        return nullptr;  
+    }
+    return iter->second.value->getType();
+}
+
+Type* VariableReferenceAST::getElementType(LLVMStructs& llvmStructs) const {
+    auto iter = llvmStructs.namedValues.find(m_name);
+    if (iter == llvmStructs.namedValues.end()) {
+        std::cerr << RED << "Error: Variable " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
+        return nullptr;  
+    }
+    return iter->second.valueType;
+}
+
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
     : m_op(std::move(op))
     , m_LHS(std::move(LHS))
     , m_RHS(std::move(RHS)) {}
 
+Type* BinaryOperatorAST::getElementType(LLVMStructs& llvmStructs) const {
+    Type* leftType = m_LHS->getElementType(llvmStructs);
+    Type* rightType = m_RHS->getElementType(llvmStructs);
+    if (leftType != rightType) {
+        std::cerr << RED << "Error: It's not allowed to apply any operators to values with different types" << RESET << std::endl;
+        return nullptr;       
+    }
+    return leftType;
+}
+
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args)
     : m_calleeIdentifier(std::move(callee))
     , m_args(std::move(args)) {}
+
+const std::u8string& FuncCallAST::getName() const {
+    return m_calleeIdentifier;
+}
+
+Type* FuncCallAST::getElementType(LLVMStructs& llvmStructs) const {
+    auto iter = llvmStructs.namedValues.find(m_calleeIdentifier);
+    if (iter == llvmStructs.namedValues.end()) {
+        std::cerr << RED << "Error: Function" << (const char*)(m_calleeIdentifier.c_str()) << " is not defined" << RESET << std::endl;
+        return nullptr;  
+    }
+    return iter->second.valueType;
+}
 
 FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args)
     : m_returnType(std::move(returnType))
@@ -77,6 +132,10 @@ const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
 }
 
+Type* FunctionPrototypeAST::getElementType(LLVMStructs& llvmStructs) const {
+    return getTypeFromStr(m_returnType, llvmStructs);
+}
+
 const std::vector<std::unique_ptr<VariableDeclarationAST>>& FunctionPrototypeAST::getArgs() const {
     return m_args;
 }
@@ -85,8 +144,24 @@ FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::u
     : m_prototype(std::move(prototype))
     , m_body(std::move(body)) {}
 
+const std::u8string& FunctionAST::getName() const {
+    return m_prototype->getName();
+}
+
+Type* FunctionAST::getElementType(LLVMStructs& llvmStructs) const {
+    return m_prototype->getElementType(llvmStructs);
+}
+
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr) 
     : m_expr(std::move(expr)) {}
+
+Type* ReturnAST::getType(LLVMStructs& llvmStructs) const {
+    return m_expr->getType(llvmStructs);
+}
+
+Type* ReturnAST::getElementType(LLVMStructs& llvmStructs) const {
+    return m_expr->getElementType(llvmStructs);
+}
 
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
     : m_cond(std::move(cond))
@@ -113,9 +188,37 @@ const std::u8string& ArrayAST::getName() const {
     return m_name;
 }
 
+Type* ArrayAST::getType(LLVMStructs& llvmStructs) const {
+    return ArrayType::get(getElementType(llvmStructs), m_size);
+}
+
+Type* ArrayAST::getElementType(LLVMStructs& llvmStructs) const {
+    return getTypeFromStr(m_type, llvmStructs);
+}
+
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
     : m_name(name)
     , m_index(std::move(index)) {}
+
+const std::u8string& AccessArrayElementAST::getName() const {
+    return m_name;
+}
+
+Type* AccessArrayElementAST::getElementType(LLVMStructs& llvmStructs) const {
+    auto iter = llvmStructs.namedValues.find(m_name);
+    if (iter == llvmStructs.namedValues.end()) {
+        GlobalVariable* globalArr = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+        if (globalArr) {
+            Type* type = globalArr->getValueType();
+            ArrayType* arrType = dyn_cast<ArrayType>(type);
+            return arrType->getElementType();
+        }
+        std::cerr << RED << "Error: Array " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
+        return nullptr;  
+    }
+    ArrayType* arrType = dyn_cast<ArrayType>(iter->second.valueType);
+    return arrType->getElementType();
+}
 
 //===----------------------------------------------------------------------===//
 // Printing AST Tree

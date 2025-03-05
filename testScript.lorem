@@ -1,12 +1,12 @@
 numerus puts = apere(litera str)
 
-nihil changeArr = λ(litera[VI] arr):
-    arr[II] = 'i'
-;
+litera[V] yesStr = ['Y', 'e', 's', '\0']
+litera[III] noStr = ['N', 'o', '\0']
 
 numerus main = λ():
-    litera[VI] helloWorld = ['H', 'e', 'l', 'l', 'o', '\0']
-    changeArr(helloWorld)
-    puts(helloWorld)
+    asertio bool = II < I
+    si(bool):
+        puts(yesStr)
+    ;
     retro O 
 ;

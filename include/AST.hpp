@@ -6,6 +6,8 @@
 #define RED "\033[31m"
 #define RESET "\033[0m"
 
+Type* getTypeFromStr(const std::u8string& typeStr, const LLVMStructs& llvmStructs);
+
 void printIndent(std::ostream& ostr, const std::string& indent, bool isLast);
 
 /// @brief Abstract Syntax Tree: Base class
@@ -74,7 +76,7 @@ private:
 public:
     VariableDeclarationAST(const std::u8string& type, const std::u8string& name);
     const std::u8string& getName() const override;
-    Type* getType(LLVMStructs& LLVMStructs) const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
@@ -88,7 +90,7 @@ private:
 public:
     VariableReferenceAST(const std::u8string& name);
     const std::u8string& getName() const override;
-    Type* getType(LLVMStructs& LLVMStructs) const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
@@ -131,11 +133,10 @@ private:
 public:
     FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args);
     const std::u8string& getName() const override;
-    Type* getType(LLVMStructs& LLVMStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
+    const std::vector<std::unique_ptr<VariableDeclarationAST>>& getArgs() const; 
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
-    const std::vector<std::unique_ptr<VariableDeclarationAST>>& getArgs() const; 
 };
 
 
@@ -147,7 +148,6 @@ private:
 public:
     FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body);
     const std::u8string& getName() const override;
-    Type* getType(LLVMStructs& LLVMStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
@@ -160,7 +160,7 @@ private:
 
 public:
     ReturnAST(std::unique_ptr<AST> expr);
-    Type* getType(LLVMStructs& LLVMStructs) const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
@@ -210,7 +210,7 @@ public:
     ArrayAST(const std::u8string& type, const std::u8string& name, int size);
     ArrayAST(const std::u8string& type, const std::u8string& name, int size, std::vector<std::unique_ptr<AST>> arrElements);
     const std::u8string& getName() const override;
-    Type* getType(LLVMStructs& LLVMStructs) const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 

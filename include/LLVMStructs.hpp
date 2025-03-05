@@ -18,7 +18,7 @@ using namespace llvm;
 
 struct NameTableEntry {
     Value* value;
-    Type* type; // that's always an element type, of array/pointer
+    Type* valueType; // it can be a int, char, array, but NOT a pointer
 };
 
 struct LLVMStructs {
