@@ -28,6 +28,10 @@ const std::u8string &VariableDeclarationAST::getType() const {
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
     : m_name(std::move(name)) {}
 
+const std::u8string& VariableReferenceAST::getName() const {
+    return m_name;
+}
+
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
     : m_op(std::move(op))
     , m_LHS(std::move(LHS))

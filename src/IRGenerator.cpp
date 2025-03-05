@@ -113,6 +113,7 @@ Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
 Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     Value* left = m_LHS->codegen(llvmStructs);
     Value* right = m_RHS->codegen(llvmStructs);
+
     if (!left || !right) {
         return nullptr;
     }
@@ -123,7 +124,8 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
         if (insertBlock != nullptr) {
             // if it's a pointer, copy value of it
             if (right->getType()->isPointerTy()) {
-                right = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), right, "loadtmp");
+                PointerType* rightType = dyn_cast<PointerType>(right->getType());
+                right = llvmStructs.builder->CreateLoad(rightType->getNonOpaquePointerElementType(), right, "loadtmp");
             }
             llvmStructs.builder->CreateStore(right, left); // switched, because left is a variable
             return nullptr;
@@ -136,12 +138,13 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     }
 
     // Load variables to registers
-    // TODO(Vlad): what if I want to compare two chars, or check if a bool is true
     if (left->getType()->isPointerTy()) {
-        left = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), left, "loadtmp");
+        PointerType* leftType = dyn_cast<PointerType>(left->getType());
+        left = llvmStructs.builder->CreateLoad(leftType->getNonOpaquePointerElementType(), left, "loadtmp");
     }
     if (right->getType()->isPointerTy()) {
-        right = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), right, "loadtmp");
+        PointerType* rightType = dyn_cast<PointerType>(right->getType());
+        right = llvmStructs.builder->CreateLoad(rightType->getNonOpaquePointerElementType(), right, "loadtmp");
     }
 
     if (m_op == u8"⇔") {

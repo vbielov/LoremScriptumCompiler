@@ -72,6 +72,7 @@ public:
     VariableReferenceAST(const std::u8string& name);
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
+    const std::u8string& getName() const;
 };
 
 
