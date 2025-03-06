@@ -89,7 +89,7 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  *    - nihil   var = λ(...): [Block] ;
  */
 std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
-    auto type = m_currentToken.value;
+    std::u8string type = m_currentToken.value;
 
     getNextToken();
 
@@ -128,10 +128,10 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     
     getNextToken();
     if (isToken(TokenType::KEYWORD, u8"λ")) {
-        return parseInstructionFunction(type, identifier);
+        return parseInstructionFunction(type, identifier, isArray, arrSize);
     } else if (isToken(TokenType::KEYWORD, u8"apere")) {
         getNextToken(); // eat apere
-        return parseInstructionPrototype(type, identifier);
+        return parseInstructionPrototype(type, identifier, isArray, arrSize);
     } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
         getNextToken(); // eat '['
         std::vector<std::unique_ptr<AST>> elements;
@@ -155,7 +155,12 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         return std::make_unique<ArrayAST>(type, identifier, arrSize, std::move(elements));
     }
     
-    auto declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
+    std::unique_ptr<VariableDeclarationAST> declaration;
+    if (isArray) {
+        declaration = std::make_unique<ArrayAST>(type, identifier, arrSize);
+    } else {
+        declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
+    }
     auto expression = parseExpression();
     if (expression == nullptr) return nullptr;
 
@@ -172,20 +177,44 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                        ^ we are always here
  */
-std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier) {
+std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize) {
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<VariableDeclarationAST>> args;
     while (!isToken(TokenType::PUNCTUATION, u8")") && !isToken(TokenType::EOF_TOKEN)) {
-        if (!isToken(TokenType::TYPE)) return nullptr;
-        auto type = m_currentToken.value;
+        if (!isToken(TokenType::TYPE)) 
+            return nullptr;
+        std::u8string argType = m_currentToken.value;
+        getNextToken(); //  eat type
+        
+        int arrSize = -1;
+        if (isToken(TokenType::PUNCTUATION, u8"[")) {
+            getNextToken(); // eat '['
+            if (!isToken(TokenType::NUMBER) || !toArabicConverter(m_currentToken.value, &arrSize)) {
+                printError("Expected number after '[', when dealing with array func-argument");
+                return nullptr;
+            }
+            getNextToken(); // eat number
+            if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+                printError("Expected ']', when dealing with array func-argument");
+                return nullptr;
+            }
+            getNextToken(); // eat ']'
+        }
 
-        getNextToken();
-        if (!isToken(TokenType::IDENTIFIER)) return nullptr;
+        if (!isToken(TokenType::IDENTIFIER)) 
+            return nullptr;
 
-        auto arg = std::make_unique<VariableDeclarationAST>(type, m_currentToken.value);
+        std::u8string identifier = m_currentToken.value;
+        getNextToken(); // eat identifier
+
+        std::unique_ptr<VariableDeclarationAST> arg;
+        if (arrSize != -1) {
+            arg = std::make_unique<ArrayAST>(argType, identifier, arrSize);
+        } else {
+            arg = std::make_unique<VariableDeclarationAST>(argType, identifier);
+        }
         args.push_back(std::move(arg));
 
-        getNextToken();
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
             continue;
@@ -200,7 +229,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
 
     getNextToken();
 
-    return std::make_unique<FunctionPrototypeAST>(type, identifier, std::move(args));
+    return std::make_unique<FunctionPrototypeAST>(type, identifier, std::move(args), returnsArray, arrSize);
 }
 
 /**
@@ -214,7 +243,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                       ^ we are always here
  */
-std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8string& type, const std::u8string& identifier) {
+std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize) {
     if (m_blockCount != 0) {
         printError("Function Declaration is only allowed at top-level");
         return nullptr;
@@ -223,7 +252,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
     getNextToken(); // eat λ
     if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
 
-    auto prototype = parseInstructionPrototype(type, identifier);
+    auto prototype = parseInstructionPrototype(type, identifier, returnsArray, arrSize);
     if (prototype == nullptr) return nullptr;
 
     // for the case if : is on the next line

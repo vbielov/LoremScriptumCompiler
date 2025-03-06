@@ -59,7 +59,8 @@ const std::u8string& VariableDeclarationAST::getName() const {
 }
 
 Type* VariableDeclarationAST::getType(LLVMStructs& llvmStructs) const {
-    return PointerType::getUnqual(getElementType(llvmStructs));
+    // return PointerType::getUnqual(getElementType(llvmStructs));
+    return getElementType(llvmStructs); // maybe I am completly wrong.
 }
 
 Type* VariableDeclarationAST::getElementType(LLVMStructs& llvmStructs) const {
@@ -74,7 +75,8 @@ const std::u8string& VariableReferenceAST::getName() const {
 }
 
 Type* VariableReferenceAST::getType(LLVMStructs& llvmStructs) const {
-    return PointerType::getUnqual(getElementType(llvmStructs));
+    // return PointerType::getUnqual(getElementType(llvmStructs));
+    return getElementType(llvmStructs);
 }
 
 Type* VariableReferenceAST::getElementType(LLVMStructs& llvmStructs) const {
@@ -126,10 +128,15 @@ Type* FuncCallAST::getElementType(LLVMStructs& llvmStructs) const {
     return iter->second.valueType;
 }
 
-FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args)
+FunctionPrototypeAST::FunctionPrototypeAST(
+    const std::u8string& returnType, const std::u8string& name, 
+    std::vector<std::unique_ptr<VariableDeclarationAST>> args, bool returnsArray, int arrSize
+)
     : m_returnType(std::move(returnType))
     , m_name(std::move(name))
-    , m_args(std::move(args)) {}
+    , m_args(std::move(args))
+    , m_returnsArray(returnsArray)
+    , m_arrSize(arrSize) {}
 
 const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
@@ -137,6 +144,14 @@ const std::u8string& FunctionPrototypeAST::getName() const {
 
 Type* FunctionPrototypeAST::getElementType(LLVMStructs& llvmStructs) const {
     return getTypeFromStr(m_returnType, llvmStructs);
+}
+
+Type* FunctionPrototypeAST::getType(LLVMStructs& llvmStructs) const {
+    // TODO(Vlad): this is just horrible. Make good types
+    if (m_returnsArray) {
+        return ArrayType::get(getElementType(llvmStructs), m_arrSize);
+    }
+    return getElementType(llvmStructs);
 }
 
 const std::vector<std::unique_ptr<VariableDeclarationAST>>& FunctionPrototypeAST::getArgs() const {
@@ -149,6 +164,10 @@ FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::u
 
 const std::u8string& FunctionAST::getName() const {
     return m_prototype->getName();
+}
+
+Type* FunctionAST::getType(LLVMStructs& llvmStructs) const {
+    m_prototype->getType(llvmStructs);
 }
 
 Type* FunctionAST::getElementType(LLVMStructs& llvmStructs) const {
@@ -177,26 +196,16 @@ LoopAST::LoopAST(std::unique_ptr<BlockAST> body)
     : m_body(std::move(body)) {}
 
 ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int size)
-    : m_type(type)
-    , m_name(name)
-    , m_size(size) {}
+    : VariableDeclarationAST(type, name)
+    , m_size(size){}
 
-ArrayAST::ArrayAST(const std::u8string &type, const std::u8string &name, int size, std::vector<std::unique_ptr<AST>> arrElements)
-    : m_type(type)
-    , m_name(name)
+ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int size, std::vector<std::unique_ptr<AST>> arrElements)
+    : VariableDeclarationAST(type, name)
     , m_size(size)
     , m_arrElements(std::move(arrElements)) {}
 
-const std::u8string& ArrayAST::getName() const {
-    return m_name;
-}
-
 Type* ArrayAST::getType(LLVMStructs& llvmStructs) const {
     return ArrayType::get(getElementType(llvmStructs), m_size);
-}
-
-Type* ArrayAST::getElementType(LLVMStructs& llvmStructs) const {
-    return getTypeFromStr(m_type, llvmStructs);
 }
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)

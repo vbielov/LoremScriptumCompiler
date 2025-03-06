@@ -1,21 +1,27 @@
 numerus puts = apere(litera str)
 
-nihil emptyFunc = λ():
-
-;
-
-numerus func = λ(numerus arg):
-    arg = arg + I
-    retro arg + I
+numerus[V] someFunc = λ(numerus[V] arr):
+    numerus[V] newArr
+    ∑(numerus i = O, i < V, i = i + I):
+        newArr[i] = V - arr[i]
+    ;
+    retro newArr
 ;
 
 numerus main = λ():
-    numerus value = V
-    numerus newValue = func(value)
-
-    litera letter = XLVIII + newValue 
-    litera terminator = '\0'
-    puts(letter)
-
+    numerus[V] one = [O, I, II, III, IV]
+    numerus[V] newOne = someFunc(one)
+    litera char
+    numerus terminator
+    ∑(numerus i = O, i < V, i = i + I):
+        char = XLVIII + one[i]
+        terminator = O
+        puts(char)
+    ;
+    ∑(numerus i = O, i < V, i = i + I):
+        char = XLVIII + newOne[i]
+        terminator = O
+        puts(char)
+    ;
     retro O 
 ;

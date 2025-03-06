@@ -70,7 +70,7 @@ public:
 
 
 class VariableDeclarationAST : public AST {
-private:
+protected:
     std::u8string m_type;
     std::u8string m_name;
 public:
@@ -130,9 +130,12 @@ private:
     std::u8string m_returnType;
     std::u8string m_name;
     std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;
+    bool m_returnsArray;
+    int m_arrSize;
 public:
-    FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args);
+    FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args, bool returnsArray, int arrSize);
     const std::u8string& getName() const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     const std::vector<std::unique_ptr<VariableDeclarationAST>>& getArgs() const; 
     Value* codegen(LLVMStructs& llvmStructs) override;
@@ -148,6 +151,7 @@ private:
 public:
     FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body);
     const std::u8string& getName() const override;
+    Type* getType(LLVMStructs& llvmStructs) const override;
     Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
@@ -199,19 +203,15 @@ public:
 };
 
 // Array declaration for global/variable
-class ArrayAST : public AST {
+class ArrayAST : public VariableDeclarationAST {
 private:
-    std::u8string m_type;
-    std::u8string m_name;
     int m_size;
     std::vector<std::unique_ptr<AST>> m_arrElements;
 
 public:
     ArrayAST(const std::u8string& type, const std::u8string& name, int size);
     ArrayAST(const std::u8string& type, const std::u8string& name, int size, std::vector<std::unique_ptr<AST>> arrElements);
-    const std::u8string& getName() const override;
     Type* getType(LLVMStructs& llvmStructs) const override;
-    Type* getElementType(LLVMStructs& llvmStructs) const override;
     Value* codegen(LLVMStructs& llvmStructs) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };

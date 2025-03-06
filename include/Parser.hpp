@@ -3,6 +3,7 @@
 #include "AST.hpp"
 #include "Lexer.hpp"
 #include "RomanNumber.hpp"
+#include <format>
 
 // TODO(Vlad): Just followed tutorial here, need to add types, single operators, controll flow and so much more.
 // https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html
@@ -83,8 +84,8 @@ class Parser {
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionDeclaration();
 
-    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier);
-    std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& type, const std::u8string& identifier);
+    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize);
+    std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();

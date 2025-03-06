@@ -110,10 +110,17 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
     if(m_op == u8"=") {
        auto insertBlock = llvmStructs.builder->GetInsertBlock();
         if (insertBlock != nullptr) {
+            Type* leftType = m_LHS->getType(llvmStructs);
+            Type* rightType = m_RHS->getType(llvmStructs);
             // if it's a pointer, copy value of it
             if (right->getType()->isPointerTy()) {
-                right = llvmStructs.builder->CreateLoad(m_RHS->getElementType(llvmStructs), right, "loadtmp");
+                right = llvmStructs.builder->CreateLoad(leftType, right, "loadtmp");
             }
+            // They are both integers, cast them
+            if (leftType != rightType && (leftType->isIntegerTy() && rightType->isIntegerTy())) {
+                right = llvmStructs.builder->CreateIntCast(right, leftType, true, "conv");
+            }
+
             llvmStructs.builder->CreateStore(right, left); // switched, because left is a variable
             return nullptr;
         }
@@ -232,7 +239,7 @@ Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {
     }
     
     // last argument of the function is a return pointer
-    Type* returnType = getElementType(llvmStructs);
+    Type* returnType = getType(llvmStructs);
 
     // NOTE(Vlad):  apperently it's OK for a linker, if you have too many arguments... 
     //              So now main and every extern function has unnecessery argument "returntmp"
@@ -293,7 +300,8 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
         if (index >= m_prototype->getArgs().size()) {
             break;
         }
-        Type* type = m_prototype->getArgs()[index++]->getElementType(llvmStructs);
+        auto argPtr = m_prototype->getArgs()[index++].get();
+        Type* type = argPtr->getType(llvmStructs);
         llvmStructs.namedValues[std::u8string(arg.getName().begin(), arg.getName().end())] = {
             .value = &arg,
             .valueType = type
@@ -319,11 +327,11 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
     if (m_expr) {
         Function* function = llvmStructs.builder->GetInsertBlock()->getParent();
-        auto value = m_expr->codegen(llvmStructs);
+        Value* value = m_expr->codegen(llvmStructs);
         // if it's a pointer, load it's value
         if (dynamic_cast<VariableReferenceAST*>(m_expr.get())) {
             // TODO(Vlad): Somehow determine elementary type of the value, because it's a pointer.
-            value = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), value, "loadtmp");
+            value = llvmStructs.builder->CreateLoad(m_expr->getType(llvmStructs), value, "loadtmp");
         }
         if (value) {
             if (function->getName() == "main") 
@@ -485,9 +493,7 @@ Value* AccessArrayElementAST::codegen(LLVMStructs &llvmStructs)
         if (GlobalVariable* globalArr = dyn_cast<GlobalVariable>(arrPtr)) {
             Type* type = globalArr->getValueType();
             arrType = dyn_cast<ArrayType>(type);
-        } else {
-            arrPtr = nullptr;
-        }
+        } 
     }
 
     if (!arrPtr) {
