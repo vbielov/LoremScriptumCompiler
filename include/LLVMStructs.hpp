@@ -25,6 +25,7 @@ struct LLVMStructs {
     std::unique_ptr<LLVMContext> theContext;
     std::unique_ptr<Module> theModule;
     std::unique_ptr<IRBuilder<>> builder;
+    std::map<std::u8string, NameTableEntry> namedFunctions;
     std::map<std::u8string, NameTableEntry> namedValues;
     std::stack<BasicBlock*> afterLoop;
 };

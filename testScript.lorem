@@ -1,5 +1,9 @@
 numerus puts = apere(litera str)
 
+nihil emptyFunc = λ():
+
+;
+
 numerus func = λ(numerus arg):
     arg = arg + I
     retro arg + I

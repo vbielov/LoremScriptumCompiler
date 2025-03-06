@@ -8,7 +8,8 @@ IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootB
         std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
         std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext),
         std::map<std::u8string, NameTableEntry>(),
-        {}
+        std::map<std::u8string, NameTableEntry>(),
+        std::stack<BasicBlock*>()
     } {}
 
 void IRGenerator::generateIRCode() {
@@ -170,7 +171,16 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
         return nullptr;
     }
 
-    if (calleeF->arg_size() != m_args.size()) {
+    bool hasReturn = false;
+    if (calleeF->arg_size() > 0) {
+        auto iter = calleeF->args().end() - 1;
+        if (iter->getName() == "returnArg") {
+            hasReturn = true;
+        }
+    }
+    size_t expectedArgs = calleeF->arg_size() - (hasReturn ? 1 : 0);
+
+    if (expectedArgs != m_args.size()) {
         std::cerr << RED << "Error: Incorrect number of arguments passed" << RESET << std::endl;
         return nullptr;
     }
@@ -193,12 +203,25 @@ Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
     }
 
     // don't store result of a void function
-    if (calleeF->getReturnType() == Type::getVoidTy(*(llvmStructs.theContext))) {
+    if (!hasReturn) {
         llvmStructs.builder->CreateCall(calleeF, argsV);
         return nullptr;
     }
 
-    return llvmStructs.builder->CreateCall(calleeF, argsV, "calltmp");
+    auto iter = llvmStructs.namedFunctions.find(m_calleeIdentifier);
+    if (iter == llvmStructs.namedFunctions.end()) {
+        std::cerr   << RED << "Error: Can't find a function " 
+                    << (const char*)(m_calleeIdentifier.c_str()) 
+                    << " in a name table" << RESET << std::endl;
+        return nullptr;
+    }
+    Type* returnType = iter->second.valueType;
+    Function* theFunction = llvmStructs.builder->GetInsertBlock()->getParent();
+    IRBuilder<> tmpB(&theFunction->getEntryBlock(), theFunction->getEntryBlock().begin());
+    AllocaInst* returnTmp = tmpB.CreateAlloca(returnType, nullptr, "returntmp");
+    argsV.push_back(returnTmp);
+    llvmStructs.builder->CreateCall(calleeF, argsV);
+    return returnTmp; 
 }
 
 Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {    
@@ -206,16 +229,37 @@ Value* FunctionPrototypeAST::codegen(LLVMStructs& llvmStructs) {
     argTypes.reserve(m_args.size());
     for (const auto& arg : m_args) {
         argTypes.push_back(PointerType::get(arg->getElementType(llvmStructs), 0));
-    }     
+    }
+    
+    // last argument of the function is a return pointer
+    Type* returnType = getElementType(llvmStructs);
 
-    // TODO(Vlad): we are accesing return type here. needs to be changed once we fix return 
-    FunctionType* funcType = FunctionType::get(getElementType(llvmStructs), argTypes, false);
+    // NOTE(Vlad):  apperently it's OK for a linker, if you have too many arguments... 
+    //              So now main and every extern function has unnecessery argument "returntmp"
+    if (!returnType->isVoidTy())
+        argTypes.push_back(PointerType::get(returnType, 0));
+
+    // TODO(Vlad): we are accesing return type here. needs to be changed once we fix return
+    FunctionType* funcType = FunctionType::get(
+        (m_name == u8"main" ? Type::getInt32Ty(*(llvmStructs.theContext)) : Type::getVoidTy(*(llvmStructs.theContext))), 
+        argTypes, 
+        false
+    );
     Function* func = Function::Create(funcType, Function::ExternalLinkage, (const char*)m_name.c_str(), llvmStructs.theModule.get());
  
-    int index = 0;
+    size_t index = 0;
     for(auto& arg : func->args()) {
-        arg.setName((const char*)(m_args[index++]->getName().c_str()));
+        if (index >= m_args.size()) {
+            arg.setName("returnArg");
+        } else {
+            arg.setName((const char*)(m_args[index++]->getName().c_str()));
+        }
     }
+
+    llvmStructs.namedFunctions[m_name] = {
+        .value = func,
+        .valueType = returnType
+    };
 
     return func;
 }
@@ -244,9 +288,12 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
     // Record the function arguments in the namedValues map
     llvmStructs.namedValues.clear();
-    int i = 0;
+    size_t index = 0;
     for (auto& arg : func->args()) {
-        Type* type = m_prototype->getArgs()[i++]->getElementType(llvmStructs);
+        if (index >= m_prototype->getArgs().size()) {
+            break;
+        }
+        Type* type = m_prototype->getArgs()[index++]->getElementType(llvmStructs);
         llvmStructs.namedValues[std::u8string(arg.getName().begin(), arg.getName().end())] = {
             .value = &arg,
             .valueType = type
@@ -255,7 +302,7 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
     m_body->codegen(llvmStructs);
     
-    // TODO(Vlad): we are accesing return type here. needs to be changed once we fix return 
+    // NOTE(Vlad): return type of prototype is now always void pointer
     if(m_prototype->getElementType(llvmStructs)->isVoidTy() && !llvmStructs.builder->GetInsertBlock()->getTerminator()) {
         llvmStructs.builder->CreateRetVoid(); // for some reason functions with void type NEED to have a return
     }
@@ -271,6 +318,7 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
 
 Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
     if (m_expr) {
+        Function* function = llvmStructs.builder->GetInsertBlock()->getParent();
         auto value = m_expr->codegen(llvmStructs);
         // if it's a pointer, load it's value
         if (dynamic_cast<VariableReferenceAST*>(m_expr.get())) {
@@ -278,7 +326,12 @@ Value* ReturnAST::codegen(LLVMStructs& llvmStructs) {
             value = llvmStructs.builder->CreateLoad(Type::getInt32Ty(*(llvmStructs.theContext)), value, "loadtmp");
         }
         if (value) {
-            return llvmStructs.builder->CreateRet(value);
+            if (function->getName() == "main") 
+                return llvmStructs.builder->CreateRet(value);
+
+            Argument* returnArg = function->getArg(function->arg_size() - 1);
+            llvmStructs.builder->CreateStore(value, returnArg);
+            return llvmStructs.builder->CreateRetVoid();
         }
         return nullptr;
     }

@@ -118,10 +118,10 @@ const std::u8string& FuncCallAST::getName() const {
 }
 
 Type* FuncCallAST::getElementType(LLVMStructs& llvmStructs) const {
-    auto iter = llvmStructs.namedValues.find(m_calleeIdentifier);
-    if (iter == llvmStructs.namedValues.end()) {
-        std::cerr << RED << "Error: Function" << (const char*)(m_calleeIdentifier.c_str()) << " is not defined" << RESET << std::endl;
-        return nullptr;  
+    auto iter = llvmStructs.namedFunctions.find(m_calleeIdentifier);
+    if (iter == llvmStructs.namedFunctions.end()) {
+        std::cerr << RED << "Can't find function " << (const char*)(m_calleeIdentifier.c_str()) <<  " in a name table" << std::endl;
+        return nullptr;
     }
     return iter->second.valueType;
 }

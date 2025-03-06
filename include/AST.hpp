@@ -129,7 +129,7 @@ class FunctionPrototypeAST : public AST {
 private:
     std::u8string m_returnType;
     std::u8string m_name;
-    std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;   
+    std::vector<std::unique_ptr<VariableDeclarationAST>> m_args;
 public:
     FunctionPrototypeAST(const std::u8string& returnType, const std::u8string& name, std::vector<std::unique_ptr<VariableDeclarationAST>> args);
     const std::u8string& getName() const override;
