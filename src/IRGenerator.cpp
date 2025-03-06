@@ -246,7 +246,7 @@ Value* FunctionAST::codegen(LLVMStructs& llvmStructs) {
     llvmStructs.namedValues.clear();
     int i = 0;
     for (auto& arg : func->args()) {
-        Type* type = m_prototype->getArgs()[i++]->getType(llvmStructs);
+        Type* type = m_prototype->getArgs()[i++]->getElementType(llvmStructs);
         llvmStructs.namedValues[std::u8string(arg.getName().begin(), arg.getName().end())] = {
             .value = &arg,
             .valueType = type

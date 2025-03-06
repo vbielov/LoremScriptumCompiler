@@ -1,12 +1,17 @@
 numerus puts = apere(litera str)
 
-litera[V] yesStr = ['Y', 'e', 's', '\0']
-litera[III] noStr = ['N', 'o', '\0']
+numerus func = λ(numerus arg):
+    arg = arg + I
+    retro arg + I
+;
 
 numerus main = λ():
-    asertio bool = II < I
-    si(bool):
-        puts(yesStr)
-    ;
+    numerus value = V
+    numerus newValue = func(value)
+
+    litera letter = XLVIII + newValue 
+    litera terminator = '\0'
+    puts(letter)
+
     retro O 
 ;

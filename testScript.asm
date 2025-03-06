@@ -6,12 +6,41 @@
 	.globl	@feat.00
 .set @feat.00, 0
 	.file	"testScript"
-	.data
-	.weak	yesStr
-yesStr:
-	.asciz	"Yes"
+	.def	func;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	func
+	.p2align	4, 0x90
+func:
+	movl	(%rcx), %eax
+	leal	1(%rax), %edx
+	movl	%edx, (%rcx)
+	addl	$2, %eax
+	retq
 
-	.weak	noStr
-noStr:
-	.asciz	"No"
+	.def	main;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	main
+	.p2align	4, 0x90
+main:
+.seh_proc main
+	subq	$56, %rsp
+	.seh_stackalloc 56
+	.seh_endprologue
+	movl	$5, 48(%rsp)
+	leaq	48(%rsp), %rcx
+	callq	func
+	movl	%eax, 52(%rsp)
+	addl	$48, %eax
+	movl	%eax, 46(%rsp)
+	movb	$0, 47(%rsp)
+	leaq	46(%rsp), %rcx
+	callq	puts
+	xorl	%eax, %eax
+	addq	$56, %rsp
+	retq
+	.seh_endproc
 

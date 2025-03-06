@@ -74,17 +74,17 @@ const std::u8string& VariableReferenceAST::getName() const {
 }
 
 Type* VariableReferenceAST::getType(LLVMStructs& llvmStructs) const {
-    auto iter = llvmStructs.namedValues.find(m_name);
-    if (iter == llvmStructs.namedValues.end()) {
-        std::cerr << RED << "Error: Variable " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
-        return nullptr;  
-    }
-    return iter->second.value->getType();
+    return PointerType::getUnqual(getElementType(llvmStructs));
 }
 
 Type* VariableReferenceAST::getElementType(LLVMStructs& llvmStructs) const {
     auto iter = llvmStructs.namedValues.find(m_name);
     if (iter == llvmStructs.namedValues.end()) {
+        GlobalVariable* globalVar = llvmStructs.theModule->getGlobalVariable((const char*)(m_name.c_str()));
+        if (globalVar) {
+            Type* type = globalVar->getValueType();
+            return type;
+        }
         std::cerr << RED << "Error: Variable " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
         return nullptr;  
     }
@@ -101,6 +101,9 @@ Type* BinaryOperatorAST::getElementType(LLVMStructs& llvmStructs) const {
     Type* rightType = m_RHS->getElementType(llvmStructs);
     if (leftType != rightType) {
         std::cerr << RED << "Error: It's not allowed to apply any operators to values with different types" << RESET << std::endl;
+        std::cerr << leftType->getTypeID() << std::endl;
+        std::cerr << rightType->getTypeID() << std::endl;
+
         return nullptr;       
     }
     return leftType;
