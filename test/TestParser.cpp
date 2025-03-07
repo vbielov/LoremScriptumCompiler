@@ -5,7 +5,7 @@
 std::string runParser(std::u8string& input) {
     Lexer lexer(input);
     Parser parser(lexer, true);
-    auto block = parser.parseBlock();
+    auto block = parser.parse();
 
     std::ostringstream oss;
     if (block != nullptr) {
@@ -18,7 +18,7 @@ std::string runParser(std::u8string& input) {
 std::string runParserInvalid(std::u8string& input) {
     Lexer lexer(input);
     Parser parser(lexer, true);
-    auto block = parser.parseBlock();
+    auto block = parser.parse();
 
     std::ostringstream oss;
     if (block != nullptr) {

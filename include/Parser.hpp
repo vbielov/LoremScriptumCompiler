@@ -16,6 +16,7 @@ class Parser {
     int m_blockCount;
     bool m_isValid;
     bool m_isTest;
+    std::vector<std::unique_ptr<AST>> m_topLevelDeclarations;
 
     // source: https://en.wikipedia.org/wiki/Order_of_operations
     // smaller number means higher priority
@@ -53,7 +54,7 @@ class Parser {
     Parser(Lexer& lexer, bool isTest);
 
     bool isValid();
-    std::unique_ptr<BlockAST> parseBlock();
+    std::unique_ptr<BlockAST> parse();
 
    private:
     /// @brief Get the precedence of the pending binary operator token.
@@ -71,6 +72,9 @@ class Parser {
 
     void printError(std::string error);
     void printUnknownTokenError();
+
+    // --- Block section ---
+    std::unique_ptr<BlockAST> parseBlock();
 
     // --- Statement section ---
     std::unique_ptr<AST> parseStatement();

@@ -1,15 +1,23 @@
-numerus main = λ():
-    numerus abra = II
-    numerus cadabra = I
+numerus puts = apere(litera str) 
 
-    ∑():
-        si abra > cadabra
-        // Hey
-        :
-            // Hey Moin
-            finio
-        ;    
+numerus current = I
+
+nihil printChar = λ():
+    si current > V:
+        litera a = 'Y'
+        numerus b = O
+        puts(a)
+    ; ni:
+        litera c = 'N'
+        numerus d = O
+        puts(c)
     ;
-
-    retro O
 ;
+
+∑(numerus i = O, i < X, i = i + I):
+    current++
+    printChar()
+;
+
+
+

@@ -16,6 +16,26 @@ Parser::Parser(Lexer& lexer, bool isTest)
     , m_isValid(true)
     , m_isTest(isTest) {}
 
+
+std::unique_ptr<BlockAST> Parser::parse() {
+    auto block = parseBlock();
+
+    std::unique_ptr<AST> pseudoReturnValue = std::make_unique<NumberAST>(0);
+    auto pseudoReturn = std::make_unique<ReturnAST>(std::move(pseudoReturnValue));
+
+    auto pseudoBlockInstr = std::vector<std::unique_ptr<AST>>();
+    pseudoBlockInstr.push_back(std::move(block));
+    pseudoBlockInstr.push_back(std::move(pseudoReturn));
+    auto pseudoBlock = std::make_unique<BlockAST>(std::move(pseudoBlockInstr));
+
+    auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(u8"numerus", u8"main", std::vector<std::unique_ptr<VariableDeclarationAST>>());
+    auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));
+
+    m_topLevelDeclarations.push_back(std::move(pseudoFunction));
+    return std::make_unique<BlockAST>(std::move(m_topLevelDeclarations));
+}
+
+
 bool Parser::isValid() {
     return m_isValid;
 }

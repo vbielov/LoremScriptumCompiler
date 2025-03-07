@@ -14,7 +14,18 @@
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
     if (isToken(TokenType::TYPE)) {
-        return parseInstructionDeclaration();
+        if (m_blockCount == 0) {
+            // is Top level declaration
+            auto declaration = parseInstructionDeclaration();
+            if (declaration == nullptr) return nullptr;
+
+            m_topLevelDeclarations.push_back(std::move(declaration));
+            
+            auto pseudoEmptyInstr = std::vector<std::unique_ptr<AST>>();
+            return std::make_unique<BlockAST>(std::move(pseudoEmptyInstr));
+        } else {
+            return parseInstructionDeclaration();
+        }
     }
     if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
@@ -77,6 +88,8 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         // var++ or var--
         getNextToken();
         expression = std::make_unique<NumberAST>(1);
+
+        if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) return nullptr;
     } else if (isToken(TokenType::OPERATOR, u8"=")) {
 
         // var -= I
