@@ -18,6 +18,11 @@ Parser::Parser(Lexer& lexer, bool isTest)
 
 
 std::unique_ptr<BlockAST> Parser::parse() {
+    if (m_isTest) {
+        // Do not make a main function wrapper for parse tests -> Easier to debug
+        return parseBlock();
+    }
+
     auto block = parseBlock();
 
     std::unique_ptr<AST> pseudoReturnValue = std::make_unique<NumberAST>(0);

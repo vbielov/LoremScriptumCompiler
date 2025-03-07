@@ -14,7 +14,7 @@
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
     if (isToken(TokenType::TYPE)) {
-        if (m_blockCount == 0) {
+        if (m_blockCount == 0 && !m_isTest) {
             // is Top level declaration
             auto declaration = parseInstructionDeclaration();
             if (declaration == nullptr) return nullptr;
