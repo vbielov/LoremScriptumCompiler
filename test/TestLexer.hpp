@@ -9,7 +9,7 @@ inline static const std::u8string SOURCE_CODE_TO_TEST =
     u8R"(
     numerus foo = λ(numerus a, numerus b):
         a = a + b
-        b = a * II
+        b = a × II
         retro b
     ;
     numerus c = foo(I, V)
@@ -32,14 +32,14 @@ inline static const std::u8string SOURCE_CODE_TO_TEST =
     scribor(test)
 
     scribor(abra ≠ cadabra)
-    scribor(abra == cadabra)
+    scribor(abra ⇔ cadabra)
     scribor(abra < cadabra)
     scribor(abra > cadabra)
 
     scribor(abra + cadabra)
     scribor(abra - cadabra)
     scribor(abra ^ cadabra)
-    scribor(abra / cadabra)
+    scribor(abra ÷ cadabra)
     scribor(¬cadabra)
     scribor(abra!)
 

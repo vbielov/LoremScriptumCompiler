@@ -24,12 +24,10 @@ class Parser {
     inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRIORITY = {
         {u8"!", 2},
         {u8"¬", 2},
-        {u8"-", 2},
-        {u8"+", 2},
         {u8"^", 2},
 
-        {u8"*", 3},
-        {u8"/", 3},
+        {u8"×", 3},
+        {u8"÷", 3},
         {u8"%", 3},
 
         {u8"+", 4},

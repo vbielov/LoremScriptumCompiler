@@ -106,7 +106,7 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  *           ^ we are always here
  */
 std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
-    if (!isToken(u8"+") && !isToken(u8"-") && !isToken(u8"*") && !isToken(u8"/") && !isToken(u8"^")) return nullptr;
+    if (!isToken(u8"+") && !isToken(u8"-") && !isToken(u8"×") && !isToken(u8"÷") && !isToken(u8"^")) return nullptr;
 
     auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
     auto assign = *BINARY_OPERATION_PRIORITY.find(u8"=");
@@ -272,6 +272,8 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
 
         if (isToken(TokenType::PUNCTUATION, u8",")) {
             getNextToken();
+            if (isToken(TokenType::PUNCTUATION, u8")") || isToken(TokenType::EOF_TOKEN)) 
+                return nullptr;
             continue;
         }
         if (isToken(TokenType::PUNCTUATION, u8")")) {

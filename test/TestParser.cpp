@@ -95,7 +95,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
         "            └── NumberAST(3)\n"
     ),
     std::make_pair(
-        u8"var = foo((func() + I), X == X-III, (V))",
+        u8"var = foo((func() + I), X ⇔ X-III, (V))",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(var)\n"
@@ -103,7 +103,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
         "            ├── BinaryOperatorAST('+')\n"
         "            │   ├── FuncCallAST(func)\n"
         "            │   └── NumberAST(1)\n"
-        "            ├── BinaryOperatorAST('==')\n"
+        "            ├── BinaryOperatorAST('⇔')\n"
         "            │   ├── NumberAST(10)\n"
         "            │   └── BinaryOperatorAST('-')\n"
         "            │       ├── NumberAST(10)\n"
@@ -129,33 +129,33 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
         "            └── NumberAST(1)\n"
     ),
     std::make_pair(
-        u8"var = I * I",
+        u8"var = I × I",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(var)\n"
-        "        └── BinaryOperatorAST('*')\n"
+        "        └── BinaryOperatorAST('×')\n"
         "            ├── NumberAST(1)\n"
         "            └── NumberAST(1)\n"
     ),
     std::make_pair(
-        u8"var = I / I",
+        u8"var = I ÷ I",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(var)\n"
-        "        └── BinaryOperatorAST('/')\n"
+        "        └── BinaryOperatorAST('÷')\n"
         "            ├── NumberAST(1)\n"
         "            └── NumberAST(1)\n"
     ),
     std::make_pair(
-        u8"var = I + II * III",
+        u8"var = I + II × III",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(var)\n"
-        "        └── BinaryOperatorAST('*')\n"
-        "            ├── BinaryOperatorAST('+')\n"
-        "            │   ├── NumberAST(1)\n"
-        "            │   └── NumberAST(2)\n"
-        "            └── NumberAST(3)\n"
+        "        └── BinaryOperatorAST('+')\n"
+        "            ├── NumberAST(1)\n"
+        "            └── BinaryOperatorAST('×')\n"
+        "                ├── NumberAST(2)\n"
+        "                └── NumberAST(3)\n"
     ),
     std::make_pair(
         u8"var = -var",
@@ -181,13 +181,13 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testi
     u8"var = finio + III",
     u8"var = si - func()",
     u8"var = si: ;",
-    u8"var = si I == I: ; nisi: ;",
-    u8"var = si I == I: ; ni I == I: ;",
-    u8"var = si I == I: ; ni I == I: si I == I: ;",
+    u8"var = si I ⇔ I: ; nisi: ;",
+    u8"var = si I ⇔ I: ; ni I ⇔ I: ;",
+    u8"var = si I ⇔ I: ; ni I ⇔ I: si I ⇔ I: ;",
     u8"var = nisi - X",
-    u8"var = X === X",
-    u8"var = X &&& X",
-    u8"var = X ||| X",
+    u8"var = X ⇔⇔ X",
+    u8"var = X ∧∧ X",
+    u8"var = X ∨∨ X",
     u8"var = V:",
     u8"var = V;",
     u8"var = ;V",
@@ -222,17 +222,17 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "        └── NumberAST(1)\n"
     ),
     std::make_pair(
-        u8"numerus id = I + II * (III + IV)",
+        u8"numerus id = I + II × (III + IV)",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(numerus id)\n"
-        "        └── BinaryOperatorAST('*')\n"
-        "            ├── BinaryOperatorAST('+')\n"
-        "            │   ├── NumberAST(1)\n"
-        "            │   └── NumberAST(2)\n"
-        "            └── BinaryOperatorAST('+')\n"
-        "                ├── NumberAST(3)\n"
-        "                └── NumberAST(4)\n"
+        "        └── BinaryOperatorAST('+')\n"
+        "            ├── NumberAST(1)\n"
+        "            └── BinaryOperatorAST('×')\n"
+        "                ├── NumberAST(2)\n"
+        "                └── BinaryOperatorAST('+')\n"
+        "                    ├── NumberAST(3)\n"
+        "                    └── NumberAST(4)\n"
     ),
     // Function Declaration
     std::make_pair(
@@ -356,17 +356,17 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentValid, TestParserValid, ::testing::
         "        └── NumberAST(1)\n"
     ),
     std::make_pair(
-        u8"id = I + II * (III + IV)",
+        u8"id = I + II × (III + IV)",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(id)\n"
-        "        └── BinaryOperatorAST('*')\n"
-        "            ├── BinaryOperatorAST('+')\n"
-        "            │   ├── NumberAST(1)\n"
-        "            │   └── NumberAST(2)\n"
-        "            └── BinaryOperatorAST('+')\n"
-        "                ├── NumberAST(3)\n"
-        "                └── NumberAST(4)\n"
+        "        └── BinaryOperatorAST('+')\n"
+        "            ├── NumberAST(1)\n"
+        "            └── BinaryOperatorAST('×')\n"
+        "                ├── NumberAST(2)\n"
+        "                └── BinaryOperatorAST('+')\n"
+        "                    ├── NumberAST(3)\n"
+        "                    └── NumberAST(4)\n"
     ),
     std::make_pair(
         u8"id++",
@@ -396,11 +396,11 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentValid, TestParserValid, ::testing::
         "            └── NumberAST(10)\n"
     ),
     std::make_pair(
-        u8"var *= X",
+        u8"var ×= X",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableReferenceAST(var)\n"
-        "        └── BinaryOperatorAST('*')\n"
+        "        └── BinaryOperatorAST('×')\n"
         "            ├── VariableReferenceAST(var)\n"
         "            └── NumberAST(10)\n"
     )
@@ -425,12 +425,12 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var = I \n + I",
     u8"var = I + \n I",
     u8"var = numerus",
-    u8"var = si I == I: ;",
+    u8"var = si I ⇔ I: ;",
     u8"var+++",
     u8"var---",
-    u8"var**",
+    u8"var××",
     u8"var++var = I",
-    u8"var == var"
+    u8"var ⇔ var"
 ));
 
 // --- Function call section ---
@@ -499,7 +499,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserFunctionCallInvalid, TestParserInvalid, ::tes
     u8"func(id\n)",
     u8"func(id, X\n)",
     u8"func)id(",
-    u8"func(si I == I: ;)",
+    u8"func(si I ⇔ I: ;)",
     u8"func(I + I +)",
     u8"func(I = I)",
     u8"func(id = I)",
@@ -512,20 +512,20 @@ INSTANTIATE_TEST_SUITE_P(TestParserFunctionCallInvalid, TestParserInvalid, ::tes
 
 INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::Values(
     std::make_pair(
-        u8"si I == II: ;",
+        u8"si I ⇔ II: ;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
         "        └── BlockAST\n"
     ),
     std::make_pair(
-        u8"si I == II: var = I;",
+        u8"si I ⇔ II: var = I;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
@@ -535,10 +535,10 @@ INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::V
         "        └── BlockAST\n"
     ),
     std::make_pair(
-        u8"si I == II: var = I; ni: var = II;",
+        u8"si I ⇔ II: var = I; ni: var = II;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
@@ -551,10 +551,10 @@ INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::V
         "                └── NumberAST(2)\n"
     ),
     std::make_pair(
-        u8"si I == II: var = I; nisi II == III: var = II; ni: var = III;",
+        u8"si I ⇔ II: var = I; nisi II ⇔ III: var = II; ni: var = III;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
@@ -563,7 +563,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::V
         "        │       └── NumberAST(1)\n"
         "        └── BlockAST\n"
         "            └── IfAST\n"
-        "                ├── BinaryOperatorAST('==')\n"
+        "                ├── BinaryOperatorAST('⇔')\n"
         "                │   ├── NumberAST(2)\n"
         "                │   └── NumberAST(3)\n"
         "                ├── BlockAST\n"
@@ -576,56 +576,56 @@ INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::V
         "                        └── NumberAST(3)\n"
     ),
     std::make_pair(
-        u8"si I == II: ; nisi II == III: ; nisi III == IV: ; nisi IV == V: ; ni: ;",
+        u8"si I ⇔ II: ; nisi II ⇔ III: ; nisi III ⇔ IV: ; nisi IV ⇔ V: ; ni: ;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
         "        └── BlockAST\n"
         "            └── IfAST\n"
-        "                ├── BinaryOperatorAST('==')\n"
+        "                ├── BinaryOperatorAST('⇔')\n"
         "                │   ├── NumberAST(2)\n"
         "                │   └── NumberAST(3)\n"
         "                ├── BlockAST\n"
         "                └── BlockAST\n"
         "                    └── IfAST\n"
-        "                        ├── BinaryOperatorAST('==')\n"
+        "                        ├── BinaryOperatorAST('⇔')\n"
         "                        │   ├── NumberAST(3)\n"
         "                        │   └── NumberAST(4)\n"
         "                        ├── BlockAST\n"
         "                        └── BlockAST\n"
         "                            └── IfAST\n"
-        "                                ├── BinaryOperatorAST('==')\n"
+        "                                ├── BinaryOperatorAST('⇔')\n"
         "                                │   ├── NumberAST(4)\n"
         "                                │   └── NumberAST(5)\n"
         "                                ├── BlockAST\n"
         "                                └── BlockAST\n"
     ),
     std::make_pair(
-        u8"si I == II: ; nisi II == III: ; nisi III == IV: ; nisi IV == V: ;",
+        u8"si I ⇔ II: ; nisi II ⇔ III: ; nisi III ⇔ IV: ; nisi IV ⇔ V: ;",
         "└── BlockAST\n"
         "    └── IfAST\n"
-        "        ├── BinaryOperatorAST('==')\n"
+        "        ├── BinaryOperatorAST('⇔')\n"
         "        │   ├── NumberAST(1)\n"
         "        │   └── NumberAST(2)\n"
         "        ├── BlockAST\n"
         "        └── BlockAST\n"
         "            └── IfAST\n"
-        "                ├── BinaryOperatorAST('==')\n"
+        "                ├── BinaryOperatorAST('⇔')\n"
         "                │   ├── NumberAST(2)\n"
         "                │   └── NumberAST(3)\n"
         "                ├── BlockAST\n"
         "                └── BlockAST\n"
         "                    └── IfAST\n"
-        "                        ├── BinaryOperatorAST('==')\n"
+        "                        ├── BinaryOperatorAST('⇔')\n"
         "                        │   ├── NumberAST(3)\n"
         "                        │   └── NumberAST(4)\n"
         "                        ├── BlockAST\n"
         "                        └── BlockAST\n"
         "                            └── IfAST\n"
-        "                                ├── BinaryOperatorAST('==')\n"
+        "                                ├── BinaryOperatorAST('⇔')\n"
         "                                │   ├── NumberAST(4)\n"
         "                                │   └── NumberAST(5)\n"
         "                                ├── BlockAST\n"
@@ -636,23 +636,23 @@ INSTANTIATE_TEST_SUITE_P(TestParserBranchingValid, TestParserValid, ::testing::V
 
 INSTANTIATE_TEST_SUITE_P(TestParserBranchingInvalid, TestParserInvalid, ::testing::Values(
     u8"si",
-    u8"si I == I",
-    u8"si I == I: ",
+    u8"si I ⇔ I",
+    u8"si I ⇔ I: ",
     u8"si: ;",
     u8"ni: ;",
-    u8"nisi I == I: ;",
+    u8"nisi I ⇔ I: ;",
     u8"nisi: ;",
-    u8"si I == I: ; nisi: ;",
-    u8"si I == I: ; nisi I == I",
-    u8"si I == I: ; nisi I == I:",
-    u8"si I == I: ; nisi I == I;",
-    u8"si I == I: ; nisi I == I: ni: ;",
-    u8"si I == I: ; nisi I == I: ; ni:",
-    u8"si I == I: ; nisi I == I: ; ni;",
-    u8"si I == I: ; ni I == I: ;",
-    u8"si I == I: ; nisi I == I: nisi I == I: ;",
+    u8"si I ⇔ I: ; nisi: ;",
+    u8"si I ⇔ I: ; nisi I ⇔ I",
+    u8"si I ⇔ I: ; nisi I ⇔ I:",
+    u8"si I ⇔ I: ; nisi I ⇔ I;",
+    u8"si I ⇔ I: ; nisi I ⇔ I: ni: ;",
+    u8"si I ⇔ I: ; nisi I ⇔ I: ; ni:",
+    u8"si I ⇔ I: ; nisi I ⇔ I: ; ni;",
+    u8"si I ⇔ I: ; ni I ⇔ I: ;",
+    u8"si I ⇔ I: ; nisi I ⇔ I: nisi I ⇔ I: ;",
     u8"si finio: ;",
-    u8"si si I == I: ;",
+    u8"si si I ⇔ I: ;",
     u8"si numerus var = I: ;",
     u8"si var = I: ;",
     u8"si (var = I): ;"
@@ -773,12 +773,12 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingValid, TestParserValid, ::testing::Val
         "            └── BreakAST\n"
     ),
     std::make_pair(
-        u8"∑(): si I == II: finio ; ;",
+        u8"∑(): si I ⇔ II: finio ; ;",
         "└── BlockAST\n"
         "    └── LoopAST\n"
         "        └── BlockAST\n"
         "            └── IfAST\n"
-        "                ├── BinaryOperatorAST('==')\n"
+        "                ├── BinaryOperatorAST('⇔')\n"
         "                │   ├── NumberAST(1)\n"
         "                │   └── NumberAST(2)\n"
         "                ├── BlockAST\n"
@@ -797,18 +797,18 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingInvalid, TestParserInvalid, ::testing:
     u8"∑();",
     u8"finio",
     u8"∑(numerus);",
-    u8"∑(V == V, numerus var);",
-    u8"∑(V == V, numerus var = I);",
+    u8"∑(V ⇔ V, numerus var);",
+    u8"∑(V ⇔ V, numerus var = I);",
     u8"∑(finio);",
     u8"∑(func(): ;",
-    u8"∑(X == X, ): ;",
-    u8"∑(X == X, var = V, ): ;",
-    u8"∑(X == X, var = V: ;",
-    u8"∑(X == X: ;",
-    u8"∑(,X == X): ;",
-    u8"∑(X == X, var = I,): ;",
+    u8"∑(X ⇔ X, ): ;",
+    u8"∑(X ⇔ X, var = V, ): ;",
+    u8"∑(X ⇔ X, var = V: ;",
+    u8"∑(X ⇔ X: ;",
+    u8"∑(,X ⇔ X): ;",
+    u8"∑(X ⇔ X, var = I,): ;",
     u8"∑(var = I): ;",
     u8"∑(numerus var = I, var = I): ;",
     u8"∑(var = I, numerus i = I): ;",
-    u8"∑(var == I, numerus i = I): ;"
+    u8"∑(var ⇔ I, numerus i = I): ;"
 ));
