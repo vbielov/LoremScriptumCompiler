@@ -1,28 +1,27 @@
-numerus puts = apere(littera str) 
+numerus puts = apere(litera str)
 
-nihil printYes = λ():
-    littera a = 'Y'
-    littera b = 'e'
-    littera c = 's'
-    numerus d = O
-    puts(a)
-;
+numerus[V] one = [O, I, II, III, IV]
+numerus[V] newOne
+litera char
+numerus terminator
 
-nihil printNo = λ():
-    littera a = 'N'
-    littera b = 'o'
-    numerus c = O
-    puts(a)
-;
-
-numerus main = λ():
-    ∑(numerus i = O, i < X, i = i + I):
-        si(i < V):
-            printYes()
-        ;
-        ni:
-            printNo()
-        ;
+numerus[V] someFunc = λ(numerus[V] arr):
+    numerus[V] newArr
+    ∑(numerus j = O, j < V, j = j + I):
+        newArr[j] = V - arr[j]
     ;
-    retro O 
+    retro newArr
+;
+
+
+∑(numerus i = O, i < V, i = i + I):
+    char = (XLVIII + one[i])
+    terminator = O
+    puts(char)
+;
+newOne = someFunc(one)
+∑(numerus l = O, l < V, l = l + I):
+    char = (XLVIII + newOne[l])
+    terminator = O
+    puts(char)
 ;

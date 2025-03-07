@@ -9,7 +9,7 @@ inline static const std::u8string SOURCE_CODE_TO_TEST =
     u8R"(
     numerus foo = λ(numerus a, numerus b):
         a = a + b
-        b = a * II
+        b = a × II
         retro b
     ;
     numerus c = foo(I, V)
@@ -32,14 +32,14 @@ inline static const std::u8string SOURCE_CODE_TO_TEST =
     scribor(test)
 
     scribor(abra ≠ cadabra)
-    scribor(abra == cadabra)
+    scribor(abra ⇔ cadabra)
     scribor(abra < cadabra)
     scribor(abra > cadabra)
 
     scribor(abra + cadabra)
     scribor(abra - cadabra)
     scribor(abra ^ cadabra)
-    scribor(abra / cadabra)
+    scribor(abra ÷ cadabra)
     scribor(¬cadabra)
     scribor(abra!)
 
@@ -70,7 +70,7 @@ inline static const std::vector<Token> EXPECTED_TOKENS = {
     {TokenType::IDENTIFIER, u8"b"},
     {TokenType::OPERATOR, u8"="},
     {TokenType::IDENTIFIER, u8"a"},
-    {TokenType::OPERATOR, u8"*"},
+    {TokenType::OPERATOR, u8"×"},
     {TokenType::NUMBER, u8"II"},
     {TokenType::NEW_LINE, u8""},
     {TokenType::KEYWORD, u8"retro"},
@@ -153,7 +153,7 @@ inline static const std::vector<Token> EXPECTED_TOKENS = {
     {TokenType::IDENTIFIER, u8"scribor"},
     {TokenType::PUNCTUATION, u8"("},
     {TokenType::IDENTIFIER, u8"abra"},
-    {TokenType::OPERATOR, u8"=="},
+    {TokenType::OPERATOR, u8"⇔"},
     {TokenType::IDENTIFIER, u8"cadabra"},
     {TokenType::PUNCTUATION, u8")"},
     {TokenType::NEW_LINE, u8""},

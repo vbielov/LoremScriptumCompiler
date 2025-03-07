@@ -12,6 +12,8 @@ inline static const std::vector<std::u8string> PUNCTUATION = {
     u8":",
     u8";",
     u8",",
+    u8"[",
+    u8"]"
 };
 
 inline static const std::vector<std::u8string> KEYWORDS = {
@@ -23,6 +25,7 @@ inline static const std::vector<std::u8string> KEYWORDS = {
     u8"nisi",
     u8"ni",
     u8"apere",
+    u8"rerum",
 };
 
 inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
@@ -30,30 +33,30 @@ inline static const std::vector<std::u8string> VARIABLE_TYPE_LABELS = {
     u8"litera", 
     u8"nihil",
     u8"asertio",
-    // u8"rerum",
 };
 
 inline static const std::vector<std::u8string> OPERATORS = {
-    u8"==", 
-    u8"=", // := was assign in many languages: https://en.wikipedia.org/wiki/ALGOL
-    u8"≠",
+    u8"=",  // asign
+    u8"⇔", // is equal
+    u8"≠",  
     u8">", 
     u8"<", 
-    u8">=", // ≥ 
-    u8"<=", // ≤
+    u8"≥",
+    u8"≤", 
     u8"+", 
     u8"-", 
-    u8"*", // ×
-    u8"/", // ÷
-    u8"%", // (mod n)
-    u8"^",
-    u8"¬",
-    u8"!",
+    u8"×", // multiply
+    u8"÷", // divide
+    u8"%", // modulo
+    u8"^", // power
+    u8"¬", // not
+    u8"!", // factorial
+    u8"∧", // and
+    u8"∨", // or
 };
 
 class Lexer {
    private:
-    // NOTE(Vlad): std::u8string may not be supported by some systems...
     const std::u8string* m_souceCode;
     int m_charIterator;
 

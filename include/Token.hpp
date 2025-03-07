@@ -7,7 +7,6 @@ enum class TokenType {
     NUMBER,         // Integer, ∅
     LITERAL,        // anything but ", surrounded by "'s
     TYPE,           // numerus, literra, nihil, ect.
-    COMMENT,        // //
     OPERATOR,       // , :=, =, ≠ , >, <, >=, <=, +, -, *, /, ^, ¬, !
     PUNCTUATION,    // (, ), :, ;
     KEYWORD,        // λ, retro, finio, ∑(∞), si, ni
@@ -20,7 +19,6 @@ inline const char* TOKEN_TYPE_LABELS[] = {
     "NUMBER",
     "LITERAL",
     "TYPE",
-    "COMMENT",
     "OPERATOR",
     "PUNCTUATION",
     "KEYWORD",

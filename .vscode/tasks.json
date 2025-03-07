@@ -15,7 +15,8 @@
           "MinGW Makefiles",
           "-DCMAKE_BUILD_TYPE=Debug",
           "-DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe",
-          "-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe"
+          "-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe",
+          "-DBUILD_TESTS=OFF"
         ]
       },
       "linux": {
@@ -27,7 +28,8 @@
           "${workspaceFolder}/build",
           "-DCMAKE_BUILD_TYPE=Debug",
           "-DCMAKE_C_COMPILER=/usr/bin/gcc",
-          "-DCMAKE_CXX_COMPILER=/usr/bin/g++"
+          "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+          "-DBUILD_TESTS=OFF"
         ]
       },
       "problemMatcher": [],
@@ -50,7 +52,8 @@
           "MinGW Makefiles",
           "-DCMAKE_BUILD_TYPE=Release",
           "-DCMAKE_C_COMPILER=C:/mingw64/bin/gcc.exe",
-          "-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe"
+          "-DCMAKE_CXX_COMPILER=C:/mingw64/bin/g++.exe",
+          "-DBUILD_TESTS=OFF"
         ]
       },
       "linux": {
@@ -62,7 +65,8 @@
           "${workspaceFolder}/build",
           "-DCMAKE_BUILD_TYPE=Release",
           "-DCMAKE_C_COMPILER=/usr/bin/gcc",
-          "-DCMAKE_CXX_COMPILER=/usr/bin/g++"
+          "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+          "-DBUILD_TESTS=OFF"
         ]
       },
       "problemMatcher": [],
