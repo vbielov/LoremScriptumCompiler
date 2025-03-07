@@ -1,23 +1,31 @@
 numerus puts = apere(litera str) 
 
-numerus current = I
+numerus test = O
 
-nihil printChar = λ():
-    si current > V:
-        litera a = 'Y'
-        numerus b = O
-        puts(a)
+∑(test < X, test++):
+    printCheck()
+;
+
+
+nihil printYes = λ():
+    litera a = 'Y'
+    litera b = 'e'
+    litera c = 's'
+    numerus d = O
+    puts(a)
+;
+
+nihil printNo = λ():
+    litera a = 'N'
+    litera b = 'o'
+    numerus c = O
+    puts(a)
+;
+
+nihil printCheck = λ():
+    si test < V:
+        printYes()
     ; ni:
-        litera c = 'N'
-        numerus d = O
-        puts(c)
+        printNo()
     ;
 ;
-
-∑(numerus i = O, i < X, i = i + I):
-    current++
-    printChar()
-;
-
-
-
