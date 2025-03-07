@@ -18,7 +18,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     getNextToken(); // eat ':', or if it's a first block in the tree, read first token
     while (!isFinishedBlock()) {
-        if (isToken(TokenType::NEW_LINE) || isToken(TokenType::COMMENT)) {
+        if (isToken(TokenType::NEW_LINE)) {
             getNextToken();
             continue;
         }
@@ -26,11 +26,6 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         auto statement = parseStatement();
         if (statement != nullptr) {
             statements.emplace_back(std::move(statement));
-
-            if (!isFinishedBlock() && !isToken(TokenType::NEW_LINE)) {
-                m_isValid = false;
-                return nullptr;
-            }
         } else {
             m_isValid = false;
             printUnknownTokenError();

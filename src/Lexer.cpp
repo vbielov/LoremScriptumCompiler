@@ -49,12 +49,10 @@ Token Lexer::getNextToken() {
 
     // if comment
     if (getCharAt(m_charIterator) == u8'/' && getCharAt(m_charIterator+1) == '/') {
-        std::u8string commentStr = u8"";
         while (getCharAt(m_charIterator) != u8'\n' && getCharAt(m_charIterator) != '\0') {
-            commentStr += getCharAt(m_charIterator);
             m_charIterator++;
         }
-        return {TokenType::COMMENT, std::move(commentStr)};
+        return getNextToken();
     }
 
     // is operator

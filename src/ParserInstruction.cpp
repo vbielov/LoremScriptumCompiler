@@ -9,10 +9,23 @@
  *      - numerus var = I
  *      - var = I
  *      - func()
+ *      - var++
+ *      - var--
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
     if (isToken(TokenType::TYPE)) {
-        return parseInstructionDeclaration();
+        if (m_blockCount == 0 && !m_isTest) {
+            // is Top level declaration
+            auto declaration = parseInstructionDeclaration();
+            if (declaration == nullptr) return nullptr;
+
+            m_topLevelDeclarations.push_back(std::move(declaration));
+            
+            auto pseudoEmptyInstr = std::vector<std::unique_ptr<AST>>();
+            return std::make_unique<BlockAST>(std::move(pseudoEmptyInstr));
+        } else {
+            return parseInstructionDeclaration();
+        }
     }
     if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
@@ -20,7 +33,10 @@ std::unique_ptr<AST> Parser::parseInstruction() {
 
         if (isToken(TokenType::PUNCTUATION, u8"[")) return parseInstructionArrayAssignment(identifier);
         if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
-        if (isToken(TokenType::OPERATOR, u8"=")) return parseInstructionAssignment(identifier);
+        if (isToken(TokenType::OPERATOR)) {
+            if (isToken(u8"=")) return parseInstructionAssignment(identifier);
+            else return parseInstructionShorthand(identifier);
+        }
     }
     return nullptr;
 }
@@ -75,6 +91,45 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
     
     std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
     return std::make_unique<BinaryOperatorAST>(u8"=", std::move(arrReference), std::move(expression));
+}
+
+/**
+ * An Increment instruction is a shorthand version of var = var -/+ 1
+ * 
+ * currentToken is at second token of assignment. It is always Operator but not '='
+ * 
+ * Examples:
+ *      - var++
+ *      - var--
+ *      - var-= I
+ *      - var*= I
+ *           ^ we are always here
+ */
+std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
+    if (!isToken(u8"+") && !isToken(u8"-") && !isToken(u8"*") && !isToken(u8"/") && !isToken(u8"^")) return nullptr;
+
+    auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
+    auto assign = *BINARY_OPERATION_PRIORITY.find(u8"=");
+
+    getNextToken();
+    if (!isToken(TokenType::OPERATOR)) return nullptr;
+
+    std::unique_ptr<AST> expression;
+    if (op.first == m_currentToken.value && (op.first == u8"+" || op.first == u8"-")) {
+        // var++ or var--
+        getNextToken();
+        expression = std::make_unique<NumberAST>(1);
+
+        if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) return nullptr;
+    } else if (isToken(TokenType::OPERATOR, u8"=")) {
+
+        // var -= I
+        getNextToken();
+        expression = parseExpression();
+    } else return nullptr;
+
+    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(op.first, std::make_unique<VariableReferenceAST>(identifier), std::move(expression));
+    return std::make_unique<BinaryOperatorAST>(assign.first, std::make_unique<VariableReferenceAST>(identifier), std::move(rhs));
 }
 
 /**

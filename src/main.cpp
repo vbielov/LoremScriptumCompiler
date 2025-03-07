@@ -65,7 +65,7 @@ int main(int argc, const char** argv) {
     std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl
               << std::endl;
     Parser parser = Parser(lexer);
-    std::unique_ptr<AST> tree = parser.parseBlock();
+    std::unique_ptr<AST> tree = parser.parse();
     if (tree) {
         tree->printTree(std::cout, "", false);
     } else {

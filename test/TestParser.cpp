@@ -5,7 +5,7 @@
 std::string runParser(std::u8string& input) {
     Lexer lexer(input);
     Parser parser(lexer, true);
-    auto block = parser.parseBlock();
+    auto block = parser.parse();
 
     std::ostringstream oss;
     if (block != nullptr) {
@@ -18,7 +18,7 @@ std::string runParser(std::u8string& input) {
 std::string runParserInvalid(std::u8string& input) {
     Lexer lexer(input);
     Parser parser(lexer, true);
-    auto block = parser.parseBlock();
+    auto block = parser.parse();
 
     std::ostringstream oss;
     if (block != nullptr) {
@@ -156,9 +156,17 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionValid, TestParserValid, ::testing::
         "            │   ├── NumberAST(1)\n"
         "            │   └── NumberAST(2)\n"
         "            └── NumberAST(3)\n"
+    ),
+    std::make_pair(
+        u8"var = -var",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── NumberAST(0)\n"
+        "            └── VariableReferenceAST(var)\n"
     )
 ));
-
 
 INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testing::Values(
     u8"var = func(I,)",
@@ -196,7 +204,11 @@ INSTANTIATE_TEST_SUITE_P(TestParserExpressionInvalid, TestParserInvalid, ::testi
     u8"var = func() = X",
     u8"var = (var = I)",
     u8"var = (var = I) + I",
-    u8"var = I + (var = I)"
+    u8"var = I + (var = I)",
+    u8"var = ++var",
+    u8"var = var++",
+    u8"var = --var",
+    u8"var = var--"
 ));
 
 // --- Declaration section ---
@@ -355,6 +367,42 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentValid, TestParserValid, ::testing::
         "            └── BinaryOperatorAST('+')\n"
         "                ├── NumberAST(3)\n"
         "                └── NumberAST(4)\n"
+    ),
+    std::make_pair(
+        u8"id++",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(id)\n"
+        "        └── BinaryOperatorAST('+')\n"
+        "            ├── VariableReferenceAST(id)\n"
+        "            └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"id--",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(id)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── VariableReferenceAST(id)\n"
+        "            └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"var -= X",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('-')\n"
+        "            ├── VariableReferenceAST(var)\n"
+        "            └── NumberAST(10)\n"
+    ),
+    std::make_pair(
+        u8"var *= X",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableReferenceAST(var)\n"
+        "        └── BinaryOperatorAST('*')\n"
+        "            ├── VariableReferenceAST(var)\n"
+        "            └── NumberAST(10)\n"
     )
 ));
 
@@ -371,7 +419,6 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var (= I)",
     u8"var := I",
     u8"var := I;",
-    u8"var -= X",
     u8"var X",
     u8"var (X",
     u8"var = \n I",
@@ -379,7 +426,11 @@ INSTANTIATE_TEST_SUITE_P(TestParserAssignmentInvalid, TestParserInvalid, ::testi
     u8"var = I + \n I",
     u8"var = numerus",
     u8"var = si I == I: ;",
-    u8"var = finio"
+    u8"var+++",
+    u8"var---",
+    u8"var**",
+    u8"var++var = I",
+    u8"var == var"
 ));
 
 // --- Function call section ---
@@ -648,6 +699,24 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingValid, TestParserValid, ::testing::Val
         "                    └── NumberAST(1)\n"
     ),
     std::make_pair(
+        u8"∑(i > V, i++): ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            ├── IfAST\n"
+        "            │   ├── BinaryOperatorAST('>')\n"
+        "            │   │   ├── VariableReferenceAST(i)\n"
+        "            │   │   └── NumberAST(5)\n"
+        "            │   ├── BlockAST\n"
+        "            │   └── BlockAST\n"
+        "            │       └── BreakAST\n"
+        "            └── BinaryOperatorAST('=')\n"
+        "                ├── VariableReferenceAST(i)\n"
+        "                └── BinaryOperatorAST('+')\n"
+        "                    ├── VariableReferenceAST(i)\n"
+        "                    └── NumberAST(1)\n"
+    ),
+    std::make_pair(
         u8"∑(numerus i = I): ;",
         "└── BlockAST\n"
         "    └── BlockAST\n"
@@ -695,6 +764,26 @@ INSTANTIATE_TEST_SUITE_P(TestParserLoopingValid, TestParserValid, ::testing::Val
         "                    └── BinaryOperatorAST('+')\n"
         "                        ├── VariableReferenceAST(i)\n"
         "                        └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"∑(): finio ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            └── BreakAST\n"
+    ),
+    std::make_pair(
+        u8"∑(): si I == II: finio ; ;",
+        "└── BlockAST\n"
+        "    └── LoopAST\n"
+        "        └── BlockAST\n"
+        "            └── IfAST\n"
+        "                ├── BinaryOperatorAST('==')\n"
+        "                │   ├── NumberAST(1)\n"
+        "                │   └── NumberAST(2)\n"
+        "                ├── BlockAST\n"
+        "                │   └── BreakAST\n"
+        "                └── BlockAST\n"
     )
 ));
 

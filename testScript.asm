@@ -43,15 +43,6 @@ someFunc:
 	.scl	2;
 	.type	32;
 	.endef
-	.globl	__xmm@00000003000000020000000100000000
-	.section	.rdata,"dr",discard,__xmm@00000003000000020000000100000000
-	.p2align	4, 0x0
-__xmm@00000003000000020000000100000000:
-	.long	0
-	.long	1
-	.long	2
-	.long	3
-	.text
 	.globl	main
 	.p2align	4, 0x90
 main:
@@ -60,61 +51,88 @@ main:
 	.seh_pushreg %rsi
 	pushq	%rdi
 	.seh_pushreg %rdi
-	subq	$120, %rsp
-	.seh_stackalloc 120
+	pushq	%rbx
+	.seh_pushreg %rbx
+	subq	$80, %rsp
+	.seh_stackalloc 80
 	.seh_endprologue
-	movaps	__xmm@00000003000000020000000100000000(%rip), %xmm0
-	movups	%xmm0, 60(%rsp)
-	movl	$4, 76(%rsp)
-	leaq	60(%rsp), %rcx
-	leaq	100(%rsp), %rdx
-	callq	someFunc
-	movl	116(%rsp), %eax
-	movups	100(%rsp), %xmm0
-	movups	%xmm0, 80(%rsp)
-	movl	%eax, 96(%rsp)
-	movl	$0, 40(%rsp)
-	leaq	39(%rsp), %rsi
+	movl	$0, 44(%rsp)
+	leaq	one(%rip), %rbx
+	leaq	char(%rip), %rsi
 	leaq	52(%rsp), %rdi
-	cmpl	$4, 40(%rsp)
+	cmpl	$4, 44(%rsp)
 	jg	.LBB1_3
 	.p2align	4, 0x90
 .LBB1_2:
-	movslq	40(%rsp), %rax
-	movzbl	60(%rsp,%rax,4), %eax
-	addb	$48, %al
-	movb	%al, 39(%rsp)
-	movl	$0, 48(%rsp)
-	movq	%rsi, %rcx
-	movq	%rdi, %rdx
-	callq	puts
-	incl	40(%rsp)
-	cmpl	$4, 40(%rsp)
-	jle	.LBB1_2
-.LBB1_3:
-	movl	$0, 44(%rsp)
-	leaq	39(%rsp), %rsi
-	leaq	56(%rsp), %rdi
-	cmpl	$4, 44(%rsp)
-	jg	.LBB1_6
-	.p2align	4, 0x90
-.LBB1_5:
 	movslq	44(%rsp), %rax
-	movzbl	80(%rsp,%rax,4), %eax
+	movzbl	(%rbx,%rax,4), %eax
 	addb	$48, %al
-	movb	%al, 39(%rsp)
-	movl	$0, 48(%rsp)
+	movb	%al, char(%rip)
+	movl	$0, terminator(%rip)
 	movq	%rsi, %rcx
 	movq	%rdi, %rdx
 	callq	puts
 	incl	44(%rsp)
 	cmpl	$4, 44(%rsp)
+	jle	.LBB1_2
+.LBB1_3:
+	leaq	one(%rip), %rcx
+	leaq	60(%rsp), %rdx
+	callq	someFunc
+	movl	76(%rsp), %eax
+	movups	60(%rsp), %xmm0
+	movups	%xmm0, newOne(%rip)
+	movl	%eax, newOne+16(%rip)
+	movl	$0, 48(%rsp)
+	leaq	newOne(%rip), %rbx
+	leaq	char(%rip), %rsi
+	leaq	56(%rsp), %rdi
+	cmpl	$4, 48(%rsp)
+	jg	.LBB1_6
+	.p2align	4, 0x90
+.LBB1_5:
+	movslq	48(%rsp), %rax
+	movzbl	(%rbx,%rax,4), %eax
+	addb	$48, %al
+	movb	%al, char(%rip)
+	movl	$0, terminator(%rip)
+	movq	%rsi, %rcx
+	movq	%rdi, %rdx
+	callq	puts
+	incl	48(%rsp)
+	cmpl	$4, 48(%rsp)
 	jle	.LBB1_5
 .LBB1_6:
 	xorl	%eax, %eax
-	addq	$120, %rsp
+	addq	$80, %rsp
+	popq	%rbx
 	popq	%rdi
 	popq	%rsi
 	retq
 	.seh_endproc
+
+	.data
+	.weak	one
+	.p2align	4, 0x0
+one:
+	.long	0
+	.long	1
+	.long	2
+	.long	3
+	.long	4
+
+	.bss
+	.weak	newOne
+	.p2align	4, 0x0
+newOne:
+	.quad	0
+
+	.weak	char
+char:
+	.quad	0
+
+	.weak	terminator
+	.p2align	2, 0x0
+terminator:
+	.quad	0
 

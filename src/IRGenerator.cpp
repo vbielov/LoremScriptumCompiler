@@ -46,6 +46,8 @@ Value* CharAST::codegen(LLVMStructs& llvmStructs) {
 }
 
 Value* VariableDeclarationAST::codegen(LLVMStructs& llvmStructs) {
+    std::cout << (const char*)(m_name.c_str()) << std::endl;
+    
     Type* type = getElementType(llvmStructs);
     // get scope
     auto insertBlock = llvmStructs.builder->GetInsertBlock();
@@ -87,7 +89,9 @@ Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
     if (iter != llvmStructs.namedValues.end()) {
         value = iter->second.value;
     } else {
-        value = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
+        for (auto& entry : llvmStructs.namedValues) {
+        }
+        value = llvmStructs.theModule->getGlobalVariable((const char*)(m_name.c_str()));
     }
     if (!value) {
         std::cerr << RED << "Error: Unknown variable name: " << (const char*)(m_name.c_str()) << RESET << std::endl;
@@ -174,7 +178,7 @@ Value* BinaryOperatorAST::codegen(LLVMStructs& llvmStructs) {
 Value* FuncCallAST::codegen(LLVMStructs& llvmStructs) {
     Function* calleeF = llvmStructs.theModule->getFunction((const char*)(m_calleeIdentifier.c_str()));
     if (!calleeF) {
-        std::cerr << RED << "Error: Uknown function referenced" << RESET << std::endl;
+        std::cerr << RED << "Error: Uknown function '" << (const char*)(m_calleeIdentifier.c_str()) << "' referenced" << RESET << std::endl;
         return nullptr;
     }
 
