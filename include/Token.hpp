@@ -27,6 +27,5 @@ inline const char* TOKEN_TYPE_LABELS[] = {
 
 struct Token {
     TokenType type;
-    // NOTE(Vlad): if you need const char* cast it like this: (const char*)(token.value.c_str())
     std::u8string value; 
 };

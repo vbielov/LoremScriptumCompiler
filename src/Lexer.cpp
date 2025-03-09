@@ -24,8 +24,8 @@ Token Lexer::getNextToken() {
     }
 
     // is punctuation
-    for (int i = 0; i < (int)PUNCTUATION.size(); i++) {
-        if (getCharAt(m_charIterator) == PUNCTUATION[i][0]) {
+    for (size_t i = 0; i < punctuation::VALUES_SIZE; i++) {
+        if (getCharAt(m_charIterator) == punctuation::VALUES[i][0]) {
             std::u8string puctuationSymbol = u8"";
             puctuationSymbol += getCharAt(m_charIterator);
             m_charIterator++;
@@ -34,17 +34,17 @@ Token Lexer::getNextToken() {
     }
 
     // is keyword
-    int keywordIndex = startWithWord(KEYWORDS, false);
+    int keywordIndex = startWithWord(keywords::VALUES, keywords::VALUES_SIZE, false);
     if (keywordIndex != -1) {
-        m_charIterator += KEYWORDS[keywordIndex].length();
-        return {TokenType::KEYWORD, KEYWORDS[keywordIndex]};
+        m_charIterator += keywords::VALUES[keywordIndex].length();
+        return {TokenType::KEYWORD, std::u8string(keywords::VALUES[keywordIndex])};
     }
 
     // is type
-    int typeIndex = startWithWord(VARIABLE_TYPE_LABELS, false);
+    int typeIndex = startWithWord(types::VALUES, types::VALUES_SIZE, false);
     if (typeIndex != -1) {
-        m_charIterator += VARIABLE_TYPE_LABELS[typeIndex].length();
-        return {TokenType::TYPE, VARIABLE_TYPE_LABELS[typeIndex]};
+        m_charIterator += types::VALUES[typeIndex].length();
+        return {TokenType::TYPE, std::u8string(types::VALUES[typeIndex])};
     }
 
     // if comment
@@ -56,10 +56,10 @@ Token Lexer::getNextToken() {
     }
 
     // is operator
-    int operatorIndex = startWithWord(OPERATORS, true);
+    int operatorIndex = startWithWord(operators::VALUES, operators::VALUES_SIZE, true);
     if (operatorIndex != -1) {
-        m_charIterator += OPERATORS[operatorIndex].length();
-        return {TokenType::OPERATOR, OPERATORS[operatorIndex]};
+        m_charIterator += operators::VALUES[operatorIndex].length();
+        return {TokenType::OPERATOR, std::u8string(operators::VALUES[operatorIndex])};
     }
 
     // if literal
@@ -92,31 +92,25 @@ Token Lexer::getNextToken() {
             getCharAt(m_charIterator) != u8'\n' && 
             getCharAt(m_charIterator) != u8'\r' && 
             getCharAt(m_charIterator) != u8'\0' && 
-            startWithWord(OPERATORS, true) == -1 &&
-            startWithWord(PUNCTUATION, true) == -1) {
+            startWithWord(operators::VALUES, operators::VALUES_SIZE, true) == -1 &&
+            startWithWord(punctuation::VALUES, punctuation::VALUES_SIZE, true) == -1) {
         identifierStr += getCharAt(m_charIterator);
         m_charIterator++;
     }
     return {TokenType::IDENTIFIER, std::move(identifierStr)};
 }
 
-int Lexer::startWithWord(const std::vector<std::u8string>& strList, bool isOperator) {
-    for (int i = 0; i < (int)strList.size(); i++) {
-        bool isEqual = true;
-        int j = 0;
-        for (; j < (int)strList[i].length(); j++) {
-            if (getCharAt(m_charIterator+j) != strList[i][j]) {
-                isEqual = false;
-                break;
-            }    
-        }
-        if (isEqual) {
-            if ((!isOperator) && ( // operator can be before identifier, for example "¬cadabra"
-                (getCharAt(m_charIterator+j) >= u8'a' && getCharAt(m_charIterator+j) <= u8'z') ||
-                (getCharAt(m_charIterator+j) >= u8'A' && getCharAt(m_charIterator+j) <= u8'Z') ||
-                (getCharAt(m_charIterator+j) >= u8'0' && getCharAt(m_charIterator+j) <= u8'9'))) {
-                // it's some identifier 
-                break;
+int Lexer::startWithWord(const std::u8string_view* words, size_t wordsSize, bool allowIdentifierAfter) const {
+    for (size_t i = 0; i < wordsSize; i++) {
+        const std::u8string_view& word = words[i];
+        std::u8string_view subString(m_souceCode->c_str() + m_charIterator, word.length());
+        if (subString.starts_with(word)) {
+            if (!allowIdentifierAfter) {
+                char8_t character = getCharAt(m_charIterator + word.length());
+                if (character >= u8'a' && character <= u8'z') {
+                    // there is some identifier after. So, the whole thing is identifier
+                    return -1;
+                }
             }
             return i;
         }
@@ -124,6 +118,7 @@ int Lexer::startWithWord(const std::vector<std::u8string>& strList, bool isOpera
     return -1;
 }
 
-char8_t Lexer::getCharAt(int index) const {
+char8_t Lexer::getCharAt(int index) const
+{
     return (*m_souceCode)[index];
 }

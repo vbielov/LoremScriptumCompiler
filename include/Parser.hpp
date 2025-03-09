@@ -1,15 +1,11 @@
 #pragma once
-#include <unordered_map>
+#include <format>
 #include "AST.hpp"
 #include "Lexer.hpp"
 #include "RomanNumber.hpp"
-#include <format>
-
-// TODO(Vlad): Just followed tutorial here, need to add types, single operators, controll flow and so much more.
-// https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html
 
 class Parser {
-   private:
+private:
     Lexer* m_lexer;
     Token m_currentToken;
 
@@ -19,46 +15,14 @@ class Parser {
     bool m_isTest;
     std::vector<std::unique_ptr<AST>> m_topLevelDeclarations;
 
-    // source: https://en.wikipedia.org/wiki/Order_of_operations
-    // smaller number means higher priority
-    inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRIORITY = {
-        {u8"!", 2},
-        {u8"¬", 2},
-        {u8"^", 2},
-
-        {u8"×", 3},
-        {u8"÷", 3},
-        {u8"%", 3},
-
-        {u8"+", 4},
-        {u8"-", 4},
-
-        {u8"<", 6},
-        {u8"≥", 6},
-        {u8"≤", 6},
-        {u8">", 6},
-
-        {u8"⇔", 7},
-        {u8"≠", 7},
-
-        {u8"∧", 11},
-
-        {u8"∨", 12},
-
-        {u8"=", 14},
-    };
-
-   public:
+public:
     Parser(Lexer& lexer);
     Parser(Lexer& lexer, bool isTest);
 
     bool isValid();
     std::unique_ptr<BlockAST> parse();
 
-   private:
-    /// @brief Get the precedence of the pending binary operator token.
-    int getTokenPrecedence() const;
-
+private:
     Token& getNextToken();
 
     bool isInsideLoop();
