@@ -33,7 +33,12 @@ std::unique_ptr<BlockAST> Parser::parse() {
     pseudoBlockInstr.push_back(std::move(pseudoReturn));
     auto pseudoBlock = std::make_unique<BlockAST>(std::move(pseudoBlockInstr));
 
-    auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(std::u8string(types::INT), u8"main", std::vector<std::unique_ptr<VariableDeclarationAST>>(), false, -1);
+    std::unique_ptr<IDataType> mainReturnType = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
+    auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(
+        u8"main", 
+        std::move(mainReturnType),
+        std::vector<std::unique_ptr<AST>>()
+    );
     auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));
 
     m_topLevelDeclarations.push_back(std::move(pseudoFunction));

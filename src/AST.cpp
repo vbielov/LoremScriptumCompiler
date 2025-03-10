@@ -4,31 +4,13 @@
 // AST
 //===----------------------------------------------------------------------===//
 
-Type* getTypeFromStr(const std::u8string& typeStr, const LLVMStructs& llvmStructs)
-{
-    if (typeStr == u8"numerus") {
-        return Type::getInt32Ty(*(llvmStructs.theContext));
-    } else if (typeStr == u8"litera") {
-        return Type::getInt8Ty(*(llvmStructs.theContext));
-    } else if (typeStr == u8"nihil") {
-        return Type::getVoidTy(*(llvmStructs.theContext));
-    } else if (typeStr == u8"asertio") {
-        return Type::getInt1Ty(*(llvmStructs.theContext));
-    }
-    return nullptr;
-}
-
 const std::u8string& AST::getName() const {
     assert(false && "This AST can't have a name.");
     static std::u8string ilegal = u8"ilegal";
     return ilegal;
 }
 
-Type* AST::getType(LLVMStructs& llvmStructs) const {
-    return this->getElementType(llvmStructs);
-}
-
-Type* AST::getElementType([[maybe_unused]] LLVMStructs& llvmStructs) const {
+const IDataType* AST::getType() const {
     assert(false && "This AST can't have a type.");
     return nullptr;
 }
@@ -39,32 +21,29 @@ BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions)
 NumberAST::NumberAST(int value) 
     : m_value(value) {}
 
-Type* NumberAST::getElementType(LLVMStructs& llvmStructs) const {
-    return Type::getInt32Ty(*(llvmStructs.theContext));
+const IDataType* NumberAST::getType() const {
+    static const std::unique_ptr<PrimitiveDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
+    return TYPE.get();
 }
 
 CharAST::CharAST(char8_t character) 
     : m_char(character) {}
 
-Type* CharAST::getElementType(LLVMStructs& llvmStructs) const {
-    return Type::getInt8Ty(*(llvmStructs.theContext));
+const IDataType* CharAST::getType() const {
+    static const std::unique_ptr<PrimitiveDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::CHAR);
+    return TYPE.get();
 }
 
-VariableDeclarationAST::VariableDeclarationAST(const std::u8string& type, const std::u8string& name)
-    : m_type(type)
-    , m_name(name) {}
+VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<PrimitiveDataType> type)
+    : m_name(name)
+    , m_type(std::move(type)) {}
 
 const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
 }
 
-Type* VariableDeclarationAST::getType(LLVMStructs& llvmStructs) const {
-    // return PointerType::getUnqual(getElementType(llvmStructs));
-    return getElementType(llvmStructs); // maybe I am completly wrong.
-}
-
-Type* VariableDeclarationAST::getElementType(LLVMStructs& llvmStructs) const {
-    return getTypeFromStr(m_type, llvmStructs);
+const IDataType* VariableDeclarationAST::getType() const {
+    return m_type.get();
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name)
@@ -74,23 +53,9 @@ const std::u8string& VariableReferenceAST::getName() const {
     return m_name;
 }
 
-Type* VariableReferenceAST::getType(LLVMStructs& llvmStructs) const {
-    // return PointerType::getUnqual(getElementType(llvmStructs));
-    return getElementType(llvmStructs);
-}
-
-Type* VariableReferenceAST::getElementType(LLVMStructs& llvmStructs) const {
-    auto iter = llvmStructs.namedValues.find(m_name);
-    if (iter == llvmStructs.namedValues.end()) {
-        GlobalVariable* globalVar = llvmStructs.theModule->getGlobalVariable((const char*)(m_name.c_str()));
-        if (globalVar) {
-            Type* type = globalVar->getValueType();
-            return type;
-        }
-        std::cerr << RED << "Error: Variable " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
-        return nullptr;  
-    }
-    return iter->second.valueType;
+const IDataType* VariableReferenceAST::getType() const {
+    // TODO(Vlad): when syntax table is done 
+    return nullptr;
 }
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
@@ -98,16 +63,8 @@ BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AS
     , m_LHS(std::move(LHS))
     , m_RHS(std::move(RHS)) {}
 
-Type* BinaryOperatorAST::getElementType(LLVMStructs& llvmStructs) const {
-    Type* leftType = m_LHS->getElementType(llvmStructs);
-    Type* rightType = m_RHS->getElementType(llvmStructs);
-    if (leftType != rightType) {
-        std::cerr << RED << "Error: It's not allowed to apply any operators to values with different types" << RESET << std::endl;
-        std::cerr << leftType->getTypeID() << std::endl;
-        std::cerr << rightType->getTypeID() << std::endl;
-
-        return nullptr;       
-    }
+const IDataType* BinaryOperatorAST::getType() const {
+    const IDataType* leftType = m_LHS->getType();
     return leftType;
 }
 
@@ -119,42 +76,25 @@ const std::u8string& FuncCallAST::getName() const {
     return m_calleeIdentifier;
 }
 
-Type* FuncCallAST::getElementType(LLVMStructs& llvmStructs) const {
-    auto iter = llvmStructs.namedFunctions.find(m_calleeIdentifier);
-    if (iter == llvmStructs.namedFunctions.end()) {
-        std::cerr << RED << "Can't find function " << (const char*)(m_calleeIdentifier.c_str()) <<  " in a name table" << std::endl;
-        return nullptr;
-    }
-    return iter->second.valueType;
+const IDataType* FuncCallAST::getType() const {
+    // TODO(Vlad): when syntax table is done
+    return nullptr;
 }
 
-FunctionPrototypeAST::FunctionPrototypeAST(
-    const std::u8string& returnType, const std::u8string& name, 
-    std::vector<std::unique_ptr<VariableDeclarationAST>> args, bool returnsArray, int arrSize
-)
-    : m_returnType(returnType)
-    , m_name(std::move(name))
-    , m_args(std::move(args))
-    , m_returnsArray(returnsArray)
-    , m_arrSize(arrSize) {}
+FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args)
+    : m_name(std::move(name))
+    , m_returnType(std::move(returnType))
+    , m_args(std::move(args)) {}
 
 const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
 }
 
-Type* FunctionPrototypeAST::getElementType(LLVMStructs& llvmStructs) const {
-    return getTypeFromStr(m_returnType, llvmStructs);
+const IDataType* FunctionPrototypeAST::getType() const {
+    return m_returnType.get();
 }
 
-Type* FunctionPrototypeAST::getType(LLVMStructs& llvmStructs) const {
-    // TODO(Vlad): this is just horrible. Make good types
-    if (m_returnsArray) {
-        return ArrayType::get(getElementType(llvmStructs), m_arrSize);
-    }
-    return getElementType(llvmStructs);
-}
-
-const std::vector<std::unique_ptr<VariableDeclarationAST>>& FunctionPrototypeAST::getArgs() const {
+const std::vector<std::unique_ptr<AST>>& FunctionPrototypeAST::getArgs() const {
     return m_args;
 }
 
@@ -166,23 +106,16 @@ const std::u8string& FunctionAST::getName() const {
     return m_prototype->getName();
 }
 
-Type* FunctionAST::getType(LLVMStructs& llvmStructs) const {
-    m_prototype->getType(llvmStructs);
-}
-
-Type* FunctionAST::getElementType(LLVMStructs& llvmStructs) const {
-    return m_prototype->getElementType(llvmStructs);
+const IDataType* FunctionAST::getType() const {
+    return m_prototype->getType();
 }
 
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr) 
     : m_expr(std::move(expr)) {}
 
-Type* ReturnAST::getType(LLVMStructs& llvmStructs) const {
-    return m_expr->getType(llvmStructs);
-}
-
-Type* ReturnAST::getElementType(LLVMStructs& llvmStructs) const {
-    return m_expr->getElementType(llvmStructs);
+const IDataType* ReturnAST::getType() const {
+    // TODO(Vlad): when syntax table is done
+    return nullptr;
 }
 
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
@@ -195,17 +128,20 @@ BreakAST::BreakAST() {}
 LoopAST::LoopAST(std::unique_ptr<BlockAST> body) 
     : m_body(std::move(body)) {}
 
-ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int size)
-    : VariableDeclarationAST(type, name)
-    , m_size(size){}
+ArrayDeclarationAST::ArrayDeclarationAST(const std::u8string& name, std::unique_ptr<ArrayDataType> type)
+    : m_name(name)
+    , m_type(std::move(type))
+    , m_arrElements() {}
 
-ArrayAST::ArrayAST(const std::u8string& type, const std::u8string& name, int size, std::vector<std::unique_ptr<AST>> arrElements)
-    : VariableDeclarationAST(type, name)
-    , m_size(size)
+
+ArrayDeclarationAST::ArrayDeclarationAST(const std::u8string& name, std::unique_ptr<ArrayDataType> type, std::vector<std::unique_ptr<AST>> arrElements)
+    : m_name(name)
+    , m_type(std::move(type))
     , m_arrElements(std::move(arrElements)) {}
 
-Type* ArrayAST::getType(LLVMStructs& llvmStructs) const {
-    return ArrayType::get(getElementType(llvmStructs), m_size);
+
+const IDataType* ArrayDeclarationAST::getType() const {
+    return m_type.get();
 }
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
@@ -216,20 +152,9 @@ const std::u8string& AccessArrayElementAST::getName() const {
     return m_name;
 }
 
-Type* AccessArrayElementAST::getElementType(LLVMStructs& llvmStructs) const {
-    auto iter = llvmStructs.namedValues.find(m_name);
-    if (iter == llvmStructs.namedValues.end()) {
-        GlobalVariable* globalArr = llvmStructs.theModule->getGlobalVariable((const char*)m_name.c_str());
-        if (globalArr) {
-            Type* type = globalArr->getValueType();
-            ArrayType* arrType = dyn_cast<ArrayType>(type);
-            return arrType->getElementType();
-        }
-        std::cerr << RED << "Error: Array " << (const char*)(m_name.c_str()) << " is not defined" << RESET << std::endl;
-        return nullptr;  
-    }
-    ArrayType* arrType = dyn_cast<ArrayType>(iter->second.valueType);
-    return arrType->getElementType();
+const IDataType* AccessArrayElementAST::getType() const {
+    // TODO(Vlad): when syntax table is done
+    return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -266,7 +191,7 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 
 void VariableDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "VariableDeclarationAST(" << std::string(m_type.begin(), m_type.end()) << " "
+    ostr << "VariableDeclarationAST(" << (const char*)(std::u8string(types::VALUES[(int)m_type->type]).c_str()) << " "
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
@@ -294,7 +219,7 @@ void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool 
 
 void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "FunctionPrototypeAST(" << std::string(m_returnType.begin(), m_returnType.end()) << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+    ostr << "FunctionPrototypeAST(" << "TODO: returnType" << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
@@ -342,9 +267,9 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     m_body->printTree(ostr, newIndent, true);
 }
 
-void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+void ArrayDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "ArrayAST(" << (const char*)(std::u8string(m_type).c_str()) << "[" << m_size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
+    ostr << "ArrayAST(" << (const char*)(std::u8string(types::VALUES[(int)m_type->type]).c_str()) << "[" << m_type->size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (const auto& element : m_arrElements) {
         element->printTree(ostr, newIndent, element == *m_arrElements.end());
@@ -357,3 +282,4 @@ void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& ind
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     m_index->printTree(ostr, newIndent, true);
 }
+

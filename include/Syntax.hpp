@@ -39,12 +39,12 @@ namespace keywords {
 
 namespace types {
     inline constexpr std::u8string_view INT = u8"numerus";
+    inline constexpr std::u8string_view BOOL = u8"asertio";
     inline constexpr std::u8string_view CHAR = u8"litera";
-    inline constexpr std::u8string_view BOOL = u8"nihil";
-    inline constexpr std::u8string_view VOID = u8"asertio";
+    inline constexpr std::u8string_view VOID = u8"nihil";
 
     inline constexpr std::u8string_view VALUES[] = {
-        INT, CHAR, BOOL, VOID 
+        INT, BOOL, CHAR, VOID 
     };
     inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
 }
