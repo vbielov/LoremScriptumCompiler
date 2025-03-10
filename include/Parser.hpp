@@ -29,8 +29,8 @@ private:
     bool isFinishedBlock();
     bool isExpressionEnd();
     bool isToken(TokenType type);
-    bool isToken(TokenType type, std::u8string value);
-    bool isToken(std::u8string value);
+    bool isToken(TokenType type, const std::u8string_view& value);
+    bool isToken(const std::u8string_view& value);
     bool isUnaryOperator();
 
     void printError(std::string error);

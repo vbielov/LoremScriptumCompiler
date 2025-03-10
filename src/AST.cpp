@@ -94,7 +94,7 @@ Type* VariableReferenceAST::getElementType(LLVMStructs& llvmStructs) const {
 }
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
-    : m_op(std::move(op))
+    : m_op(op)
     , m_LHS(std::move(LHS))
     , m_RHS(std::move(RHS)) {}
 
@@ -132,7 +132,7 @@ FunctionPrototypeAST::FunctionPrototypeAST(
     const std::u8string& returnType, const std::u8string& name, 
     std::vector<std::unique_ptr<VariableDeclarationAST>> args, bool returnsArray, int arrSize
 )
-    : m_returnType(std::move(returnType))
+    : m_returnType(returnType)
     , m_name(std::move(name))
     , m_args(std::move(args))
     , m_returnsArray(returnsArray)
@@ -344,7 +344,7 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 
 void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "ArrayAST(" << (const char*)(m_type.c_str()) << "[" << m_size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
+    ostr << "ArrayAST(" << (const char*)(std::u8string(m_type).c_str()) << "[" << m_size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (const auto& element : m_arrElements) {
         element->printTree(ostr, newIndent, element == *m_arrElements.end());
@@ -353,5 +353,7 @@ void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isL
 
 void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "AccessArrayElement(" << std::string(m_name.begin(), m_name.end()) << "[" << m_index << "])" << std::endl;
+    ostr << "AccessArrayElement(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    m_index->printTree(ostr, newIndent, true);
 }

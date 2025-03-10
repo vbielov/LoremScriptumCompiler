@@ -31,11 +31,15 @@ std::unique_ptr<AST> Parser::parseInstruction() {
         auto identifier = m_currentToken.value;
         getNextToken();
 
-        if (isToken(TokenType::PUNCTUATION, u8"[")) return parseInstructionArrayAssignment(identifier);
-        if (isToken(TokenType::PUNCTUATION, u8"(")) return parseExpressionFunctionCall(identifier);
+        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) 
+            return parseInstructionArrayAssignment(identifier);
+        if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) 
+            return parseExpressionFunctionCall(identifier);
         if (isToken(TokenType::OPERATOR)) {
-            if (isToken(u8"=")) return parseInstructionAssignment(identifier);
-            else return parseInstructionShorthand(identifier);
+            if (isToken(operators::ASSIGN)) 
+                return parseInstructionAssignment(identifier);
+            else 
+                return parseInstructionShorthand(identifier);
         }
     }
     return nullptr;
@@ -57,15 +61,15 @@ std::unique_ptr<AST> Parser::parseInstruction() {
 std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& identifier) {
     getNextToken();
     auto expression = parseExpression();
-    if (expression == nullptr) return nullptr;
+    if (expression == nullptr) 
+        return nullptr;
     
     std::unique_ptr<AST> reference = std::make_unique<VariableReferenceAST>(identifier);
-    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(reference), std::move(expression));
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(reference), std::move(expression));
 }
 
 // the same as above, but for arrays, current token is '['
-std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string& identifier)
-{
+std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string& identifier) {
     getNextToken(); // eat '['
     
     std::unique_ptr<AST> index = parseExpression();
@@ -74,23 +78,24 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
         return nullptr;
     }
 
-    if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+    if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
         printError("Expected ']' after array indexing");
         return nullptr;
     }
     getNextToken(); // eat ']'
 
-    if (!isToken(TokenType::OPERATOR, u8"=")) {
+    if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
         printError("Why would you just access an array?, assign something to it!");
         return nullptr;
     }
     getNextToken(); // eat '='
     
     std::unique_ptr<AST> expression = parseExpression();
-    if (expression == nullptr) return nullptr;
+    if (expression == nullptr) 
+        return nullptr;
     
     std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
-    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(arrReference), std::move(expression));
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(arrReference), std::move(expression));
 }
 
 /**
@@ -106,30 +111,30 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  *           ^ we are always here
  */
 std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
-    if (!isToken(u8"+") && !isToken(u8"-") && !isToken(u8"×") && !isToken(u8"÷") && !isToken(u8"^")) return nullptr;
+    if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) 
+        return nullptr;
 
-    auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
-    auto assign = *BINARY_OPERATION_PRIORITY.find(u8"=");
+    auto op = operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
 
     getNextToken();
     if (!isToken(TokenType::OPERATOR)) return nullptr;
 
     std::unique_ptr<AST> expression;
-    if (op.first == m_currentToken.value && (op.first == u8"+" || op.first == u8"-")) {
+    if (op->first == m_currentToken.value && (op->first == operators::PLUS || op->first == operators::MINUS)) {
         // var++ or var--
         getNextToken();
         expression = std::make_unique<NumberAST>(1);
 
         if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) return nullptr;
-    } else if (isToken(TokenType::OPERATOR, u8"=")) {
+    } else if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
 
         // var -= I
         getNextToken();
         expression = parseExpression();
     } else return nullptr;
 
-    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(op.first, std::make_unique<VariableReferenceAST>(identifier), std::move(expression));
-    return std::make_unique<BinaryOperatorAST>(assign.first, std::make_unique<VariableReferenceAST>(identifier), std::move(rhs));
+    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(std::u8string(op->first), std::make_unique<VariableReferenceAST>(identifier), std::move(expression));
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::make_unique<VariableReferenceAST>(identifier), std::move(rhs));
 }
 
 /**
@@ -150,7 +155,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     bool isArray = false;
     int arrSize = 0;
-    if (isToken(TokenType::PUNCTUATION, u8"[")) {
+    if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
         // it's array declaration
         isArray = true;
         // TODO(Vlad): maybe thats can be a more then a number?
@@ -161,17 +166,18 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         }
         toArabicConverter(m_currentToken.value, &arrSize);
         getNextToken(); // eat number
-        if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+        if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
             printError("Expected ']' in array declaration");
             return nullptr;
         }
-        getNextToken(); // eat ]
+        getNextToken(); // eat ']'
     }
 
-    if (!isToken(TokenType::IDENTIFIER)) return nullptr;
-    auto identifier = m_currentToken.value;
-    
-    getNextToken();
+    if (!isToken(TokenType::IDENTIFIER)) 
+        return nullptr;
+    std::u8string identifier = m_currentToken.value;
+    getNextToken(); // eat identifier
+
     if (isToken(TokenType::NEW_LINE)) {
         if (isArray) {
             return std::make_unique<ArrayAST>(type, identifier, arrSize);
@@ -179,29 +185,35 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         return std::make_unique<VariableDeclarationAST>(type, identifier);
     }
     
-    if (!isToken(TokenType::OPERATOR, u8"=")) return nullptr;
-    
-    getNextToken();
-    if (isToken(TokenType::KEYWORD, u8"λ")) {
+    if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) 
+        return nullptr;
+    getNextToken(); // eat '='
+
+    // λ
+    if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         return parseInstructionFunction(type, identifier, isArray, arrSize);
-    } else if (isToken(TokenType::KEYWORD, u8"apere")) {
+    // apere
+    } else if (isToken(TokenType::KEYWORD, keywords::INCLUDE)) { 
         getNextToken(); // eat apere
         return parseInstructionPrototype(type, identifier, isArray, arrSize);
-    } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
+    // '['
+    } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) { 
         getNextToken(); // eat '['
         std::vector<std::unique_ptr<AST>> elements;
-        while (!isToken(TokenType::PUNCTUATION, u8"]") && !isToken(TokenType::EOF_TOKEN)) {
+        // while != ']'
+        while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE) && !isToken(TokenType::EOF_TOKEN)) { 
             std::unique_ptr<AST> element = parseExpression();
             elements.push_back(std::move(element));
             if (!elements.back() || isToken(TokenType::EOF_TOKEN)) {
                 printError("Error when parsing elements of array initialization");
                 return nullptr;
             }
-            if (isToken(TokenType::PUNCTUATION, u8",")) {
+            if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
                 getNextToken(); // eat ','
             }
         }
-        if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+        
+        if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { // ']'
             printError("Expected ] in array initalization");
             return nullptr;
         }
@@ -211,15 +223,16 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     }
     
     std::unique_ptr<VariableDeclarationAST> declaration;
-    if (isArray) {
+    if (isArray)
         declaration = std::make_unique<ArrayAST>(type, identifier, arrSize);
-    } else {
+    else
         declaration = std::make_unique<VariableDeclarationAST>(type, identifier);
-    }
-    auto expression = parseExpression();
-    if (expression == nullptr) return nullptr;
 
-    return std::make_unique<BinaryOperatorAST>(u8"=", std::move(declaration), std::move(expression));
+    auto expression = parseExpression();
+    if (expression == nullptr) 
+        return nullptr;
+
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression));
 }
 
 /**
@@ -235,21 +248,21 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize) {
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<VariableDeclarationAST>> args;
-    while (!isToken(TokenType::PUNCTUATION, u8")") && !isToken(TokenType::EOF_TOKEN)) {
+    while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) 
             return nullptr;
         std::u8string argType = m_currentToken.value;
         getNextToken(); //  eat type
         
         int arrSize = -1;
-        if (isToken(TokenType::PUNCTUATION, u8"[")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
             getNextToken(); // eat '['
             if (!isToken(TokenType::NUMBER) || !toArabicConverter(m_currentToken.value, &arrSize)) {
                 printError("Expected number after '[', when dealing with array func-argument");
                 return nullptr;
             }
             getNextToken(); // eat number
-            if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+            if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
                 printError("Expected ']', when dealing with array func-argument");
                 return nullptr;
             }
@@ -263,24 +276,25 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         getNextToken(); // eat identifier
 
         std::unique_ptr<VariableDeclarationAST> arg;
-        if (arrSize != -1) {
+        if (arrSize != -1)
             arg = std::make_unique<ArrayAST>(argType, identifier, arrSize);
-        } else {
+        else
             arg = std::make_unique<VariableDeclarationAST>(argType, identifier);
-        }
+            
         args.push_back(std::move(arg));
 
-        if (isToken(TokenType::PUNCTUATION, u8",")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
-            if (isToken(TokenType::PUNCTUATION, u8")") || isToken(TokenType::EOF_TOKEN)) 
+            if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) || isToken(TokenType::EOF_TOKEN)) 
                 return nullptr;
+
             continue;
         }
-        if (isToken(TokenType::PUNCTUATION, u8")")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
             break;
         }
 
-        printError("Error: Expected ) in function declaration");
+        printError("Error: Expected ')' in function declaration");
         return nullptr;
     }
 
@@ -307,7 +321,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
     }
 
     getNextToken(); // eat λ
-    if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
+    if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) return nullptr;
 
     auto prototype = parseInstructionPrototype(type, identifier, returnsArray, arrSize);
     if (prototype == nullptr) return nullptr;
@@ -317,7 +331,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
         getNextToken();
     }
 
-    if (!isToken(TokenType::PUNCTUATION, u8":")) {
+    if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) {
         printError("Expected ':' when parsin Block");
         return nullptr;
     }

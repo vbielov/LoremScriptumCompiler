@@ -33,23 +33,24 @@ std::unique_ptr<AST> Parser::parseStatement() {
  *  - ∑(∞): ... ;
  */
 std::unique_ptr<AST> Parser::parseStatementFlow() {
-    if (isToken(u8"finio")) {
+    if (isToken(keywords::BREAK)) {
         if (m_loopCount == 0) {
             printError("finio can only be called inside loop");
             return nullptr;
         }
-
-        getNextToken();
+        getNextToken(); // eat finio
         
         return std::make_unique<BreakAST>();
     }
 
-    if (isToken(u8"retro")) {
+    if (isToken(keywords::RETURN)) {
         getNextToken();
         return std::make_unique<ReturnAST>(parseExpression());
     }
-    if (isToken(u8"si")) return parseStatementBranching();
-    if (isToken(u8"∑")) return parseStatementLooping();
+    if (isToken(keywords::IF)) 
+        return parseStatementBranching();
+    if (isToken(keywords::FOR_LOOP)) 
+        return parseStatementLooping();
     return nullptr;
 }
 
@@ -74,25 +75,27 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     if (condition == nullptr) return nullptr;
 
     while (isToken(TokenType::NEW_LINE)) getNextToken();
-    if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
+    if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) 
+        return nullptr;
     auto ifBlock = parseBlock();
-    if (ifBlock == nullptr) return nullptr;
+    if (ifBlock == nullptr) 
+        return nullptr;
 
     std::unique_ptr<BlockAST> elseBlock;
 
     while (isToken(TokenType::NEW_LINE)) getNextToken();
 
-    if (isToken(TokenType::KEYWORD, u8"nisi")) {
+    if (isToken(TokenType::KEYWORD, keywords::ELIF)) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
         auto elifBranch = parseStatementBranching();
         if (elifBranch == nullptr) return nullptr;
         pseudoIf.emplace_back(std::move(elifBranch));
         elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));
-    } else if (isToken(TokenType::KEYWORD, u8"ni")) {
+    } else if (isToken(TokenType::KEYWORD, keywords::ELSE)) {
         getNextToken();
 
         while (isToken(TokenType::NEW_LINE)) getNextToken();
-        if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) return nullptr;
         elseBlock = parseBlock();
         if (elseBlock == nullptr) return nullptr;
     } else {
@@ -122,41 +125,50 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
  */
 std::unique_ptr<AST> Parser::parseStatementLooping() {
     getNextToken();
-    if (!isToken(TokenType::PUNCTUATION, u8"(")) return nullptr;
+    if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) return nullptr;
 
     std::unique_ptr<AST> declaration, endExpression, stepExpression;
 
     getNextToken();
     if (isToken(TokenType::TYPE)) {
         declaration = parseInstructionDeclaration();
-        if (declaration == nullptr) return nullptr;
-        if (isToken(TokenType::PUNCTUATION, u8",")) getNextToken();
+        if (declaration == nullptr) 
+            return nullptr;
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) getNextToken();
     }
 
-    if (!isToken(TokenType::PUNCTUATION, u8")")) {
+    if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
         endExpression = parseExpression();
-        if (endExpression == nullptr) return nullptr;
+        if (endExpression == nullptr) 
+            return nullptr;
 
-        if (isToken(TokenType::PUNCTUATION, u8",")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
-            if (isToken(TokenType::TYPE)) return nullptr;
+            if (isToken(TokenType::TYPE)) 
+                return nullptr;
             stepExpression = parseInstruction();
-            if (stepExpression == nullptr) return nullptr;
+            if (stepExpression == nullptr) 
+                return nullptr;
         }
 
-        if (!isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) 
+            return nullptr;
     }
 
     getNextToken();
-    while (isToken(TokenType::NEW_LINE)) getNextToken();
-    if (!isToken(TokenType::PUNCTUATION, u8":")) return nullptr;
+    while (isToken(TokenType::NEW_LINE)) 
+        getNextToken();
+
+    if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) 
+        return nullptr;
+
     m_loopCount++;
     auto loopBlock = parseBlock();
     m_loopCount--;
-    if (loopBlock == nullptr) return nullptr;
+    if (loopBlock == nullptr) 
+        return nullptr;
 
-    // build pseudo wrapper block
-
+    // Building pseudo wrapper block
     auto loopWrapper = std::vector<std::unique_ptr<AST>>();
     if (endExpression != nullptr) {
         auto elseBlockInstr = std::vector<std::unique_ptr<AST>>();

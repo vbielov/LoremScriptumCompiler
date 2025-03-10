@@ -37,16 +37,15 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     }
 
     // Catch close/open more blocks than possible
-    if (isToken(TokenType::PUNCTUATION, u8";")) m_blockCount--;
-    if (m_blockCount < 0 || (isToken(TokenType::EOF_TOKEN) && m_blockCount != 0)) {
-        m_isValid = false;
-        return nullptr;
-    }
-    if (isToken(TokenType::PUNCTUATION, u8";")) getNextToken();
+    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
+        m_blockCount--;
+
+    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
+        getNextToken();
 
     return std::make_unique<BlockAST>(std::move(statements));
 }
 
 bool Parser::isFinishedBlock() {
-    return isToken(TokenType::EOF_TOKEN) || isToken(TokenType::PUNCTUATION, u8";");
+    return isToken(TokenType::EOF_TOKEN) || isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE);
 }

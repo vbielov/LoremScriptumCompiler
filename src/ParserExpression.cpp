@@ -29,30 +29,32 @@ std::unique_ptr<AST> Parser::parseExpression() {
     
     if (isExpressionEnd()) return left;
     
-    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, u8"=")) return nullptr;
-    auto op = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
+    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) 
+        return nullptr;
+
+    auto op = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
     getNextToken();
     
     auto right = parseExpressionSingle();
     if (right == nullptr) return nullptr;
 
     if (isExpressionEnd()) {
-        return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
+        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
     }
 
-    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, u8"=")) return nullptr;
-    auto nextOp = *BINARY_OPERATION_PRIORITY.find(m_currentToken.value);
+    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) return nullptr;
+    auto nextOp = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
 
     getNextToken();
     auto nextExpression = parseExpression();
     if (nextExpression == nullptr) return nullptr;
 
     if (op.second <= nextOp.second) {
-        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(right));
-        return std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(priorityOp), std::move(nextExpression));
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
+        return std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(priorityOp), std::move(nextExpression));
     } else {
-        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(nextOp.first, std::move(right), std::move(nextExpression));
-        return std::make_unique<BinaryOperatorAST>(op.first, std::move(left), std::move(priorityOp));
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(right), std::move(nextExpression));
+        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(priorityOp));
     }
 }
 
@@ -78,17 +80,20 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     std::unique_ptr<AST> value;
 
     if (isUnaryOperator()) {
-        auto sign = m_currentToken.value;
+        std::u8string sign = m_currentToken.value;
 
         getNextToken();
-        if (isUnaryOperator()) return nullptr;
-        value = parseExpressionSingle();
-        if (value == nullptr) return nullptr;
+        if (isUnaryOperator()) 
+            return nullptr;
 
-        if (sign == u8"+" || sign == u8"-") {
+        value = parseExpressionSingle();
+        if (value == nullptr) 
+            return nullptr;
+
+        if (sign == operators::PLUS || sign == operators::MINUS) {
             auto lhs = std::make_unique<NumberAST>(0);
             return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
-        } else if (sign == u8"¬"){
+        } else if (sign == operators::NOT){
             // TODO: Add BoolAST
             return nullptr;
         }
@@ -97,11 +102,14 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
     if (isToken(TokenType::NUMBER)) {
         int intValue;
-        if (!toArabicConverter(m_currentToken.value, &intValue)) return nullptr;
+        if (!toArabicConverter(m_currentToken.value, &intValue)) 
+            return nullptr;
+
         value = std::make_unique<NumberAST>(intValue);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
         char letter = m_currentToken.value[0];
+
         if(m_currentToken.value == u8"\\0") letter = '\0';
         if(m_currentToken.value == u8"\\n") letter = '\n';
         if(m_currentToken.value == u8"\\t") letter = '\t';
@@ -111,10 +119,10 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         getNextToken();
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken.value;
-        getNextToken();
-        if (isToken(TokenType::PUNCTUATION, u8"(")) {
+        getNextToken(); // eat identifier
+        if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
             value = parseExpressionFunctionCall(identifier);
-        } else if (isToken(TokenType::PUNCTUATION, u8"[")) {
+        } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
             getNextToken(); // eat [
 
             std::unique_ptr<AST> index = parseExpression();
@@ -123,7 +131,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
                 return nullptr;
             }
 
-            if (!isToken(TokenType::PUNCTUATION, u8"]")) {
+            if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
                 printError("Expected ']' after array index accessing");
                 return nullptr;
             }
@@ -132,10 +140,12 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         } else {
             value = std::make_unique<VariableReferenceAST>(identifier);
         }
-    } else if (isToken(TokenType::PUNCTUATION, u8"(")) {
+    } else if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
         getNextToken();
         value = parseExpression();
-        if (!isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) 
+            return nullptr;
+
         getNextToken();
     } else {
         return nullptr;
@@ -162,18 +172,19 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
     getNextToken();
 
     std::vector<std::unique_ptr<AST>> args;
-    while (!isToken(TokenType::PUNCTUATION, u8")")) {
+    while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
         auto expression = parseExpression();
-        if (expression == nullptr) return nullptr;
+        if (expression == nullptr) 
+            return nullptr;
 
         args.push_back(std::move(expression));
 
-        if (isToken(TokenType::PUNCTUATION, u8",")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
-            if (isToken(TokenType::PUNCTUATION, u8")")) return nullptr;
+            if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) return nullptr;
             continue;
         }
-        if (isToken(TokenType::PUNCTUATION, u8")")) {
+        if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
             break;
         }
 

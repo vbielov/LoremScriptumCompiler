@@ -89,8 +89,6 @@ Value* VariableReferenceAST::codegen(LLVMStructs& llvmStructs) {
     if (iter != llvmStructs.namedValues.end()) {
         value = iter->second.value;
     } else {
-        for (auto& entry : llvmStructs.namedValues) {
-        }
         value = llvmStructs.theModule->getGlobalVariable((const char*)(m_name.c_str()));
     }
     if (!value) {

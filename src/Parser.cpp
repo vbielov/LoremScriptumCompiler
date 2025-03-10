@@ -33,7 +33,7 @@ std::unique_ptr<BlockAST> Parser::parse() {
     pseudoBlockInstr.push_back(std::move(pseudoReturn));
     auto pseudoBlock = std::make_unique<BlockAST>(std::move(pseudoBlockInstr));
 
-    auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(u8"numerus", u8"main", std::vector<std::unique_ptr<VariableDeclarationAST>>(), false, -1);
+    auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(std::u8string(types::INT), u8"main", std::vector<std::unique_ptr<VariableDeclarationAST>>(), false, -1);
     auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));
 
     m_topLevelDeclarations.push_back(std::move(pseudoFunction));
@@ -57,16 +57,16 @@ bool Parser::isToken(TokenType type) {
     return m_currentToken.type == type;
 }
 
-bool Parser::isToken(std::u8string value) {
+bool Parser::isToken(const std::u8string_view& value) {
     return m_currentToken.value == value;
 }
 
-bool Parser::isToken(TokenType type, std::u8string value) {
+bool Parser::isToken(TokenType type, const std::u8string_view& value) {
     return m_currentToken.type == type && m_currentToken.value == value;
 }
 
 bool Parser::isUnaryOperator() {
-    return isToken(TokenType::OPERATOR, u8"+") || isToken(TokenType::OPERATOR, u8"-") || isToken(TokenType::OPERATOR, u8"¬");
+    return isToken(TokenType::OPERATOR, operators::PLUS) || isToken(TokenType::OPERATOR, operators::MINUS) || isToken(TokenType::OPERATOR, operators::NOT);
 }
 
 void Parser::printUnknownTokenError() {
