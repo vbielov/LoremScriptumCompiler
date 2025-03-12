@@ -187,24 +187,23 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     getNextToken(); // eat identifier
 
     if (isToken(TokenType::NEW_LINE)) {
-        if (isArray) {
-            return std::make_unique<ArrayDeclarationAST>(identifier, std::move((std::unique_ptr<ArrayDataType>&)dataType));
-        }
-        return std::make_unique<VariableDeclarationAST>(identifier, std::move((std::unique_ptr<PrimitiveDataType>&)dataType));
+        return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType));
     }
     
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) 
         return nullptr;
     getNextToken(); // eat '='
 
+    std::unique_ptr<AST> expression;
+
     // λ
     if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         return parseInstructionFunction(identifier, std::move(dataType));
-    // apere
+        // apere
     } else if (isToken(TokenType::KEYWORD, keywords::INCLUDE)) { 
         getNextToken(); // eat apere
-        return parseInstructionPrototype(identifier, std::move(dataType));
-    // '['
+        return parseInstructionPrototype(identifier, std::move(dataType), false);
+        // '['
     } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) { 
         getNextToken(); // eat '['
         std::vector<std::unique_ptr<AST>> elements;
@@ -226,24 +225,15 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
             return nullptr;
         }
         getNextToken(); // eat ']'
-
-        return std::make_unique<ArrayDeclarationAST>(
-            identifier, 
-            std::move((std::unique_ptr<ArrayDataType>&)dataType), 
-            std::move(elements)
-        );
+        expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements));
+    } else {
+        expression = parseExpression();
     }
     
-    if (isArray) {
-        printError("Assigment to array declaration, is allowed only for initialization array.");
-        return nullptr;
-    }
-    
-    auto declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move((std::unique_ptr<PrimitiveDataType>&)dataType));
-    auto expression = parseExpression();
     if (expression == nullptr) 
         return nullptr;
-
+    
+    std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType));
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression));
 }
 
@@ -257,7 +247,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                        ^ we are always here
  */
-std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
+std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type, bool isDefined) {
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<AST>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
@@ -292,14 +282,14 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
 
         std::u8string identifier = m_currentToken.value;
         getNextToken(); // eat identifier
-
-        std::unique_ptr<AST> arg;
+        
+        std::unique_ptr<IDataType> dataType;
         if (isArray)
-            arg = std::make_unique<ArrayDeclarationAST>(identifier, std::make_unique<ArrayDataType>(primitiveType, arrSize));
+            dataType = std::make_unique<ArrayDataType>(primitiveType, arrSize);
         else
-            arg = std::make_unique<VariableDeclarationAST>(identifier, std::make_unique<PrimitiveDataType>(primitiveType));
-            
-        args.push_back(std::move(arg));
+            dataType = std::make_unique<PrimitiveDataType>(primitiveType);
+        
+        args.push_back(std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType)));
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
@@ -317,7 +307,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     }
     getNextToken(); // eat ')'
 
-    return std::make_unique<FunctionPrototypeAST>(identifier, std::move(type), std::move(args));
+    return std::make_unique<FunctionPrototypeAST>(identifier, std::move(type), std::move(args), isDefined);
 }
 
 /**
@@ -340,7 +330,7 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
     getNextToken(); // eat λ
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) return nullptr;
 
-    auto prototype = parseInstructionPrototype(identifier, std::move(type));
+    auto prototype = parseInstructionPrototype(identifier, std::move(type), true);
     if (prototype == nullptr) return nullptr;
 
     // for the case if : is on the next line

@@ -6,11 +6,11 @@
 
 const std::u8string& AST::getName() const {
     assert(false && "This AST can't have a name.");
-    static std::u8string ilegal = u8"ilegal";
+    static const std::u8string ilegal = u8"ilegal";
     return ilegal;
 }
 
-const IDataType* AST::getType() const {
+const IDataType* AST::getType([[maybe_unused]] const IRContext& context) const {
     assert(false && "This AST can't have a type.");
     return nullptr;
 }
@@ -21,20 +21,20 @@ BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions)
 NumberAST::NumberAST(int value) 
     : m_value(value) {}
 
-const IDataType* NumberAST::getType() const {
-    static const std::unique_ptr<PrimitiveDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
+const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) const {
+    static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
     return TYPE.get();
 }
 
 CharAST::CharAST(char8_t character) 
     : m_char(character) {}
 
-const IDataType* CharAST::getType() const {
-    static const std::unique_ptr<PrimitiveDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::CHAR);
+const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) const {
+    static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::CHAR);
     return TYPE.get();
 }
 
-VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<PrimitiveDataType> type)
+VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type)
     : m_name(name)
     , m_type(std::move(type)) {}
 
@@ -42,7 +42,7 @@ const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
 }
 
-const IDataType* VariableDeclarationAST::getType() const {
+const IDataType* VariableDeclarationAST::getType([[maybe_unused]] const IRContext& context) const {
     return m_type.get();
 }
 
@@ -53,9 +53,8 @@ const std::u8string& VariableReferenceAST::getName() const {
     return m_name;
 }
 
-const IDataType* VariableReferenceAST::getType() const {
-    // TODO(Vlad): when syntax table is done 
-    return nullptr;
+const IDataType* VariableReferenceAST::getType(const IRContext& context) const {
+    return context.symbolTable.lookupVariable(m_name)->type;
 }
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS) 
@@ -63,9 +62,8 @@ BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AS
     , m_LHS(std::move(LHS))
     , m_RHS(std::move(RHS)) {}
 
-const IDataType* BinaryOperatorAST::getType() const {
-    const IDataType* leftType = m_LHS->getType();
-    return leftType;
+const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& context) const {
+    return m_LHS->getType(context);
 }
 
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args)
@@ -76,21 +74,21 @@ const std::u8string& FuncCallAST::getName() const {
     return m_calleeIdentifier;
 }
 
-const IDataType* FuncCallAST::getType() const {
-    // TODO(Vlad): when syntax table is done
-    return nullptr;
+const IDataType* FuncCallAST::getType(const IRContext& context) const {
+    return context.symbolTable.lookupFunction(m_calleeIdentifier)->type;
 }
 
-FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args)
+FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args, bool isDefined)
     : m_name(std::move(name))
     , m_returnType(std::move(returnType))
-    , m_args(std::move(args)) {}
+    , m_args(std::move(args))
+    , m_isDefined(isDefined) {}
 
 const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
 }
 
-const IDataType* FunctionPrototypeAST::getType() const {
+const IDataType* FunctionPrototypeAST::getType([[maybe_unused]] const IRContext& context) const {
     return m_returnType.get();
 }
 
@@ -106,16 +104,15 @@ const std::u8string& FunctionAST::getName() const {
     return m_prototype->getName();
 }
 
-const IDataType* FunctionAST::getType() const {
-    return m_prototype->getType();
+const IDataType* FunctionAST::getType(const IRContext& context) const {
+    return m_prototype->getType(context);
 }
 
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr) 
     : m_expr(std::move(expr)) {}
 
-const IDataType* ReturnAST::getType() const {
-    // TODO(Vlad): when syntax table is done
-    return nullptr;
+const IDataType* ReturnAST::getType(const IRContext& context) const {
+    return m_expr->getType(context);
 }
 
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else)
@@ -128,21 +125,9 @@ BreakAST::BreakAST() {}
 LoopAST::LoopAST(std::unique_ptr<BlockAST> body) 
     : m_body(std::move(body)) {}
 
-ArrayDeclarationAST::ArrayDeclarationAST(const std::u8string& name, std::unique_ptr<ArrayDataType> type)
+ArrayInitializationAST::ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements)
     : m_name(name)
-    , m_type(std::move(type))
-    , m_arrElements() {}
-
-
-ArrayDeclarationAST::ArrayDeclarationAST(const std::u8string& name, std::unique_ptr<ArrayDataType> type, std::vector<std::unique_ptr<AST>> arrElements)
-    : m_name(name)
-    , m_type(std::move(type))
-    , m_arrElements(std::move(arrElements)) {}
-
-
-const IDataType* ArrayDeclarationAST::getType() const {
-    return m_type.get();
-}
+    , m_elements(std::move(elements)) {}
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
     : m_name(name)
@@ -152,9 +137,8 @@ const std::u8string& AccessArrayElementAST::getName() const {
     return m_name;
 }
 
-const IDataType* AccessArrayElementAST::getType() const {
-    // TODO(Vlad): when syntax table is done
-    return nullptr;
+const IDataType* AccessArrayElementAST::getType(const IRContext& context) const {
+    return context.symbolTable.lookupVariable(m_name)->type;
 }
 
 //===----------------------------------------------------------------------===//
@@ -191,7 +175,7 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 
 void VariableDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "VariableDeclarationAST(" << (const char*)(std::u8string(types::VALUES[(int)m_type->type]).c_str()) << " "
+    ostr << "VariableDeclarationAST(" << "TODO: show type here..." << " "
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
@@ -267,15 +251,6 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     m_body->printTree(ostr, newIndent, true);
 }
 
-void ArrayDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
-    printIndent(ostr, indent, isLast);
-    ostr << "ArrayAST(" << (const char*)(std::u8string(types::VALUES[(int)m_type->type]).c_str()) << "[" << m_type->size << "] " << (const char*)(m_name.c_str()) << ")" << std::endl;
-    std::string newIndent = indent + (isLast ? "    " : "│   ");
-    for (const auto& element : m_arrElements) {
-        element->printTree(ostr, newIndent, element == *m_arrElements.end());
-    }
-}
-
 void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     ostr << "AccessArrayElement(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
@@ -283,3 +258,11 @@ void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& ind
     m_index->printTree(ostr, newIndent, true);
 }
 
+void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "ArrayInitialization" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    for (const auto& element : m_elements) {
+        element->printTree(ostr, newIndent, element == m_elements.back());
+    }
+}

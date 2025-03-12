@@ -1,6 +1,8 @@
 #pragma once
 #include <unordered_map>
-#include "LLVMStructs.hpp"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "Syntax.hpp"
 
 // Must have same order as in Syntax.hpp, for correct indexing in debug messages
@@ -19,7 +21,7 @@ inline const std::unordered_map<std::u8string_view, PrimitiveType> PRIMITIVE_TYP
 class IDataType {
 public:
     virtual ~IDataType() {};
-    virtual llvm::Type* getLLVMType(LLVMStructs& llvmStructs) const = 0;
+    virtual llvm::Type* getLLVMType(llvm::LLVMContext& context) const = 0;
 };
 
 
@@ -27,7 +29,7 @@ class PrimitiveDataType : public IDataType {
 public:
     PrimitiveType type;
     PrimitiveDataType(PrimitiveType type);
-    llvm::Type* getLLVMType(LLVMStructs& llvmStructs) const override; 
+    llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
 };
 
 
@@ -36,7 +38,7 @@ public:
     PrimitiveType type;
     size_t size;
    ArrayDataType(PrimitiveType type, size_t size);
-    llvm::Type* getLLVMType(LLVMStructs& llvmStructs) const override; 
+    llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
 };
 
 
@@ -50,5 +52,5 @@ class StructDataType : public IDataType {
 public:
     std::vector<std::unique_ptr<StructAttribute>> attributes;
     StructDataType(std::vector<std::unique_ptr<StructAttribute>> attributes);
-    llvm::Type* getLLVMType(LLVMStructs& llvmStructs) const override; 
+    llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
 };

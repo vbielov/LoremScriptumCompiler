@@ -2,26 +2,25 @@
 
 IRGenerator::IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootBlock)
     : m_root(rootBlock.get())
-    , m_llvmStructs{
-        std::make_unique<LLVMContext>(),
-        std::make_unique<Module>(moduleID, *m_llvmStructs.theContext),
-        std::make_unique<IRBuilder<>>(*m_llvmStructs.theContext),
-        std::map<std::u8string, NameTableEntry>(),
-        std::map<std::u8string, NameTableEntry>(),
-        std::stack<BasicBlock*>() 
+    , m_context{
+        std::make_unique<llvm::LLVMContext>(),
+        std::make_unique<llvm::Module>(moduleID, *m_context.context),
+        std::make_unique<llvm::IRBuilder<>>(*m_context.context),
+        SymbolTable(),
+        std::stack<llvm::BasicBlock*>() 
     } {}
 
 void IRGenerator::generateIRCode() {
-    m_root->codegen(m_llvmStructs);
+    m_root->codegen(m_context);
 }
 
-Module* IRGenerator::getModule() {
-    return m_llvmStructs.theModule.get();
+llvm::Module* IRGenerator::getModule() {
+    return m_context.theModule.get();
 }
 
 std::string IRGenerator::getIRCodeString() {
     std::string IRCode;
     llvm::raw_string_ostream outStream(IRCode);
-    m_llvmStructs.theModule->print(outStream, nullptr);
+    m_context.theModule->print(outStream, nullptr);
     return outStream.str();
 }

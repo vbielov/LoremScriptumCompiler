@@ -52,7 +52,7 @@ private:
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
 
-    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
+    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type, bool isDefined);
     std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
 
     // --- Expression section ---
