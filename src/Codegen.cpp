@@ -26,8 +26,6 @@ llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
     llvm::BasicBlock* insertBlock = context.builder->GetInsertBlock();
     llvm::Type* type = m_type->getLLVMType(*context.context);
     
-    std::cout << "Variable: " << cStr(m_name) << " is Array:" << (type->isArrayTy() ? "true" : "false") << std::endl;
-
     if (insertBlock) {
         // stack allocated
         llvm::IRBuilder<> tmpBuilder(insertBlock, insertBlock->begin());
@@ -70,14 +68,23 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             // Load value from pointer if it's an reference, array indexing, ect.
             llvm::Type* leftType = m_LHS->getType(context)->getLLVMType(*context.context);
             llvm::Type* rightType = m_RHS->getType(context)->getLLVMType(*context.context);
+            
             if (right->getType()->isPointerTy())
-                right = context.builder->CreateLoad(rightType, right, "loadtmp");
+            right = context.builder->CreateLoad(rightType, right, "loadtmp");
+            
+            if (dynamic_cast<AccessArrayElementAST*>(m_RHS.get()))
+                rightType = rightType->getArrayElementType();
+            if (dynamic_cast<AccessArrayElementAST*>(m_LHS.get()))
+                leftType = leftType->getArrayElementType();
 
             // Cast values if they are both integers 
             if (leftType != rightType) {
                 // TODO(Vlad): Error
                 if (!leftType->isIntegerTy() || !rightType->isIntegerTy())
+                {
+                    m_RHS->printTree(std::cout, "", false);
                     return nullptr;
+                }
 
                 right = context.builder->CreateIntCast(right, leftType, true, "conv");
             }
@@ -141,11 +148,18 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         return nullptr; 
 
     llvm::Type* type = entry->type->getLLVMType(*context.context);
-    bool hasReturn = type->isVoidTy();
+    bool hasReturn = !type->isVoidTy();
 
-    // TODO(Vlad): Error
-    if (function->arg_size() != (m_args.size() + hasReturn ? 1 : 0))
+    bool isExtern = true;
+    if(function->arg_size() > 0) {
+        const auto& nameLastArg = (function->args().end()-1)->getName();
+        isExtern = nameLastArg != RETURN_ARG_NAME;
+    }
+
+    if (function->arg_size() != (m_args.size() + (!isExtern && hasReturn ? 1 : 0))) {
+        std::cout << cStr(m_calleeIdentifier) << std::endl;
         return nullptr;
+    }
 
     std::vector<llvm::Value*> arguments;
     arguments.reserve(function->arg_size());
@@ -167,9 +181,8 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         arguments.push_back(argValue);
     }
     
-    if (!hasReturn) {
-        context.builder->CreateCall(function, arguments);
-        return nullptr;
+    if (!hasReturn || isExtern) {
+        return context.builder->CreateCall(function, arguments);
     }
 
     // TODO(Vlad): Error
@@ -178,7 +191,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
-    llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, "returnArg");
+    llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
     arguments.push_back(returnVariable);
     context.builder->CreateCall(function, arguments);
     return returnVariable;
@@ -207,7 +220,7 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
         function->getArg(i)->setName(cStr(m_args[i]->getName()));
     }
     if(!isExtern && function->arg_size() > m_args.size()) {
-        function->getArg(function->arg_size()-1)->setName("returnArg");
+        function->getArg(function->arg_size()-1)->setName(RETURN_ARG_NAME);
     }
 
     context.symbolTable.addFunction(m_name, m_returnType.get(), function);
@@ -254,7 +267,7 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
     if (!value)
         return nullptr;
 
-    if (value->getType()->isVoidTy())
+    if (value->getType()->isPointerTy())
         value = context.builder->CreateLoad(m_expr->getType(context)->getLLVMType(*context.context), value, "loadtmp");
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
@@ -267,6 +280,7 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
         return context.builder->CreateRet(value);
 
     llvm::Argument* returnArg = function->getArg(function->arg_size()-1);
+    assert(returnArg->getName() == RETURN_ARG_NAME);
     context.builder->CreateStore(value, returnArg);
     return context.builder->CreateRetVoid();
 }
@@ -351,7 +365,7 @@ llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
         std::vector<llvm::Constant*> constants;
         constants.reserve(m_elements.size());
         for(auto& element : m_elements) {
-            llvm::Constant* constant = dyn_cast<llvm::Constant>(element->codegen(context));
+            llvm::Constant* constant = dyn_cast<llvm::ConstantInt>(element->codegen(context));
             // TODO(Vlad): Error
             if (!constant)
                 return nullptr;

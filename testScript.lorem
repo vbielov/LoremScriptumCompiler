@@ -1,28 +1,35 @@
+numerus[X] one
+numerus[X] newOne
+
+// https://www.reddit.com/r/C_Programming/comments/1ac62ll/comment/kjtttcg/
+nihil ___chkstk_ms = apere()
+nihil __chkstk = λ():
+    ___chkstk_ms()
+; 
 
 numerus puts = apere(litera str)
 
-numerus[V] one = [O, I, II, III, IV]
-numerus[V] newOne
-litera char
-numerus terminator
-
-numerus[V] someFunc = λ(numerus[V] arr):
-    numerus[V] newArr
-    ∑(numerus j = O, j < V, j = j + I):
-        newArr[j] = V - arr[j]
+numerus[X] someFunc = λ(numerus[X] arr):
+    numerus[X] newArr
+    ∑(numerus j = O, j < X, j = j + I):
+        newArr[j] = X - arr[j]
     ;
     retro newArr
 ;
 
 
-∑(numerus i = O, i < V, i = i + I):
-    char = (XLVIII + one[i])
-    terminator = O
+∑(numerus k = O, k < X, k = k + I):
+    one[k] = k 
+;
+
+∑(numerus i = O, i < X, i = i + I):
+    numerus terminator = O
+    litera char = (XLVIII + one[i])
     puts(char)
 ;
 newOne = someFunc(one)
-∑(numerus l = O, l < V, l = l + I):
-    char = (XLVIII + newOne[l])
-    terminator = O
-    puts(char)
+∑(numerus l = O, l < X, l = l + I):
+    numerus terminator2 = O
+    litera char2 = (XLVIII + newOne[l])
+    puts(char2)
 ;

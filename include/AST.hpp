@@ -7,6 +7,12 @@
 #define RED "\033[31m"
 #define RESET "\033[0m"
 
+// NOTE(Vlad):
+// it appears multiple times in code, and needs to be equal everywhere
+// because I search by the name in FuncCallAST
+// We can fix it in the future, if we add "bool isExtern" to symbolTable for functions
+inline const char* RETURN_ARG_NAME = "returnArg"; 
+
 void printIndent(std::ostream& ostr, const std::string& indent, bool isLast);
 
 /// @brief Abstract Syntax Tree: Base class
@@ -207,7 +213,8 @@ public:
 class AccessArrayElementAST : public AST {
 private:
     std::u8string m_name;
-    std::unique_ptr<AST> m_index; // you can access with variable reference ect.
+    std::unique_ptr<AST> m_index; 
+    std::unique_ptr<IDataType> m_type; // this is cached type and will be defined after getType() is called
 
 public:
     AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index);

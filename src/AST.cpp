@@ -131,14 +131,16 @@ ArrayInitializationAST::ArrayInitializationAST(const std::u8string& name, std::v
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index)
     : m_name(name)
-    , m_index(std::move(index)) {}
+    , m_index(std::move(index))
+    , m_type(nullptr) {}
 
 const std::u8string& AccessArrayElementAST::getName() const {
     return m_name;
 }
 
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) const {
-    return context.symbolTable.lookupVariable(m_name)->type;
+    const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
+    return entry->type;
 }
 
 //===----------------------------------------------------------------------===//
