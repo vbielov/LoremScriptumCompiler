@@ -150,8 +150,8 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
  */
 std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     std::u8string typeStr = m_currentToken->value;
-    auto typeIter = PRIMITIVE_TYPE_MAP.find(typeStr);
-    assert(typeIter != PRIMITIVE_TYPE_MAP.end() && "Unknown type");
+    auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
+    assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unknown type");
     PrimitiveType primitiveType = typeIter->second;
     getNextToken(); // eat type
 
@@ -250,8 +250,8 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
             return nullptr;
 
         std::u8string argType = m_currentToken->value;
-        auto typeIter = PRIMITIVE_TYPE_MAP.find(argType);
-        assert(typeIter != PRIMITIVE_TYPE_MAP.end() && "Unkown type");
+        auto typeIter = STR_TO_PRIMITIVE_MAP.find(argType);
+        assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unkown type");
         PrimitiveType primitiveType = typeIter->second;
         getNextToken(); //  eat type
         

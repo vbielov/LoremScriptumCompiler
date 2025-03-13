@@ -34,6 +34,14 @@ const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) {
     return TYPE.get();
 }
 
+BoolAST::BoolAST(bool boolean)
+    : m_bool(boolean) {}
+
+const IDataType* BoolAST::getType([[maybe_unused]] const IRContext& context) {
+    static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::BOOL);
+    return TYPE.get();
+}
+
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type)
     : m_name(name)
     , m_type(std::move(type)) {}
@@ -186,7 +194,7 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 
 void VariableDeclarationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "VariableDeclarationAST(" << "TODO: show type here..." << " "
+    ostr << "VariableDeclarationAST(" << (const char*)m_type->toString().c_str() << " "
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
@@ -214,7 +222,8 @@ void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool 
 
 void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "FunctionPrototypeAST(" << "TODO: returnType" << " " << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+    ostr    << "FunctionPrototypeAST(" << (const char*)m_returnType->toString().c_str() << " " 
+            << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
@@ -234,9 +243,7 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     ostr << "ReturnAST" << std::endl;
-    if (m_expr) {
-        m_expr->printTree(ostr, newIndent, true);
-    }
+    if (m_expr) m_expr->printTree(ostr, newIndent, true);
 }
 
 void BreakAST::printTree(std::ostream &ostr, const std::string& indent, bool isLast) const
@@ -264,16 +271,21 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
 
 void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "AccessArrayElement(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+    ostr << "AccessArrayElementAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     m_index->printTree(ostr, newIndent, true);
 }
 
 void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
-    ostr << "ArrayInitialization" << std::endl;
+    ostr << "ArrayInitializationAST" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (const auto& element : m_elements) {
         element->printTree(ostr, newIndent, element == m_elements.back());
     }
+}
+
+void BoolAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "BoolAST(" << (m_bool ? "true" : "false") << ")" << std::endl;
 }

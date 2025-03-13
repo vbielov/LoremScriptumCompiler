@@ -117,6 +117,12 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         
         value = std::make_unique<CharAST>(letter);
         getNextToken();
+
+    } else if (isToken(TokenType::BOOL)) {
+        bool state = m_currentToken->value == boolean_types::TRUE;
+        getNextToken(); // eat bool
+        return std::make_unique<BoolAST>(state);
+
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken->value;
         getNextToken(); // eat identifier

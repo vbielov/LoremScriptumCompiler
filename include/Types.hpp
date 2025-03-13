@@ -5,23 +5,22 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "Syntax.hpp"
 
-// Must have same order as in Syntax.hpp, for correct indexing in debug messages
 enum class PrimitiveType {
     INT, BOOL, CHAR, VOID
 };
 
-inline const std::unordered_map<std::u8string_view, PrimitiveType> PRIMITIVE_TYPE_MAP = {
+inline const std::unordered_map<std::u8string_view, PrimitiveType> STR_TO_PRIMITIVE_MAP = {
     { types::INT, PrimitiveType::INT },
     { types::BOOL, PrimitiveType::BOOL },
     { types::CHAR, PrimitiveType::CHAR },
     { types::VOID, PrimitiveType::VOID }
 };
 
-
 class IDataType {
 public:
     virtual ~IDataType() {};
     virtual llvm::Type* getLLVMType(llvm::LLVMContext& context) const = 0;
+    virtual std::u8string toString() const = 0;
 };
 
 
@@ -30,6 +29,7 @@ public:
     PrimitiveType type;
     PrimitiveDataType(PrimitiveType type);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
+    std::u8string toString() const override;
 };
 
 
@@ -37,8 +37,9 @@ class ArrayDataType : public IDataType {
 public:
     PrimitiveType type;
     size_t size;
-   ArrayDataType(PrimitiveType type, size_t size);
+    ArrayDataType(PrimitiveType type, size_t size);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
+    std::u8string toString() const override;
 };
 
 
@@ -53,4 +54,5 @@ public:
     std::vector<std::unique_ptr<StructAttribute>> attributes;
     StructDataType(std::vector<std::unique_ptr<StructAttribute>> attributes);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
+    std::u8string toString() const override;
 };

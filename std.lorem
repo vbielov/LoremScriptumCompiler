@@ -1,26 +1,26 @@
 numerus printf = λ(litera str)
 
 nihil scriborNum = λ(numerus num):
-    si (num < O):
+    numerus copyNum = num
+    si (copyNum < O):
         litera[II] minusStr = ['-', '\0']
         printf(minusStr)
-        num ×= -I
+        copyNum ×= -I
     ;
 
     numerus[XX] digits
     numerus count = O
 
-    ∑(num ≥ X):
-        digits[count] = (num % X) + XLVIII
+    ∑(copyNum ≥ X):
+        digits[count] = (copyNum % X) + XLVIII
         count++
-        num = num ÷ X
+        copyNum ÷= X
     ;
-    digits[count] = num + XLVIII
+    digits[count] = copyNum + XLVIII
     count++
 
     ∑(numerus i = count - I, i ≥ O, i--):
-        numerus digit = digits[i] 
-        litera[II] char = [digit, '\0']
+        litera[II] char = [digits[i], '\0']
         printf(char)
     ;
 

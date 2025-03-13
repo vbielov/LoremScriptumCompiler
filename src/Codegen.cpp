@@ -22,6 +22,11 @@ llvm::Value* CharAST::codegen(IRContext& context) {
     return llvm::ConstantInt::get(*context.context, llvm::APInt(8, m_char, false));
 }
 
+llvm::Value* BoolAST::codegen(IRContext& context) {
+    // unsigned 1bit boolean
+    return llvm::ConstantInt::get(*context.context, llvm::APInt(1, m_bool, false));
+}
+
 llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
     llvm::BasicBlock* insertBlock = context.builder->GetInsertBlock();
     llvm::Type* type = m_type->getLLVMType(*context.context);

@@ -70,6 +70,18 @@ public:
 };
 
 
+class BoolAST : public AST {
+private:
+    bool m_bool;
+
+public:
+    BoolAST(bool boolean);
+    const IDataType* getType(const IRContext& context) override;
+    llvm::Value* codegen(IRContext& context) override;
+    void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+};
+
+
 class VariableDeclarationAST : public AST {
 private:
     std::u8string m_name;

@@ -37,15 +37,14 @@ scriborNum:
 	.seh_pushreg %rsi
 	pushq	%rdi
 	.seh_pushreg %rdi
-	pushq	%rbx
-	.seh_pushreg %rbx
-	pushq	%rax
-	.seh_stackalloc 8
-	movq	%rsp, %rbp
-	.seh_setframe %rbp, 0
+	subq	$16, %rsp
+	.seh_stackalloc 16
+	leaq	16(%rsp), %rbp
+	.seh_setframe %rbp, 16
 	.seh_endprologue
-	movq	%rcx, %rsi
-	cmpl	$0, (%rcx)
+	movl	(%rcx), %eax
+	movl	%eax, -4(%rbp)
+	testl	%eax, %eax
 	jns	.LBB1_2
 	movl	$16, %eax
 	callq	__chkstk
@@ -55,7 +54,7 @@ scriborNum:
 	subq	$32, %rsp
 	callq	printf
 	addq	$32, %rsp
-	negl	(%rsi)
+	negl	-4(%rbp)
 .LBB1_2:
 	movl	$16, %eax
 	callq	__chkstk
@@ -64,14 +63,14 @@ scriborNum:
 	movl	$80, %eax
 	callq	__chkstk
 	subq	%rax, %rsp
-	movq	%rsp, %rdi
+	movq	%rsp, %rsi
 	movl	$0, (%rcx)
-	cmpl	$10, (%rsi)
+	cmpl	$10, -4(%rbp)
 	jl	.LBB1_5
 	.p2align	4, 0x90
 .LBB1_4:
 	movslq	(%rcx), %rax
-	movslq	(%rsi), %rdx
+	movslq	-4(%rbp), %rdx
 	imulq	$1717986919, %rdx, %r8
 	movq	%r8, %r9
 	shrq	$63, %r9
@@ -82,30 +81,30 @@ scriborNum:
 	subl	%r8d, %edx
 	addl	$48, %edx
 	incl	(%rcx)
-	movl	%edx, (%rdi,%rax,4)
-	movslq	(%rsi), %rax
+	movl	%edx, (%rsi,%rax,4)
+	movslq	-4(%rbp), %rax
 	imulq	$1717986919, %rax, %rax
 	movq	%rax, %rdx
 	shrq	$63, %rdx
 	sarq	$34, %rax
 	addl	%edx, %eax
-	movl	%eax, (%rsi)
-	cmpl	$10, (%rsi)
+	movl	%eax, -4(%rbp)
+	cmpl	$10, -4(%rbp)
 	jge	.LBB1_4
 .LBB1_5:
 	movl	$16, %eax
 	callq	__chkstk
 	subq	%rax, %rsp
-	movq	%rsp, %rbx
+	movq	%rsp, %rdi
 	movslq	(%rcx), %rax
-	movl	(%rsi), %edx
+	movl	-4(%rbp), %edx
 	addl	$48, %edx
-	movl	%edx, (%rdi,%rax,4)
+	movl	%edx, (%rsi,%rax,4)
 	movl	(%rcx), %eax
 	leal	1(%rax), %edx
 	movl	%edx, (%rcx)
-	movl	%eax, (%rbx)
-	cmpl	$0, (%rbx)
+	movl	%eax, (%rdi)
+	cmpl	$0, (%rdi)
 	js	.LBB1_8
 	.p2align	4, 0x90
 .LBB1_7:
@@ -113,20 +112,15 @@ scriborNum:
 	callq	__chkstk
 	subq	%rax, %rsp
 	movq	%rsp, %rcx
-	movl	$16, %eax
-	callq	__chkstk
-	subq	%rax, %rsp
-	movq	%rsp, %rax
-	movslq	(%rbx), %rdx
-	movl	(%rdi,%rdx,4), %edx
-	movl	%edx, (%rax)
-	movb	%dl, (%rcx)
+	movslq	(%rdi), %rax
+	movzbl	(%rsi,%rax,4), %eax
+	movb	%al, (%rcx)
 	movb	$0, 1(%rcx)
 	subq	$32, %rsp
 	callq	printf
 	addq	$32, %rsp
-	decl	(%rbx)
-	cmpl	$0, (%rbx)
+	decl	(%rdi)
+	cmpl	$0, (%rdi)
 	jns	.LBB1_7
 .LBB1_8:
 	movl	$16, %eax
@@ -137,8 +131,7 @@ scriborNum:
 	subq	$32, %rsp
 	callq	printf
 	nop
-	leaq	8(%rbp), %rsp
-	popq	%rbx
+	movq	%rbp, %rsp
 	popq	%rdi
 	popq	%rsi
 	popq	%rbp
@@ -156,7 +149,7 @@ main:
 	subq	$40, %rsp
 	.seh_stackalloc 40
 	.seh_endprologue
-	movl	$2325, 36(%rsp)
+	movl	$-2325, 36(%rsp)
 	leaq	36(%rsp), %rcx
 	callq	scriborNum
 	xorl	%eax, %eax

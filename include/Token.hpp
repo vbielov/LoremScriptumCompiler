@@ -6,6 +6,7 @@ enum class TokenType {
     IDENTIFIER,     // Name of the variable, function, ect. [a-z][a-zA-Z0-9]
     NUMBER,         // Integer, ∅
     LITERAL,        // anything but ", surrounded by "'s
+    BOOL,
     TYPE,           // numerus, literra, nihil, ect.
     OPERATOR,       // , :=, =, ≠ , >, <, >=, <=, +, -, *, /, ^, ¬, !
     PUNCTUATION,    // (, ), :, ;
@@ -18,11 +19,12 @@ inline const char* TOKEN_TYPE_LABELS[] = {
     "IDENTIFIER",
     "NUMBER",
     "LITERAL",
+    "BOOL",
     "TYPE",
     "OPERATOR",
     "PUNCTUATION",
     "KEYWORD",
-    "NEW_LINE"
+    "NEW_LINE",
 };
 
 struct Token {

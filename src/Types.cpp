@@ -19,6 +19,15 @@ llvm::Type* PrimitiveDataType::getLLVMType(llvm::LLVMContext& context) const {
     }
 }
 
+std::u8string PrimitiveDataType::toString() const {
+    PrimitiveType cpType = type;
+    auto it = std::find_if(STR_TO_PRIMITIVE_MAP.begin(), STR_TO_PRIMITIVE_MAP.end(), [&cpType](const auto& pt) {
+        return pt.second == cpType;
+    });
+    assert(it != STR_TO_PRIMITIVE_MAP.end());
+    return std::u8string(it->first);
+}
+
 ArrayDataType::ArrayDataType(PrimitiveType type, size_t size) 
     : type(type)
     , size(size) {}
@@ -40,10 +49,24 @@ llvm::Type* ArrayDataType::getLLVMType(llvm::LLVMContext& context) const {
     }
 }
 
+std::u8string ArrayDataType::toString() const {
+    PrimitiveType cpType = type;
+    auto it = std::find_if(STR_TO_PRIMITIVE_MAP.begin(), STR_TO_PRIMITIVE_MAP.end(), [&cpType](const auto& pt) {
+        return pt.second == cpType;
+    });
+    assert(it != STR_TO_PRIMITIVE_MAP.end());
+    std::string sizeStr = std::to_string(size);
+    return (std::u8string(it->first) + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
+}
+
 StructDataType::StructDataType(std::vector<std::unique_ptr<StructAttribute>> attributes)
     : attributes(std::move(attributes)) {}
     
 llvm::Type* StructDataType::getLLVMType([[maybe_unused]] llvm::LLVMContext& context) const {
     // TODO(Vlad)...
     return nullptr;
+}
+
+std::u8string StructDataType::toString() const {
+    return u8"TODO";
 }

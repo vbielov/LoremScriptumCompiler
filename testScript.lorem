@@ -1,3 +1,5 @@
 apere './std.lorem'
 
-scriborNum(MMCCCXXV)
+si (veri):
+    scriborNum(-MMCCCXXV)
+;

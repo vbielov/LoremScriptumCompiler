@@ -43,6 +43,13 @@ Token Lexer::getNextToken() {
         }
     }
 
+    // is boolean
+    int boolIndex = startWithWord(boolean_types::VALUES, boolean_types::VALUES_SIZE, false);
+    if (boolIndex != -1) {
+        m_charIterator += boolean_types::VALUES[boolIndex].length();
+        return {TokenType::BOOL, std::u8string(boolean_types::VALUES[boolIndex])};
+    }
+
     // is keyword
     int keywordIndex = startWithWord(keywords::VALUES, keywords::VALUES_SIZE, false);
     if (keywordIndex != -1) {
