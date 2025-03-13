@@ -1,16 +1,16 @@
 #include "Parser.hpp"
 
-Parser::Parser(Lexer& lexer) 
-    : m_lexer(&lexer)
-    , m_currentToken()
+Parser::Parser(const std::vector<Token>& tokens) 
+    : m_tokens(tokens)
+    , m_currentToken(nullptr)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
     , m_isTest(false) {}
 
-Parser::Parser(Lexer& lexer, bool isTest) 
-    : m_lexer(&lexer)
-    , m_currentToken()
+Parser::Parser(const std::vector<Token>& tokens, bool isTest) 
+    : m_tokens(tokens)
+    , m_currentToken(nullptr)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
@@ -60,15 +60,15 @@ bool Parser::isExpressionEnd() {
 }
 
 bool Parser::isToken(TokenType type) {
-    return m_currentToken.type == type;
+    return m_currentToken->type == type;
 }
 
 bool Parser::isToken(const std::u8string_view& value) {
-    return m_currentToken.value == value;
+    return m_currentToken->value == value;
 }
 
 bool Parser::isToken(TokenType type, const std::u8string_view& value) {
-    return m_currentToken.type == type && m_currentToken.value == value;
+    return m_currentToken->type == type && m_currentToken->value == value;
 }
 
 bool Parser::isUnaryOperator() {
@@ -77,8 +77,8 @@ bool Parser::isUnaryOperator() {
 
 void Parser::printUnknownTokenError() {
     if (m_isTest) return;
-    std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken.type)]
-              << " " << (const char*)(m_currentToken.value.c_str()) << RESET << std::endl;
+    std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken->type)]
+              << " " << (const char*)(m_currentToken->value.c_str()) << RESET << std::endl;
 }
 
 void Parser::printError(std::string error) {
@@ -86,6 +86,12 @@ void Parser::printError(std::string error) {
     std::cerr << RED << error << RESET << std::endl;
 }
 
-Token& Parser::getNextToken() {
-    return m_currentToken = m_lexer->getNextToken();
+const Token& Parser::getNextToken() {
+    // Get first token
+    if (m_currentToken.base() == nullptr) {
+        m_currentToken = m_tokens.begin();
+        return *m_currentToken;
+    }
+    m_currentToken++;
+    return *m_currentToken; 
 }

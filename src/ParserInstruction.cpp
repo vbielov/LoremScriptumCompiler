@@ -28,7 +28,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
         }
     }
     if (isToken(TokenType::IDENTIFIER)) {
-        auto identifier = m_currentToken.value;
+        auto identifier = m_currentToken->value;
         getNextToken();
 
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) 
@@ -114,13 +114,13 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
     if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) 
         return nullptr;
 
-    auto op = operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
+    auto op = operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
 
     getNextToken();
     if (!isToken(TokenType::OPERATOR)) return nullptr;
 
     std::unique_ptr<AST> expression;
-    if (op->first == m_currentToken.value && (op->first == operators::PLUS || op->first == operators::MINUS)) {
+    if (op->first == m_currentToken->value && (op->first == operators::PLUS || op->first == operators::MINUS)) {
         // var++ or var--
         getNextToken();
         expression = std::make_unique<NumberAST>(1);
@@ -149,7 +149,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
  *    - nihil   var = λ(...): [Block] ;
  */
 std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
-    std::u8string typeStr = m_currentToken.value;
+    std::u8string typeStr = m_currentToken->value;
     auto typeIter = PRIMITIVE_TYPE_MAP.find(typeStr);
     assert(typeIter != PRIMITIVE_TYPE_MAP.end() && "Unknown type");
     PrimitiveType primitiveType = typeIter->second;
@@ -166,7 +166,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
             printError("Expected number after [ for array declaration");
             return nullptr; 
         }
-        toArabicConverter(m_currentToken.value, &arrSize);
+        toArabicConverter(m_currentToken->value, &arrSize);
         getNextToken(); // eat number
         if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
             printError("Expected ']' in array declaration");
@@ -183,7 +183,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     if (!isToken(TokenType::IDENTIFIER)) 
         return nullptr;
-    std::u8string identifier = m_currentToken.value;
+    std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
     if (isToken(TokenType::NEW_LINE)) {
@@ -199,11 +199,6 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     // λ
     if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         return parseInstructionFunction(identifier, std::move(dataType));
-        // apere
-    } else if (isToken(TokenType::KEYWORD, keywords::INCLUDE)) { 
-        getNextToken(); // eat apere
-        return parseInstructionPrototype(identifier, std::move(dataType), false);
-        // '['
     } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) { 
         getNextToken(); // eat '['
         std::vector<std::unique_ptr<AST>> elements;
@@ -247,14 +242,14 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                        ^ we are always here
  */
-std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type, bool isDefined) {
+std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<AST>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) 
             return nullptr;
 
-        std::u8string argType = m_currentToken.value;
+        std::u8string argType = m_currentToken->value;
         auto typeIter = PRIMITIVE_TYPE_MAP.find(argType);
         assert(typeIter != PRIMITIVE_TYPE_MAP.end() && "Unkown type");
         PrimitiveType primitiveType = typeIter->second;
@@ -264,7 +259,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         int arrSize = -1;
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
             getNextToken(); // eat '['
-            if (!isToken(TokenType::NUMBER) || !toArabicConverter(m_currentToken.value, &arrSize)) {
+            if (!isToken(TokenType::NUMBER) || !toArabicConverter(m_currentToken->value, &arrSize)) {
                 printError("Expected number after '[', when dealing with array func-argument");
                 return nullptr;
             }
@@ -280,7 +275,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         if (!isToken(TokenType::IDENTIFIER)) 
             return nullptr;
 
-        std::u8string identifier = m_currentToken.value;
+        std::u8string identifier = m_currentToken->value;
         getNextToken(); // eat identifier
         
         std::unique_ptr<IDataType> dataType;
@@ -307,6 +302,11 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     }
     getNextToken(); // eat ')'
 
+    while(isToken(TokenType::NEW_LINE)) {
+        getNextToken();
+    }
+
+    bool isDefined = isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN);
     return std::make_unique<FunctionPrototypeAST>(identifier, std::move(type), std::move(args), isDefined);
 }
 
@@ -321,7 +321,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
  *      - numerus add  = λ(numerus a, numerus b): [Block] ;
  *                       ^ we are always here
  */
-std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
+std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     if (m_blockCount != 0) {
         printError("Function Declaration is only allowed at top-level");
         return nullptr;
@@ -330,18 +330,13 @@ std::unique_ptr<FunctionAST> Parser::parseInstructionFunction(const std::u8strin
     getNextToken(); // eat λ
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) return nullptr;
 
-    auto prototype = parseInstructionPrototype(identifier, std::move(type), true);
-    if (prototype == nullptr) return nullptr;
-
-    // for the case if : is on the next line
-    while(isToken(TokenType::NEW_LINE)) {
-        getNextToken();
-    }
-
-    if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) {
-        printError("Expected ':' when parsin Block");
+    auto prototype = parseInstructionPrototype(identifier, std::move(type));
+    if (prototype == nullptr) 
         return nullptr;
-    }
+
+    if (!prototype->isDefined())
+        return prototype; // it's a extern defined function
+
     auto funcBlock = parseBlock();
     if (funcBlock == nullptr) return nullptr;
 

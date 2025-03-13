@@ -2,12 +2,12 @@ numerus[X] one
 numerus[X] newOne
 
 // https://www.reddit.com/r/C_Programming/comments/1ac62ll/comment/kjtttcg/
-nihil ___chkstk_ms = apere()
+nihil ___chkstk_ms = λ()
 nihil __chkstk = λ():
     ___chkstk_ms()
 ; 
 
-numerus puts = apere(litera str)
+numerus puts = λ(litera str)
 
 numerus[X] someFunc = λ(numerus[X] arr):
     numerus[X] newArr

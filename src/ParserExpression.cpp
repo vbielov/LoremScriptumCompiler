@@ -32,7 +32,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
     if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) 
         return nullptr;
 
-    auto op = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
+    auto op = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
     getNextToken();
     
     auto right = parseExpressionSingle();
@@ -43,7 +43,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
     }
 
     if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) return nullptr;
-    auto nextOp = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken.value);
+    auto nextOp = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
 
     getNextToken();
     auto nextExpression = parseExpression();
@@ -80,7 +80,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     std::unique_ptr<AST> value;
 
     if (isUnaryOperator()) {
-        std::u8string sign = m_currentToken.value;
+        std::u8string sign = m_currentToken->value;
 
         getNextToken();
         if (isUnaryOperator()) 
@@ -102,23 +102,23 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
     if (isToken(TokenType::NUMBER)) {
         int intValue;
-        if (!toArabicConverter(m_currentToken.value, &intValue)) 
+        if (!toArabicConverter(m_currentToken->value, &intValue)) 
             return nullptr;
 
         value = std::make_unique<NumberAST>(intValue);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
-        char letter = m_currentToken.value[0];
+        char letter = m_currentToken->value[0];
 
-        if(m_currentToken.value == u8"\\0") letter = '\0';
-        if(m_currentToken.value == u8"\\n") letter = '\n';
-        if(m_currentToken.value == u8"\\t") letter = '\t';
-        if(m_currentToken.value == u8"\\r") letter = '\r';
+        if(m_currentToken->value == u8"\\0") letter = '\0';
+        if(m_currentToken->value == u8"\\n") letter = '\n';
+        if(m_currentToken->value == u8"\\t") letter = '\t';
+        if(m_currentToken->value == u8"\\r") letter = '\r';
         
         value = std::make_unique<CharAST>(letter);
         getNextToken();
     } else if (isToken(TokenType::IDENTIFIER)) {
-        auto identifier = m_currentToken.value;
+        auto identifier = m_currentToken->value;
         getNextToken(); // eat identifier
         if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
             value = parseExpressionFunctionCall(identifier);

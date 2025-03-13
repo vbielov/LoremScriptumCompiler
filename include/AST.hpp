@@ -137,6 +137,7 @@ public:
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) const override; 
     const std::vector<std::unique_ptr<AST>>& getArgs() const;
+    bool isDefined() const;
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };

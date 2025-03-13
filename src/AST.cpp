@@ -96,6 +96,10 @@ const std::vector<std::unique_ptr<AST>>& FunctionPrototypeAST::getArgs() const {
     return m_args;
 }
 
+bool FunctionPrototypeAST::isDefined() const {
+    return m_isDefined;
+}
+
 FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body)
     : m_prototype(std::move(prototype))
     , m_body(std::move(body)) {}

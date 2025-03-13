@@ -14,11 +14,12 @@ class Lexer {
 
    public:
     Lexer(const std::u8string& sourceCode);
-
+    void tokenize(std::vector<Token>& outTokens);
+    
+private:
     /// @return next token from code given in constructor
     Token getNextToken();
 
-   private:
     /// @brief checks if text starts with some string from vector
     /// @param allowIdentifierAfter if true, will allow identifiers to start directly after operators without space in-between.
     ///                     Example: operators can be before identifier "¬cadabra"
