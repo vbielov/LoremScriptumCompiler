@@ -256,6 +256,9 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
         function->eraseFromParent();
         return nullptr;
     }
+
+    context.builder->SetInsertPoint((llvm::BasicBlock*)nullptr);
+
     return function;
 }
 

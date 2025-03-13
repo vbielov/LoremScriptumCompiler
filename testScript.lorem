@@ -1,25 +1,18 @@
-numerus[X] one
-numerus[X] newOne
-
-// https://www.reddit.com/r/C_Programming/comments/1ac62ll/comment/kjtttcg/
-nihil ___chkstk_ms = λ()
-nihil __chkstk = λ():
-    ___chkstk_ms()
-; 
 
 numerus puts = λ(litera str)
 
+numerus[X] one
+∑(numerus k = O, k < X, k = k + I):
+    one[k] = k 
+;
+
+numerus[X] newOne
 numerus[X] someFunc = λ(numerus[X] arr):
     numerus[X] newArr
     ∑(numerus j = O, j < X, j = j + I):
         newArr[j] = X - arr[j]
     ;
     retro newArr
-;
-
-
-∑(numerus k = O, k < X, k = k + I):
-    one[k] = k 
 ;
 
 ∑(numerus i = O, i < X, i = i + I):

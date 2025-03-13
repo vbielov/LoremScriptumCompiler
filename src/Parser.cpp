@@ -43,6 +43,24 @@ std::unique_ptr<BlockAST> Parser::parse() {
     auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));
 
     m_topLevelDeclarations.push_back(std::move(pseudoFunction));
+
+    // NOTE(Vlad):  maybe it's not needed anymore, 
+    //              because I have figured out how to set insert block to nullptr
+
+    // std::sort(m_topLevelDeclarations.begin(), m_topLevelDeclarations.end(), [](const std::unique_ptr<AST>& a, const std::unique_ptr<AST>& b) {
+    //     int aPriority = 0;
+    //     int bPriority = 0;
+    //     if (dynamic_cast<VariableDeclarationAST*>(a.get()))
+    //         aPriority += 2;
+    //     else if (dynamic_cast<FunctionAST*>(a.get()) || dynamic_cast<FunctionPrototypeAST*>(a.get()))
+    //         aPriority += 1;
+    //     if (dynamic_cast<VariableDeclarationAST*>(b.get()))
+    //         bPriority += 2;
+    //     else if (dynamic_cast<FunctionAST*>(b.get()) || dynamic_cast<FunctionPrototypeAST*>(b.get()))
+    //         bPriority += 1;
+    //     return aPriority > bPriority;
+    // });
+
     return std::make_unique<BlockAST>(std::move(m_topLevelDeclarations));
 }
 
