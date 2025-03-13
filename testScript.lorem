@@ -1,28 +1,3 @@
+apere './std.lorem'
 
-numerus puts = λ(litera str)
-
-numerus[X] one
-∑(numerus k = O, k < X, k = k + I):
-    one[k] = k 
-;
-
-numerus[X] newOne
-numerus[X] someFunc = λ(numerus[X] arr):
-    numerus[X] newArr
-    ∑(numerus j = O, j < X, j = j + I):
-        newArr[j] = X - arr[j]
-    ;
-    retro newArr
-;
-
-∑(numerus i = O, i < X, i = i + I):
-    numerus terminator = O
-    litera char = (XLVIII + one[i])
-    puts(char)
-;
-newOne = someFunc(one)
-∑(numerus l = O, l < X, l = l + I):
-    numerus terminator2 = O
-    litera char2 = (XLVIII + newOne[l])
-    puts(char2)
-;
+scriborNum(MMCCCXXV)

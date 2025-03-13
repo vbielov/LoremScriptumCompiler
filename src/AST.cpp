@@ -10,7 +10,7 @@ const std::u8string& AST::getName() const {
     return ilegal;
 }
 
-const IDataType* AST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* AST::getType([[maybe_unused]] const IRContext& context) {
     assert(false && "This AST can't have a type.");
     return nullptr;
 }
@@ -21,7 +21,7 @@ BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions)
 NumberAST::NumberAST(int value) 
     : m_value(value) {}
 
-const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
     return TYPE.get();
 }
@@ -29,7 +29,7 @@ const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) c
 CharAST::CharAST(char8_t character) 
     : m_char(character) {}
 
-const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::CHAR);
     return TYPE.get();
 }
@@ -42,7 +42,7 @@ const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
 }
 
-const IDataType* VariableDeclarationAST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* VariableDeclarationAST::getType([[maybe_unused]] const IRContext& context) {
     return m_type.get();
 }
 
@@ -53,7 +53,7 @@ const std::u8string& VariableReferenceAST::getName() const {
     return m_name;
 }
 
-const IDataType* VariableReferenceAST::getType(const IRContext& context) const {
+const IDataType* VariableReferenceAST::getType(const IRContext& context) {
     return context.symbolTable.lookupVariable(m_name)->type;
 }
 
@@ -62,7 +62,7 @@ BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AS
     , m_LHS(std::move(LHS))
     , m_RHS(std::move(RHS)) {}
 
-const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& context) {
     return m_LHS->getType(context);
 }
 
@@ -74,7 +74,7 @@ const std::u8string& FuncCallAST::getName() const {
     return m_calleeIdentifier;
 }
 
-const IDataType* FuncCallAST::getType(const IRContext& context) const {
+const IDataType* FuncCallAST::getType(const IRContext& context) {
     return context.symbolTable.lookupFunction(m_calleeIdentifier)->type;
 }
 
@@ -88,7 +88,7 @@ const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
 }
 
-const IDataType* FunctionPrototypeAST::getType([[maybe_unused]] const IRContext& context) const {
+const IDataType* FunctionPrototypeAST::getType([[maybe_unused]] const IRContext& context) {
     return m_returnType.get();
 }
 
@@ -108,14 +108,14 @@ const std::u8string& FunctionAST::getName() const {
     return m_prototype->getName();
 }
 
-const IDataType* FunctionAST::getType(const IRContext& context) const {
+const IDataType* FunctionAST::getType(const IRContext& context) {
     return m_prototype->getType(context);
 }
 
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr) 
     : m_expr(std::move(expr)) {}
 
-const IDataType* ReturnAST::getType(const IRContext& context) const {
+const IDataType* ReturnAST::getType(const IRContext& context) {
     return m_expr->getType(context);
 }
 
@@ -142,9 +142,14 @@ const std::u8string& AccessArrayElementAST::getName() const {
     return m_name;
 }
 
-const IDataType* AccessArrayElementAST::getType(const IRContext& context) const {
-    const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
-    return entry->type;
+const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
+    if (!m_type) {
+        const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
+        const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(entry->type);
+        m_type = std::make_unique<PrimitiveDataType>(arrType->type);
+    }
+
+    return m_type.get();
 }
 
 //===----------------------------------------------------------------------===//

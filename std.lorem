@@ -1,0 +1,29 @@
+numerus printf = λ(litera str)
+
+nihil scriborNum = λ(numerus num):
+    si (num < O):
+        litera[II] minusStr = ['-', '\0']
+        printf(minusStr)
+        num ×= -I
+    ;
+
+    numerus[XX] digits
+    numerus count = O
+
+    ∑(num ≥ X):
+        digits[count] = (num % X) + XLVIII
+        count++
+        num = num ÷ X
+    ;
+    digits[count] = num + XLVIII
+    count++
+
+    ∑(numerus i = count - I, i ≥ O, i--):
+        numerus digit = digits[i] 
+        litera[II] char = [digit, '\0']
+        printf(char)
+    ;
+
+    litera[II] newLine = ['\n', '\0']
+    printf(newLine)
+;

@@ -70,13 +70,8 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             llvm::Type* rightType = m_RHS->getType(context)->getLLVMType(*context.context);
             
             if (right->getType()->isPointerTy())
-            right = context.builder->CreateLoad(rightType, right, "loadtmp");
+                right = context.builder->CreateLoad(rightType, right, "loadtmp");
             
-            if (dynamic_cast<AccessArrayElementAST*>(m_RHS.get()))
-                rightType = rightType->getArrayElementType();
-            if (dynamic_cast<AccessArrayElementAST*>(m_LHS.get()))
-                leftType = leftType->getArrayElementType();
-
             // Cast values if they are both integers 
             if (leftType != rightType) {
                 // TODO(Vlad): Error
@@ -173,7 +168,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
             llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
             llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
             llvm::Type* argType = arg->getType(context)->getLLVMType(*context.context);
-            llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, cStr(arg->getName()));
+            llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, "argTmp");
             context.builder->CreateStore(argValue, stackVariable);
             argValue = stackVariable;
         }

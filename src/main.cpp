@@ -9,16 +9,7 @@
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
 #include <cstdlib>
-
-std::u8string readFileToU8String(const std::string& filePath) {
-    std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
-    if (!file) {
-        return u8"";
-    }
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    return std::u8string(content.begin(), content.end());  // Convert to u8string
-}
+#include "Preprocessor.hpp"
 
 int main(int argc, const char** argv) {
     if (argc < 2) {
@@ -32,7 +23,9 @@ int main(int argc, const char** argv) {
     size_t lastindex = inputFilePathStr.find_last_of("."); 
     std::string rawFilePath = inputFilePathStr.substr(0, lastindex);
 
-    std::u8string sourceCode = readFileToU8String(inputFilePath);
+    std::filesystem::path mainFilePath = std::filesystem::canonical(inputFilePathStr);
+    std::u8string sourceCode = u8"";
+    processPreprocessors(mainFilePath, sourceCode);
     if (sourceCode.empty()) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
@@ -90,10 +83,6 @@ int main(int argc, const char** argv) {
     Assembler assembler;
     assembler.compileToObjectFile(asmFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::AssemblyFile);
     assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
-
-    std::u8string assembly = readFileToU8String(asmFileName);
-    std::cout << (const char*)(assembly.c_str()) << std::endl;
-
     assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), codeGenerator.getModule());
 
     lld::exitLld(0); // NOTE: it should not be used like this...

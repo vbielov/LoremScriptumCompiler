@@ -24,7 +24,7 @@ public:
     virtual const std::u8string& getName() const;
 
     /// @warning Will assert, if node has no type
-    virtual const IDataType* getType(const IRContext& context) const; 
+    virtual const IDataType* getType(const IRContext& context); 
 
     /// @warning Abstract method, has to implemented in every AST
     virtual llvm::Value* codegen(IRContext& context) = 0;
@@ -51,7 +51,7 @@ private:
 
 public:
     NumberAST(int value);
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 
@@ -64,7 +64,7 @@ private:
 
 public:
     CharAST(char8_t character);
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -78,7 +78,7 @@ private:
 public:
     VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -91,7 +91,7 @@ private:
 public:
     VariableReferenceAST(const std::u8string& name);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
 };
@@ -104,7 +104,7 @@ private:
 
 public:
     BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS);
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -118,7 +118,7 @@ private:
 public:
     FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -135,7 +135,7 @@ private:
 public:
     FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args, bool isDefined);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     const std::vector<std::unique_ptr<AST>>& getArgs() const;
     bool isDefined() const;
     llvm::Value* codegen(IRContext& context) override;
@@ -151,7 +151,7 @@ private:
 public:
     FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -163,7 +163,7 @@ private:
 
 public:
     ReturnAST(std::unique_ptr<AST> expr);
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
@@ -220,7 +220,7 @@ private:
 public:
     AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index);
     const std::u8string& getName() const override;
-    const IDataType* getType(const IRContext& context) const override; 
+    const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
