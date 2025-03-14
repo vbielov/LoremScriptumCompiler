@@ -53,33 +53,42 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 	dest.flush();
 }
 
-void Assembler::compileToExecutable(const char* objectFilePath, const char* executableFilePath, Module* srcModule) {
+void Assembler::compileToExecutable(const char* objectFilePath, const char* executableFilePath, std::vector<std::filesystem::path>& linkLibraries) {
 	lld::Result result;
 	#if defined(_WIN32)
-		const char* WINDOWS_ARGS[] = {
+		std::vector<const char*> windowsArgs = {
 			"ld", 
 			"../lib/windows/crt2.o", 
 			objectFilePath, "-o", executableFilePath, 
 			"../lib/windows/libgcc.a", "../lib/windows/libmingw32.a", "../lib/windows/libmingwex.a", 
 			"../lib/windows/libmsvcrt.a", "../lib/windows/libkernel32.a",
-			nullptr
 		};
+
+		for(const auto& lib : linkLibraries) {
+			windowsArgs.push_back(lib.string().c_str());
+		}
+
 		const lld::DriverDef WINDOWS_DRIVERS[] = {
 			{lld::MinGW, &lld::mingw::link}
 		};
-		result = lld::lldMain(WINDOWS_ARGS, llvm::outs(), llvm::errs(), WINDOWS_DRIVERS);
+		result = lld::lldMain(windowsArgs, llvm::outs(), llvm::errs(), WINDOWS_DRIVERS);
 	#elif defined(__linux__)
-		const char* LINUX_ARGS[] = {
+		std::vector<const char*> linuxArgs = {
 			"ld.lld", 
 			"../lib/linux/crt1.o", "../lib/linux/crti.o", "../lib/linux/crtn.o",
 			objectFilePath, "-o", executableFilePath,
 			"../lib/linux/libc.a", "../lib/linux/libgcc_eh.a", "../lib/linux/libgcc.a",
 			nullptr
 		};
+
+		for(const auto& lib : linkLibraries) {
+			linuxArgs.push_back(lib.string().c_str());
+		}
+
 		const lld::DriverDef LINUX_DRIVER[] = {
 			{lld::Gnu, &lld::elf::link}
 		};
-		result = lld::lldMain(LINUX_ARGS, llvm::outs(), llvm::errs(), LINUX_DRIVER);
+		result = lld::lldMain(linuxArgs, llvm::outs(), llvm::errs(), LINUX_DRIVER);
 	#endif
 
 	if (result.retCode != 0) {

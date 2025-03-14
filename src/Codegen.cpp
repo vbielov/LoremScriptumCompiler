@@ -134,7 +134,9 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         return context.builder->CreateAnd(left, right, "andtmp");
     } else if (m_op == operators::OR) {
         return context.builder->CreateOr(left, right, "ortmp");
-    } 
+    } else if (m_op == operators::NOT) {
+        return context.builder->CreateNeg(left, "negtmp");
+    }
 
     // TODO(Vlad): Error
     return nullptr;

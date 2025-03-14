@@ -1,5 +1,6 @@
 apere './std.lorem'
+apere './anotherScript.lorem'
 
-si (veri):
+si (¬veri):
     scriborNum(-MMCCCXXV)
 ;

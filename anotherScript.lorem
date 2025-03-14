@@ -1,0 +1,4 @@
+apere './std.lorem'
+
+
+litera[II] hello = ['H', '\0']

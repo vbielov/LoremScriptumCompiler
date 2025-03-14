@@ -157,3 +157,8 @@ main:
 	retq
 	.seh_endproc
 
+	.data
+	.weak	hello
+hello:
+	.asciz	"H"
+
