@@ -160,6 +160,19 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     return m_type.get();
 }
 
+StructAST::StructAST(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes)
+    : m_type(nullptr) {
+    m_type = std::make_unique<StructDataType>(name, std::move(attributes));
+}
+
+const std::u8string& StructAST::getName() const {
+    return m_type->name;
+}
+
+const IDataType* StructAST::getType(const IRContext &context) {
+    return m_type.get();
+}
+
 //===----------------------------------------------------------------------===//
 // Printing AST Tree
 //===----------------------------------------------------------------------===//
@@ -288,4 +301,14 @@ void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& in
 void BoolAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     ostr << "BoolAST(" << (m_bool ? "true" : "false") << ")" << std::endl;
+}
+
+void StructAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "StructAST(" << (const char*)getName().c_str() << ")" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    for (const auto& attr : m_type->attributes) {
+        printIndent(ostr, newIndent, attr == m_type->attributes.back());
+        ostr << (const char*)attr->type->toString().c_str() << " " << (const char*)attr->name.c_str() << std::endl;
+    }
 }

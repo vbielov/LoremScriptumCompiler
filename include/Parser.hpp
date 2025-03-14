@@ -44,7 +44,7 @@ private:
     std::unique_ptr<AST> parseStatementFlow();
     std::unique_ptr<IfAST> parseStatementBranching();
     std::unique_ptr<AST> parseStatementLooping();
-
+    
     // --- Instruction section ---
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();

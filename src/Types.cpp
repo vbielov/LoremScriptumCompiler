@@ -59,12 +59,15 @@ std::u8string ArrayDataType::toString() const {
     return (std::u8string(it->first) + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
 }
 
-StructDataType::StructDataType(std::vector<std::unique_ptr<StructAttribute>> attributes)
-    : attributes(std::move(attributes)) {}
+StructDataType::StructDataType(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes)
+    : name(name), attributes(std::move(attributes)) {}
     
-llvm::Type* StructDataType::getLLVMType([[maybe_unused]] llvm::LLVMContext& context) const {
-    // TODO(Vlad)...
-    return nullptr;
+llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
+    std::vector<llvm::Type*> types;
+    for (const auto& attribute : attributes) {
+        types.push_back(attribute->type->getLLVMType(context));
+    }
+    return llvm::StructType::get(context, types, (const char*)name.c_str());
 }
 
 std::u8string StructDataType::toString() const {

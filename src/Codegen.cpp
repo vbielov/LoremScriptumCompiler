@@ -408,3 +408,7 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     static llvm::Value* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context.context), llvm::APInt(32, 0, true));
     return context.builder->CreateInBoundsGEP(arrType, arrVar->value, {zero, index}, "arrIdx");
 }
+
+llvm::Value* StructAST::codegen(IRContext& context) {
+    return nullptr;
+}
