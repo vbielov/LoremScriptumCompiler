@@ -1,3 +1,6 @@
-si(I < II):
-    apere './tst1.lorem'
+nihil tst = λ(numerus num):
+
+    si(I < II):
+        apere './tst1.lorem'
+    ;
 ;

@@ -22,9 +22,9 @@ void buildRanges(std::vector<fileLength> fileIndexes){
     //TODO: implement
 
 
-    if(pos == 0){
-        
-    }
+    // if(pos == 0){
+
+    // }
 };
 
 
