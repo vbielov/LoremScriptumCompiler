@@ -18,24 +18,21 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
-    
-    bool existPos = pos != std::u8string::npos;
 
     //for ErrorHandler
-    if(isBody){
-        isBody = false;
-    }
-
+    bool existPos = pos != std::u8string::npos;
     if(existPos){
         setFile(mainFilePath.generic_u8string(), outStr.length(), pos, existPos, isBody);
     } else {
         setFile(mainFilePath.generic_u8string(), outStr.length(), 0, existPos, isBody);
     }
-    
-    
+    if(isBody){
+        isBody = false;
+    }
 
 
-    while (existPos) {
+
+    while (pos != std::u8string::npos) {
         size_t index = pos + INCLUDE.length();
         // skip all spaces, tabs
         while (outStr[index] == ' ' || outStr[index] == '\t')

@@ -8,17 +8,23 @@ static bool anyErrors = false;
 
 static std::vector<std::u8string> sourceArray;
 static std::vector<fileLength> fileIndexes;
+static std::vector<fileRange> fileRanges;
 static std::u8string file;
 
 void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
     fileLength file(fileName, length, pos, noPos, body);
     fileIndexes.push_back(file);
 
-    std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << noPos << body << std::endl;
+    std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << " " << noPos << " " << body << std::endl;
 };
 
 void buildRanges(std::vector<fileLength> fileIndexes){
     //TODO: implement
+
+
+    if(pos == 0){
+        
+    }
 };
 
 
