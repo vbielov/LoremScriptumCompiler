@@ -8,6 +8,7 @@
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
+#include "ErrorHandler.hpp"
 #include <cstdlib>
 
 std::u8string readFileToU8String(const std::string& filePath) {
@@ -44,6 +45,11 @@ int main(int argc, const char** argv) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }
+
+    //ErrorHandler grabbing source code pointer
+    grabSource(sourceCode, inputFilePathStr); //TODO: start thread maybe and lock ErrorHandler in meantime
+    //
+    
 
     std::cout << "----------------------- Source Code: ----------------------- " << std::endl
               << std::endl;
