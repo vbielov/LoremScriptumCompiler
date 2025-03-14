@@ -11,9 +11,10 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Object/ObjectFile.h"
-#include <iostream>
 #include "lld/Common/Driver.h"
 #include "lld/Common/ErrorHandler.h"
+#include <iostream>
+#include <filesystem>
 
 using namespace llvm;
 using namespace llvm::sys;
@@ -31,5 +32,5 @@ private:
 
 public:
     void compileToObjectFile(const char* objectFileName, Module* module, CodeGenFileType fileType);
-    void compileToExecutable(const char* objectFilePath, const char* executableFilePath, Module* srcModule);
+    void compileToExecutable(const char* objectFilePath, const char* executableFilePath, std::vector<std::filesystem::path>& linkLibraries);
 };

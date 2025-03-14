@@ -26,7 +26,9 @@ int main(int argc, const char** argv) {
 
     std::filesystem::path mainFilePath = std::filesystem::canonical(inputFilePathStr);
     std::u8string sourceCode = u8"";
-    processPreprocessors(mainFilePath, sourceCode);
+    std::vector<std::filesystem::path> includeStack;
+    std::vector<std::filesystem::path> linkLibraries;
+    processPreprocessors(mainFilePath, sourceCode, includeStack, linkLibraries);
     if (sourceCode.empty()) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
@@ -105,7 +107,7 @@ int main(int argc, const char** argv) {
     Assembler assembler;
     assembler.compileToObjectFile(asmFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::AssemblyFile);
     assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
-    assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), codeGenerator.getModule());
+    assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), linkLibraries);
 
     lld::exitLld(0); // NOTE: it should not be used like this...
     return 0;

@@ -94,8 +94,9 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             auto lhs = std::make_unique<NumberAST>(0);
             return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
         } else if (sign == operators::NOT){
-            // TODO: Add BoolAST
-            return nullptr;
+            // only left is important
+            auto rhs = std::make_unique<NumberAST>(0);
+            return std::make_unique<BinaryOperatorAST>(sign, std::move(value), std::move(rhs));
         }
         return nullptr;
     }
