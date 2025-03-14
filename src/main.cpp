@@ -72,6 +72,14 @@ int main(int argc, const char** argv) {
               << std::endl;
     Parser parser = Parser(lexer);
     std::unique_ptr<AST> tree = parser.parse();
+
+    // ErrorHandler
+    if(error()){ // check if any errors occured
+        dumpErrorLog();
+        return 1;
+    }
+    //
+
     if (tree) {
         tree->printTree(std::cout, "", false);
     } else {
@@ -87,6 +95,14 @@ int main(int argc, const char** argv) {
     std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
     IRGenerator codeGenerator = IRGenerator(fileName.c_str(), tree);
     codeGenerator.generateIRCode();
+
+    // ErrorHandler
+    if(error()){ // check if any errors occured
+        dumpErrorLog();
+        return 1;
+    }
+    //
+
     std::cout << codeGenerator.getIRCodeString()<< std::endl;
 
     // Assembler
