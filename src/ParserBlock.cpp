@@ -15,13 +15,13 @@
 std::unique_ptr<BlockAST> Parser::parseBlock() {
     std::vector<std::unique_ptr<AST>> statements;
 
-    std::cout << currentLine << std::endl;
+    // std::cout << currentLine << std::endl;
 
     m_blockCount++;
+    lastOpenBlock.push_back(currentLine);
 
-    std::cout << "block count" << m_blockCount << std::endl;
+    // std::cout << "block count" << m_blockCount << std::endl;
 
-    buildString(currentLine, u8"jeblan");
 
     getNextToken(); // eat ':', or if it's a first block in the tree, read first token
     while (!isFinishedBlock()) {
@@ -44,9 +44,33 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         }
     }
 
+    for(int i = 0; i < lastOpenBlock.size(); i++){ //TODO DELETE
+        std::cout << lastOpenBlock[i] << " ";
+    }
+    std::cout << std::endl;
+
+
+
+
     // Catch close/open more blocks than possible
-    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
+    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) {
         m_blockCount--;
+        //ErrorHandler
+        std::cout <<"close " << currentLine << std::endl;
+
+        lastOpenBlock.erase(lastOpenBlock.end());
+
+        std::cout << "blocksize"<< lastOpenBlock.size() << std::endl;
+        //
+    }
+
+    
+    //ErrorHandler
+    if(m_blockCount > 1 && lastOpenBlock.size() > 1){
+
+        buildString(lastOpenBlock.back(), u8"ControlFlow Error: brackets arent closed");
+        lastOpenBlock.erase(lastOpenBlock.end());
+    }
 
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
         getNextToken();

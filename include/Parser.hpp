@@ -24,6 +24,7 @@ public:
 
     //for ErrorHandler
     size_t currentLine = 1;
+    std::vector<size_t> lastOpenBlock;
 
 
 private:
