@@ -22,6 +22,10 @@ public:
     bool isValid();
     std::unique_ptr<BlockAST> parse();
 
+    //for ErrorHandler
+    size_t currentLine = 1;
+
+
 private:
     const Token& getNextToken();
 

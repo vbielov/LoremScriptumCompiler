@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ErrorHandler.hpp"
 
 /**
  * A block contains statements
@@ -14,11 +15,18 @@
 std::unique_ptr<BlockAST> Parser::parseBlock() {
     std::vector<std::unique_ptr<AST>> statements;
 
+    std::cout << currentLine << std::endl;
+
     m_blockCount++;
+
+    std::cout << "block count" << m_blockCount << std::endl;
+
+    buildString(currentLine, u8"jeblan");
 
     getNextToken(); // eat ':', or if it's a first block in the tree, read first token
     while (!isFinishedBlock()) {
         if (isToken(TokenType::NEW_LINE)) {
+            currentLine++;
             getNextToken();
             continue;
         }

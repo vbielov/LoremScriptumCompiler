@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ErrorHandler.hpp"
 
 /**
  * An Instruction can be a declaration, assignment or function call
@@ -303,6 +304,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     getNextToken(); // eat ')'
 
     while(isToken(TokenType::NEW_LINE)) {
+        currentLine++;
         getNextToken();
     }
 

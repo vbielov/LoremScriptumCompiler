@@ -11,6 +11,8 @@ static std::vector<fileLength> fileIndexes;
 static std::vector<fileRange> fileRanges;
 static std::u8string file;
 
+size_t currentLine = 0;
+
 void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
     fileLength file(fileName, length, pos, noPos, body);
     fileIndexes.push_back(file);
@@ -83,7 +85,7 @@ void buildString(size_t line, std::u8string reason){ // add string parameter
     std::u8string uLine2(sLine.begin(), sLine.end());
 
     //TODO: try hide link => move to appropriate location
-    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine + u8"\x1b]8;;\x1b\\");
+    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine2 + u8"\x1b]8;;\x1b\\");
 
     //build += uLine;
     build.append(u8"\n        \033[31m");

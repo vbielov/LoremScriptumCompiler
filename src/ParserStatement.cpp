@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ErrorHandler.hpp"
 
 /**
  * A statement can be an instuction or a flow statement like for, if, break, return
@@ -74,7 +75,10 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     auto condition = parseExpression();
     if (condition == nullptr) return nullptr;
 
-    while (isToken(TokenType::NEW_LINE)) getNextToken();
+    while (isToken(TokenType::NEW_LINE)){ 
+        currentLine++;
+        getNextToken();
+    }
     if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) 
         return nullptr;
     auto ifBlock = parseBlock();
@@ -83,7 +87,10 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 
     std::unique_ptr<BlockAST> elseBlock;
 
-    while (isToken(TokenType::NEW_LINE)) getNextToken();
+    while (isToken(TokenType::NEW_LINE)){
+        currentLine++;
+        getNextToken();
+    }
 
     if (isToken(TokenType::KEYWORD, keywords::ELIF)) {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
@@ -94,7 +101,10 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
     } else if (isToken(TokenType::KEYWORD, keywords::ELSE)) {
         getNextToken();
 
-        while (isToken(TokenType::NEW_LINE)) getNextToken();
+        while (isToken(TokenType::NEW_LINE)){
+            currentLine++;
+            getNextToken();
+        }
         if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) return nullptr;
         elseBlock = parseBlock();
         if (elseBlock == nullptr) return nullptr;
@@ -156,9 +166,10 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     }
 
     getNextToken();
-    while (isToken(TokenType::NEW_LINE)) 
+    while (isToken(TokenType::NEW_LINE)) {
+        currentLine++;
         getNextToken();
-
+    }
     if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) 
         return nullptr;
 
