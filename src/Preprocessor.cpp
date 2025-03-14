@@ -1,4 +1,5 @@
 #include "Preprocessor.hpp"
+#include "ErrorHandler.hpp"
 
 static std::vector<std::filesystem::path> s_includedFiles;
 
@@ -10,13 +11,31 @@ static std::u8string readFileToU8String(std::filesystem::path& filePath) {
     return std::u8string(content.begin(), content.end());  // Convert to u8string
 }
 
+static bool isBody = true;
 void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& outStr) {
     s_includedFiles.push_back(mainFilePath);
     outStr = readFileToU8String(mainFilePath);
 
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
-    while (pos != std::u8string::npos) {
+    
+    bool existPos = pos != std::u8string::npos;
+
+    //for ErrorHandler
+    if(isBody){
+        isBody = false;
+    }
+
+    if(existPos){
+        setFile(mainFilePath.generic_u8string(), outStr.length(), pos, existPos, isBody);
+    } else {
+        setFile(mainFilePath.generic_u8string(), outStr.length(), 0, existPos, isBody);
+    }
+    
+    
+
+
+    while (existPos) {
         size_t index = pos + INCLUDE.length();
         // skip all spaces, tabs
         while (outStr[index] == ' ' || outStr[index] == '\t')

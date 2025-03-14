@@ -5,8 +5,22 @@
 
 static std::u8string output = u8"----------------------- Error encountered in ";
 static bool anyErrors = false;
+
 static std::vector<std::u8string> sourceArray;
+static std::vector<fileLength> fileIndexes;
 static std::u8string file;
+
+void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
+    fileLength file(fileName, length, pos, noPos, body);
+    fileIndexes.push_back(file);
+
+    std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << noPos << body << std::endl;
+};
+
+void buildRanges(std::vector<fileLength> fileIndexes){
+    //TODO: implement
+};
+
 
 void grabSource(std::u8string sourceCode, std::string fileLocation){
     std::u8string line = u8"";
@@ -30,7 +44,7 @@ void grabSource(std::u8string sourceCode, std::string fileLocation){
 
     sourceArray.push_back(line);
 
-    std::u8string temp(fileLocation.begin(), fileLocation.end());
+    std::u8string temp(fileLocation.begin(), fileLocation.end()); //TODO DELETE
     file = temp;
     output.append(temp);
     output.append(u8" -----------------------");
