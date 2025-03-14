@@ -44,8 +44,16 @@ namespace types {
     inline constexpr std::u8string_view VOID = u8"nihil";
 
     inline constexpr std::u8string_view VALUES[] = {
-        INT, BOOL, CHAR, VOID 
+        INT, BOOL, CHAR, VOID
     };
+    inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
+}
+
+namespace boolean_types {
+    inline constexpr std::u8string_view TRUE = u8"veri";
+    inline constexpr std::u8string_view FALSE = u8"falso";
+
+    inline constexpr std::u8string_view VALUES[] = { TRUE, FALSE };
     inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
 }
 

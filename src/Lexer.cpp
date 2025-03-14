@@ -4,6 +4,16 @@ Lexer::Lexer(const std::u8string& sourceCode)
     : m_souceCode(&sourceCode)
     , m_charIterator(0) {}
 
+void Lexer::tokenize(std::vector<Token>& outTokens) {
+    Token token;
+    while (true) {
+        token = getNextToken();
+        outTokens.push_back(token);
+        if (token.type == TokenType::EOF_TOKEN)
+            break;
+    }
+}
+
 Token Lexer::getNextToken() {
     // ignore any whitespace, tab, ect.
     while ( getCharAt(m_charIterator) == u8' ' || 
@@ -31,6 +41,13 @@ Token Lexer::getNextToken() {
             m_charIterator++;
             return {TokenType::PUNCTUATION, std::move(puctuationSymbol)};
         }
+    }
+
+    // is boolean
+    int boolIndex = startWithWord(boolean_types::VALUES, boolean_types::VALUES_SIZE, false);
+    if (boolIndex != -1) {
+        m_charIterator += boolean_types::VALUES[boolIndex].length();
+        return {TokenType::BOOL, std::u8string(boolean_types::VALUES[boolIndex])};
     }
 
     // is keyword
@@ -99,6 +116,7 @@ Token Lexer::getNextToken() {
     }
     return {TokenType::IDENTIFIER, std::move(identifierStr)};
 }
+
 
 int Lexer::startWithWord(const std::u8string_view* words, size_t wordsSize, bool allowIdentifierAfter) const {
     for (size_t i = 0; i < wordsSize; i++) {

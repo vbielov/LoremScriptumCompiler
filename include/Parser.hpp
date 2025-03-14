@@ -1,14 +1,14 @@
 #pragma once
 #include <format>
 #include "AST.hpp"
-#include "Lexer.hpp"
+#include "Token.hpp"
 #include "RomanNumber.hpp"
 
 class Parser {
 private:
-    Lexer* m_lexer;
-    Token m_currentToken;
-
+    const std::vector<Token>& m_tokens;
+    std::vector<Token>::const_iterator m_currentToken;
+    
     int m_loopCount;
     int m_blockCount;
     bool m_isValid;
@@ -16,14 +16,14 @@ private:
     std::vector<std::unique_ptr<AST>> m_topLevelDeclarations;
 
 public:
-    Parser(Lexer& lexer);
-    Parser(Lexer& lexer, bool isTest);
+    Parser(const std::vector<Token>& tokens);
+    Parser(const std::vector<Token>& tokens, bool isTest);
 
     bool isValid();
     std::unique_ptr<BlockAST> parse();
 
 private:
-    Token& getNextToken();
+    const Token& getNextToken();
 
     bool isInsideLoop();
     bool isFinishedBlock();
@@ -53,7 +53,7 @@ private:
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
 
     std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
-    std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
+    std::unique_ptr<AST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();

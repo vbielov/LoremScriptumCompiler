@@ -5,12 +5,12 @@
 class IRGenerator {
 private:
     AST* m_root;
-    LLVMStructs m_llvmStructs;
+    IRContext m_context;
 
 public:
     IRGenerator(const char* moduleID, const std::unique_ptr<AST>& rootBlock);
 
     void generateIRCode();
-    Module* getModule();
+    llvm::Module* getModule();
     std::string getIRCodeString();
 };

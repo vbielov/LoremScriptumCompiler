@@ -1,27 +1,5 @@
-numerus puts = apere(litera str)
+apere './std.lorem'
 
-numerus[V] one = [O, I, II, III, IV]
-numerus[V] newOne
-litera char
-numerus terminator
-
-numerus[V] someFunc = λ(numerus[V] arr):
-    numerus[V] newArr
-    ∑(numerus j = O, j < V, j = j + I):
-        newArr[j] = V - arr[j]
-    ;
-    retro newArr
-;
-
-
-∑(numerus i = O, i < V, i = i + I):
-    char = (XLVIII + one[i])
-    terminator = O
-    puts(char)
-;
-newOne = someFunc(one)
-∑(numerus l = O, l < V, l = l + I):
-    char = (XLVIII + newOne[l])
-    terminator = O
-    puts(char)
+si (veri):
+    scriborNum(-MMCCCXXV)
 ;
