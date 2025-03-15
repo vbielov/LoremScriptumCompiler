@@ -109,6 +109,8 @@ main:
 	.cfi_startproc
 	pushq	%rax
 	.cfi_def_cfa_offset 16
+	movq	test@GOTPCREL(%rip), %rdi
+	callq	scriborNum@PLT
 	movl	$-2325, 4(%rsp)
 	leaq	4(%rsp), %rdi
 	callq	scriborNum@PLT
@@ -119,5 +121,13 @@ main:
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 	.cfi_endproc
+
+	.type	test,@object
+	.data
+	.weak	test
+	.p2align	2, 0x0
+test:
+	.long	6
+	.size	test, 4
 
 	.section	".note.GNU-stack","",@progbits

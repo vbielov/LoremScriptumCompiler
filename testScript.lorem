@@ -2,6 +2,10 @@ apere './std.lorem'
 
 apere './tst.lorem'
 
+numerus test = VI
+
+scriborNum(test)
+
 si (¬veri):
     scriborNum(-MMCCCXXV)
 ;

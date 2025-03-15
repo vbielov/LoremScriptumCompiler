@@ -7,7 +7,7 @@ static std::u8string output = u8"----------------------- Error while compiling  
 static bool anyErrors = false;
 
 static std::vector<std::u8string> sourceArray;
-static std::vector<fileLength> fileIndexes; // first entry is body
+static std::vector<fileLength> fileIndexes;
 static std::vector<fileRange> fileRanges;
 
 static std::vector<std::u8string> depth;
@@ -121,11 +121,6 @@ size_t getLineCountTilPos(std::u8string text, size_t pos){
 void setFile(std::u8string fileName, std::u8string code, size_t pos, bool noPos){
     fileLength file(fileName, getLineCount(code), getLineCountTilPos(code, pos), pos, noPos);
     fileIndexes.push_back(file);
-
-
-    // std::cout << (const char*) code.c_str() << std::endl;
-    // std::cout << (const char*) file.fileName.c_str() << " length: " << file.lines << " pos: " << pos << " " << noPos << " " << file.lines << std::endl;
-
 };
 
 
@@ -155,7 +150,6 @@ void buildRanges(std::u8string& sourceCode){
             fileRange range(depth[i], getLineCountTilPos(sourceCode, pos), getLineCountTilPos(sourceCode, pos2));
             temp.push_back(range);
 
-            // std::cout << (const char*)range.fileName.c_str() << " start line: " << std::to_string(range.start) << " end line: " << std::to_string(range.end) << std::endl;
 
             sourceCode.erase(pos2, depthEnd.length());  
             sourceCode.erase(pos, depthStart.length());          
@@ -167,16 +161,7 @@ void buildRanges(std::u8string& sourceCode){
         return a.start < b.start;
     });
 
-    for(int i = 0; i < temp.size(); i++){
-        std::cout << (const char*)temp[i].fileName.c_str() << " start line: " << std::to_string(temp[i].start) << " end line: " << std::to_string(temp[i].end) << std::endl;
-    }
-
-
     fileRanges = temp;
-
-    for(int i=1; i < 50; i++ ){
-        std::cout<< "real pos "<< std::to_string(i) << " relative pos " << std::to_string(getFileName(i).displayline) << " filename: " << (const char*) getFileName(i).fileName.c_str() << std::endl;
-    }
 }
 
 
@@ -208,7 +193,7 @@ void grabSource(std::u8string sourceCode, std::string fileLocation){
 
     sourceArray.push_back(line);
 
-    std::u8string temp(fileLocation.begin(), fileLocation.end()); //TODO DELETE
+    std::u8string temp(fileLocation.begin(), fileLocation.end()); 
     file = temp;
     output.append(temp);
     output.append(u8" -----------------------");
@@ -221,13 +206,10 @@ bool error(){
 }
 
 
-void buildString(size_t line, std::u8string reason){ // add string parameter
+void buildString(size_t line, std::u8string reason){ 
     anyErrors = true;
     std::u8string build = u8"\n \033[1;41mError\033[0m encountered in Line ";
     
-    
-    // std::string sLine = std::to_string(line);
-    //std::u8string uLine(sLine.begin(), sLine.end());
 
     rangeResult data = getFileName(line);
 
@@ -242,7 +224,7 @@ void buildString(size_t line, std::u8string reason){ // add string parameter
 
     std::cout << (const char*) data.fileName.c_str() << std::endl;
 
-    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine2 + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
+    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
 
     //build += uLine;
     build.append(u8"\n        \033[31m");
