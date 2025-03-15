@@ -29,12 +29,14 @@ int main(int argc, const char** argv) {
     std::vector<std::filesystem::path> includeStack;
     std::vector<std::filesystem::path> linkLibraries;
     processPreprocessors(mainFilePath, sourceCode, includeStack, linkLibraries);
+    
     if (sourceCode.empty()) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }
 
     //ErrorHandler grabbing source code pointer
+    buildRanges(sourceCode);
     grabSource(sourceCode, inputFilePathStr); //TODO: start thread maybe and lock ErrorHandler in meantime
     //
     

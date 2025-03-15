@@ -11,28 +11,43 @@ static std::u8string readFileToU8String(std::filesystem::path& filePath) {
     return std::u8string(content.begin(), content.end());  // Convert to u8string
 }
 
+
+static bool isBody = true;
+static size_t depthVal = 0;
 void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack, std::vector<std::filesystem::path>& outLibraries) {
+    
+
+    
     s_includedFiles.push_back(mainFilePath);
     includingStack.push_back(mainFilePath);
 
     outStr = readFileToU8String(mainFilePath);
 
+    std::string depthVals = std::to_string(depthVal);
+    std::u8string depthCount(depthVals.begin(), depthVals.end());
+    std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount+ u8"\n";
+    std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount +u8"\n";
+    depthMapping(mainFilePath.generic_u8string());
+
+    outStr = depth + outStr + depthEnd;
+
+    depthVal++;
+
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
 
     //for ErrorHandler
-    bool existPos = pos != std::u8string::npos;
-    if(existPos){
-        setFile(mainFilePath.generic_u8string(), outStr.length(), pos, existPos, isBody);
-    } else {
-        setFile(mainFilePath.generic_u8string(), outStr.length(), 0, existPos, isBody);
-    }
-    if(isBody){
-        isBody = false;
-    }
-
-
-
+    // bool existPos = pos != std::u8string::npos;
+    // if(!existPos){
+    //     setFile(mainFilePath.generic_u8string(), outStr, 0, existPos);
+    // } else {
+    //     setFile(mainFilePath.generic_u8string(), outStr, pos, existPos);
+    // }
+    
+    // if(isBody){
+    //     isBody = false;
+    // }
+    
     while (pos != std::u8string::npos) {
         int indexBack = pos - 1;
         bool valid = true;
@@ -64,7 +79,9 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
         index++; // eat '
 
         outStr.erase(pos, index - pos); // remove appere
+
         index = pos;
+
 
         // insert file if it's not included yet
         try {

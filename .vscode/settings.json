@@ -107,6 +107,15 @@
     "xtr1common": "cpp",
     "xtree": "cpp",
     "xutility": "cpp",
-    "filesystem": "cpp"
+    "filesystem": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "coroutine": "cpp",
+    "source_location": "cpp",
+    "stacktrace": "cpp",
+    "stdfloat": "cpp",
+    "valarray": "cpp",
+    "__verbose_abort": "cpp",
+    "execution": "cpp"
   }
 }

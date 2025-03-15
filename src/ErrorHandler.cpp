@@ -7,28 +7,179 @@ static std::u8string output = u8"----------------------- Error encountered in ";
 static bool anyErrors = false;
 
 static std::vector<std::u8string> sourceArray;
-static std::vector<fileLength> fileIndexes;
+static std::vector<fileLength> fileIndexes; // first entry is body
 static std::vector<fileRange> fileRanges;
+
+static std::vector<std::u8string> depth;
+
 static std::u8string file;
 
 size_t currentLine = 0;
 
-void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
-    fileLength file(fileName, length, pos, noPos, body);
+size_t getLineCount(std::u8string text){
+    size_t line = 1;
+    for (size_t i = 0; i < text.length(); i++){
+        if(text.at(i) == '\n'){
+            line++;
+        }
+    }
+    return line;
+}
+
+size_t getLineCountTilPos(std::u8string text, size_t pos){
+    size_t line = 1;
+    for (size_t i = 0; i <= pos; i++){
+        if(text.at(i) == '\n'){
+            line++;
+        }
+    }
+    return line;
+}
+
+
+void setFile(std::u8string fileName, std::u8string code, size_t pos, bool noPos){
+    fileLength file(fileName, getLineCount(code), getLineCountTilPos(code, pos), pos, noPos);
     fileIndexes.push_back(file);
 
-    std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << " " << noPos << " " << body << std::endl;
+
+    // std::cout << (const char*) code.c_str() << std::endl;
+    // std::cout << (const char*) file.fileName.c_str() << " length: " << file.lines << " pos: " << pos << " " << noPos << " " << file.lines << std::endl;
+
 };
 
-void buildRanges(std::vector<fileLength> fileIndexes){
-    //TODO: implement
+
+// void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
+    // fileLength file(fileName, length, pos, noPos, body);
+    // fileIndexes.push_back(file);
+
+    // std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << " " << noPos << " " << body << std::endl;
 
 
-    // if(pos == 0){
+    //fileLength file(fileName, );
+//};
 
-    // }
-};
+// static size_t currentPosition = 1;
+// void buildRanges(){
+//     //TODO: implement
 
+
+//     // if(pos == 0){
+
+//     // }
+
+//     for (int i = 0; i < fileIndexes.size(); i++){
+//         if(fileIndexes[i].noPos){
+//             fileRange file (fileIndexes[i].fileName, currentPosition, fileIndexes[i].lines);
+//             currentPosition += fileIndexes[i].lines;
+//         } else {
+//             fileRange file (fileIndexes[i].fileName, currentPosition, fileIndexes[i].lines);
+
+//         }
+
+//         std::cout << (const char*) fileIndexes[i].fileName.c_str() << std::endl;
+//     }
+
+
+// };
+
+
+
+fileRange fileRangeBuilder(std::u8string fileName, size_t start, size_t end) {
+    fileRange newRange;
+    newRange.fileName = fileName;
+    newRange.start = start;
+    newRange.end = end;
+    return newRange;
+}
+
+void buildRanges(std::u8string& sourceCode){
+
+    static std::vector<fileRange> temp;
+
+    for(size_t i = 0; i < depth.size(); i++){
+        std::string depthVals = std::to_string(i);
+        std::u8string depthCount(depthVals.begin(), depthVals.end());
+        std::u8string depthStart = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount+u8"\n";
+        std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount+u8"\n";
+
+        size_t pos = sourceCode.find(depthStart); 
+        size_t pos2 = sourceCode.find(depthEnd); 
+
+
+        if (pos != std::u8string::npos && pos != std::u8string::npos) {
+            fileRange range(depth[i], getLineCountTilPos(sourceCode, pos)-1, getLineCountTilPos(sourceCode, pos2)-1);
+            temp.push_back(range);
+
+            sourceCode.erase(pos2, depthEnd.length());  
+            sourceCode.erase(pos, depthStart.length());          
+        }
+
+    }
+
+    size_t rangeBegin = 0;
+
+    // if(temp[0].end > temp[1].end){
+    //     if(temp[0].start == temp[1].end){
+    //         fileRanges.push_back(temp[1]); 
+
+    //          if(temp[1].end > temp[2].end){
+
+    //          }
+
+    //          rangeBegin = temp[1].end; //temp 1 exits as it is completed
+    //      };
+    //  }
+
+    size_t i = 0;
+    static std::vector<fileRange> temp2;
+
+    while(1 < temp.size()){
+        if(temp[i].end > temp[i+1].end && temp[i].start > temp[i+1].start){ // somewhere in middle of program is import
+            fileRanges.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
+            fileRanges.push_back(temp[i+1]);
+            // i+1 is complete
+
+            temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
+            temp.erase(temp.begin()+i+1);
+
+
+        }else if(temp[i].end==temp[i+1].end && temp[i].start == temp[i+1].start){ // entire programm is 1 import
+            fileRanges.push_back(temp[i+1]); 
+            //i and i+1 are complete
+            temp.erase(temp.begin()+ i);
+            temp.erase(temp.begin()+i+1);
+
+        }else if(temp[i].end==temp[i+1].end && temp[i].start > temp[i+1].start){ // import at end of programm
+            //i and i+1 are complete
+            temp.erase(temp.begin()+i);
+            temp.erase(temp.begin()+i+1);
+
+        }else if(temp[i].end > temp[i+1].end && temp[i].start == temp[i+1].start){ // import at start of programm
+            fileRanges.push_back(temp[i+1]); 
+            temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
+            //i+1 is complete
+
+            temp.erase(temp.begin()+i+1);
+
+        }
+    }
+
+    if(temp.size() == 1){
+        fileRanges.push_back(temp[i]); 
+    }
+    
+
+    for(int i = 0; i < fileRanges.size(); i++){
+        std::cout << (const char*) fileRanges[i].fileName.c_str() << " start line " << std::to_string(fileRanges[i].start) << " end line " << std::to_string(fileRanges[i].end) << std::endl ; 
+    
+    }
+
+}
+
+
+void depthMapping(std::u8string fileName){
+    depth.push_back(fileName);
+}
 
 void grabSource(std::u8string sourceCode, std::string fileLocation){
     std::u8string line = u8"";

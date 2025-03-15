@@ -29,21 +29,33 @@ void dumpErrorLog();
 void typoDetection();
 
 //
-void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body);
+void setFile(std::u8string fileName, std::u8string code, size_t pos, bool noPos);
+
+// struct fileLength{
+//     std::u8string fileName;
+//     size_t length;
+//     size_t pos;
+//     bool noPos;
+//     bool body;
+// };
 
 struct fileLength{
     std::u8string fileName;
-    size_t length;
+    size_t lines;
+    size_t lineTillPos;
     size_t pos;
     bool noPos;
-    bool body;
 };
 
 //
-void buildRanges(std::vector<fileLength> fileIndexes);
+void buildRanges(std::u8string& sourceCode);
 
 struct fileRange{
     std::u8string fileName;
     size_t start;
     size_t end;
 };
+
+
+
+void depthMapping(std::u8string fileName);

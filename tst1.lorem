@@ -1,4 +1,3 @@
 si(I < II):
-
-    apere './tst2.lorem'
+    apere './tst2.lorem'    
 ;
