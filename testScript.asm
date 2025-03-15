@@ -101,6 +101,24 @@ scriborNum:
 .Lfunc_end0:
 	.size	scriborNum, .Lfunc_end0-scriborNum
 	.cfi_endproc
+	.seh_endproc
+
+	.def	foo;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	foo
+	.p2align	4, 0x90
+foo:
+.seh_proc foo
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	callq	scriborNum
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
 
 	.globl	main
 	.p2align	4, 0x90
@@ -114,6 +132,16 @@ main:
 	movl	$-2325, 4(%rsp)
 	leaq	4(%rsp), %rdi
 	callq	scriborNum@PLT
+.seh_proc main
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movl	$500, 32(%rsp)
+	leaq	32(%rsp), %rcx
+	callq	foo
+	movl	$500, 36(%rsp)
+	leaq	36(%rsp), %rcx
+	callq	scriborNum
 	xorl	%eax, %eax
 	popq	%rcx
 	.cfi_def_cfa_offset 8

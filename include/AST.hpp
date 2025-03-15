@@ -236,3 +236,17 @@ public:
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
 };
+
+
+class StructAST : public AST {
+private:
+    std::u8string m_name;
+    std::unique_ptr<StructDataType> m_type;
+
+public:
+    StructAST(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes);
+    const std::u8string& getName() const override;
+    const IDataType* getType(const IRContext& context) override; 
+    llvm::Value* codegen(IRContext& context) override;
+    void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+};

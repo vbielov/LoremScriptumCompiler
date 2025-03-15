@@ -51,8 +51,10 @@ struct StructAttribute {
 
 class StructDataType : public IDataType {
 public:
+    std::u8string name;
     std::vector<std::unique_ptr<StructAttribute>> attributes;
-    StructDataType(std::vector<std::unique_ptr<StructAttribute>> attributes);
+
+    StructDataType(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
     std::u8string toString() const override;
 };

@@ -1,13 +1,8 @@
 apere './std.lorem'
 
-apere './tst.lorem'
-
-numerus test = VI
-
-scriborNum(test)
-
-si (¬veri):
-    scriborNum(-MMCCCXXV)
+nihil foo = λ(numerus value):
+    scriborNum(value)
 ;
 
-si (veri):;
+foo(D)
+scriborNum(D)
