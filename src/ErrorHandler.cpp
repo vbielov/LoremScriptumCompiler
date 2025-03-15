@@ -16,6 +16,62 @@ static std::u8string file;
 
 size_t currentLine = 0;
 
+
+
+struct rangeResult {
+    std::u8string fileName;
+    size_t displayline;
+};
+
+rangeResult getFileName(size_t line){
+
+    static std::vector<fileRange> temp;
+
+    rangeResult closestMatch;
+    size_t distance ;
+    size_t meantimeDist=0;
+    bool firstMatch = true;
+
+    for (size_t i = 0; i < fileRanges.size(); i++){
+        size_t start = fileRanges[i].start;
+        size_t end = fileRanges[i].end;
+
+
+        if(start <= line){
+        size_t displayline = line - start; //nonfunctional
+            
+        if(line == end){
+            distance = line-meantimeDist; //... difficult
+
+            if(firstMatch){
+                distance = displayline;
+            }
+
+            closestMatch.displayline = distance+1;
+            closestMatch.fileName = fileRanges[i].fileName;
+            break;
+        }
+        
+        if(line < end){
+            
+
+            if(firstMatch){
+                distance = displayline;
+                firstMatch = false;
+            }
+
+            closestMatch.displayline = distance+1;
+            closestMatch.fileName = fileRanges[i].fileName;
+        }
+        
+        }
+    }
+
+
+    return closestMatch;
+    
+}
+
 size_t getLineCount(std::u8string text){
     size_t line = 1;
     for (size_t i = 0; i < text.length(); i++){
@@ -110,104 +166,31 @@ void buildRanges(std::u8string& sourceCode){
             fileRange range(depth[i], getLineCountTilPos(sourceCode, pos), getLineCountTilPos(sourceCode, pos2));
             temp.push_back(range);
 
+            // std::cout << (const char*)range.fileName.c_str() << " start line: " << std::to_string(range.start) << " end line: " << std::to_string(range.end) << std::endl;
+
             sourceCode.erase(pos2, depthEnd.length());  
             sourceCode.erase(pos, depthStart.length());          
         }
 
     }
 
-    size_t rangeBegin = 0;
+    std::sort(temp.begin(), temp.end(), [](const fileRange& a, const fileRange& b) {
+        return a.start < b.start;
+    });
 
-    // if(temp[0].end > temp[1].end){
-    //     if(temp[0].start == temp[1].end){
-    //         fileRanges.push_back(temp[1]); 
-
-    //          if(temp[1].end > temp[2].end){
-
-    //          }
-
-    //          rangeBegin = temp[1].end; //temp 1 exits as it is completed
-    //      };
-    //  }
-
-    size_t i = 0;
-    static std::vector<fileRange> temp2;
-    bool secondIteration = false;
-
-    do{
-        if(secondIteration){
-            temp = temp2;
-            temp2.clear();
-        }
-        while(1 < temp.size()){
-            for(int i = 0; i < 2; i++){
-                std::cout << (const char*) temp[i].fileName.c_str() << " start line " << std::to_string(temp[i].start) << " end line " << std::to_string(temp[i].end) << std::endl ; 
-            
-            }
-            std::cout << std::endl;
-
-            if(temp[i].end < temp[i+1].end || temp[i].start > temp[i+1].start){
-                temp2.push_back(temp[i+1]);
-                temp.erase(temp.begin()+i+1);
-                if(temp.size() == 1){
-                    fileRanges.push_back(temp[i]); 
-                }
-                continue;
-            }
-
-            if(temp[i].end > temp[i+1].end && temp[i].start < temp[i+1].start){ // somewhere in middle of program is import
-                temp2.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
-                // fileRanges.push_back(temp[i+1]);
-                // i+1 is complete
-
-                temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
-
-                temp2.push_back(temp[i+1]);
-                
-                temp.erase(temp.begin()+i+1);
-
-
-            }else if(temp[i].end==temp[i+1].end && temp[i].start == temp[i+1].start){ // entire programm is 1 import
-                //fileRanges.push_back(temp[i+1]); //TODO: FIX this is wonky
-                //i and i+1 are complete
-                //temp.erase(temp.begin()+ i);
-
-                temp2.push_back(temp[i+1]);
-                temp.erase(temp.begin()+i+1);
-
-            }else if(temp[i].end==temp[i+1].end && temp[i+1].start > temp[i].start){ // import at end of programm
-                //i and i+1 are complete
-                //temp.erase(temp.begin()+i);
-
-                temp2.push_back(temp[i+1]);
-                temp.erase(temp.begin()+i+1);
-
-            }else if(temp[i].end > temp[i+1].end && temp[i].start == temp[i+1].start){ // import at start of programm
-                //fileRanges.push_back(temp[i+1]); 
-                temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
-                //i+1 is complete
-
-                temp2.push_back(temp[i+1]);
-                temp.erase(temp.begin()+i+1);
-            }
-        }
-        secondIteration = true;
-
-        // if(temp.size() == 1){
-        //     fileRanges.push_back(temp[i]); 
-        // }
-
-    }while(!temp2.empty() && 1 < temp2.size());
-
-    
-    
-
-    for(int i = 0; i < fileRanges.size(); i++){
-        std::cout << (const char*) fileRanges[i].fileName.c_str() << " start line " << std::to_string(fileRanges[i].start) << " end line " << std::to_string(fileRanges[i].end) << std::endl ; 
-    
+    for(int i = 0; i < temp.size(); i++){
+        std::cout << (const char*)temp[i].fileName.c_str() << " start line: " << std::to_string(temp[i].start) << " end line: " << std::to_string(temp[i].end) << std::endl;
     }
 
+
+    fileRanges = temp;
+
+    for(int i=1; i < 50; i++ ){
+        std::cout<< "real pos "<< std::to_string(i) << " relative pos " << std::to_string(getFileName(i).displayline) << " filename: " << (const char*) getFileName(i).fileName.c_str() << std::endl;
+    }
 }
+
+
 
 
 void depthMapping(std::u8string fileName){
