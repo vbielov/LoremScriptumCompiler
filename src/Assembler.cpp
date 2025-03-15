@@ -78,6 +78,7 @@ void Assembler::compileToExecutable(const char* objectFilePath, const char* exec
 		args.push_back("ld");
 		args.push_back(objectFilePath);
 		args.push_back("-o");
+		args.push_back(executableFilePath);
 
 		for (const auto& file : includedFiles) {
 			auto path = storeFileTmp(file.name, file.compressedData, file.compressedSize, file.originalSize);
