@@ -33,11 +33,17 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
     // while(outStr.at(counter) != '\n'){
     //     counter++;
     // }
+    bool setEnd = false;
     for (size_t i = 0; i < outStr.length(); i++){
         if(outStr.at(i) == '\n'){
             outStr.insert(i, depth);
+            setEnd=true;
             break;
         }
+    }
+
+    if(!setEnd){
+        outStr.append(depth);
     }
 
 

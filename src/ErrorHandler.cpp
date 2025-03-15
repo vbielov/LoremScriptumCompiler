@@ -156,7 +156,7 @@ void buildRanges(std::u8string& sourceCode){
             }
 
             if(temp[i].end > temp[i+1].end && temp[i].start < temp[i+1].start){ // somewhere in middle of program is import
-                fileRanges.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
+                temp2.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
                 // fileRanges.push_back(temp[i+1]);
                 // i+1 is complete
 
@@ -168,14 +168,14 @@ void buildRanges(std::u8string& sourceCode){
 
 
             }else if(temp[i].end==temp[i+1].end && temp[i].start == temp[i+1].start){ // entire programm is 1 import
-                fileRanges.push_back(temp[i+1]); //TODO: FIX this is wonky
+                //fileRanges.push_back(temp[i+1]); //TODO: FIX this is wonky
                 //i and i+1 are complete
                 //temp.erase(temp.begin()+ i);
 
                 temp2.push_back(temp[i+1]);
                 temp.erase(temp.begin()+i+1);
 
-            }else if(temp[i].end==temp[i+1].end && temp[i].start > temp[i+1].start){ // import at end of programm
+            }else if(temp[i].end==temp[i+1].end && temp[i+1].start > temp[i].start){ // import at end of programm
                 //i and i+1 are complete
                 //temp.erase(temp.begin()+i);
 
@@ -193,9 +193,9 @@ void buildRanges(std::u8string& sourceCode){
         }
         secondIteration = true;
 
-        if(temp.size() == 1){
-            fileRanges.push_back(temp[i]); 
-        }
+        // if(temp.size() == 1){
+        //     fileRanges.push_back(temp[i]); 
+        // }
 
     }while(!temp2.empty() && 1 < temp2.size());
 
