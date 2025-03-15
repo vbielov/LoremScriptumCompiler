@@ -129,42 +129,6 @@ void setFile(std::u8string fileName, std::u8string code, size_t pos, bool noPos)
 };
 
 
-// void setFile(std::u8string fileName, size_t length, size_t pos, bool noPos, bool body){
-    // fileLength file(fileName, length, pos, noPos, body);
-    // fileIndexes.push_back(file);
-
-    // std::cout << (const char*) file.fileName.c_str() << " length: " << length << " pos: " << pos << " " << noPos << " " << body << std::endl;
-
-
-    //fileLength file(fileName, );
-//};
-
-// static size_t currentPosition = 1;
-// void buildRanges(){
-//     //TODO: implement
-
-
-//     // if(pos == 0){
-
-//     // }
-
-//     for (int i = 0; i < fileIndexes.size(); i++){
-//         if(fileIndexes[i].noPos){
-//             fileRange file (fileIndexes[i].fileName, currentPosition, fileIndexes[i].lines);
-//             currentPosition += fileIndexes[i].lines;
-//         } else {
-//             fileRange file (fileIndexes[i].fileName, currentPosition, fileIndexes[i].lines);
-
-//         }
-
-//         std::cout << (const char*) fileIndexes[i].fileName.c_str() << std::endl;
-//     }
-
-
-// };
-
-
-
 fileRange fileRangeBuilder(std::u8string fileName, size_t start, size_t end) {
     fileRange newRange;
     newRange.fileName = fileName;
@@ -278,7 +242,6 @@ void buildString(size_t line, std::u8string reason){ // add string parameter
 
     std::cout << (const char*) data.fileName.c_str() << std::endl;
 
-    //TODO: try hide link => move to appropriate location
     build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine2 + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
 
     //build += uLine;
@@ -303,4 +266,22 @@ void buildString(size_t line, std::u8string reason){ // add string parameter
 
 void dumpErrorLog(){
     std::cout << (const char*) output.c_str() << std::endl;
+}
+
+
+
+
+void dumpAndBuildError(std::u8string text){
+    std::u8string output;
+    output.append(u8"\n \033[1;41mError\033[0m ");
+    output.append(text);
+    output.append(u8"\n\n\n");
+    std::cout << (const char*) output.c_str() << std::endl;
+}
+
+
+void queueUndefinedError(std::u8string text){
+    output.append(u8"\n \033[1;41mError\033[0m ");
+    output.append(text);
+    output.append(u8"\n\n\n");
 }

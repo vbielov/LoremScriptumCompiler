@@ -1,5 +1,6 @@
 #include "Parser.hpp"
 #include "RomanNumber.hpp"
+#include "ErrorHandler.hpp"
 
 /**
  * An Expression always calculates a value of some type. Expression end on new line, eof or punctuation.
@@ -25,18 +26,28 @@
  */
 std::unique_ptr<AST> Parser::parseExpression() {
     auto left = parseExpressionSingle();
-    if (left == nullptr) return nullptr;
+    if (left == nullptr){
+        buildString(currentLine, u8"Syntax Error: left side of Expression is missing!");
+        return nullptr;
+    } 
     
     if (isExpressionEnd()) return left;
     
     if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) 
-        return nullptr;
+        {
+            buildString(currentLine, u8"Syntax Error: missing or wrong operator!");
+            return nullptr;
+        }
 
     auto op = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
     getNextToken();
     
     auto right = parseExpressionSingle();
-    if (right == nullptr) return nullptr;
+    if (right == nullptr){
+        
+        buildString(currentLine, u8"Syntax Error: right side of Expression is missing!");
+         return nullptr;
+        }
 
     if (isExpressionEnd()) {
         return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
@@ -47,7 +58,10 @@ std::unique_ptr<AST> Parser::parseExpression() {
 
     getNextToken();
     auto nextExpression = parseExpression();
-    if (nextExpression == nullptr) return nullptr;
+    if (nextExpression == nullptr) {
+        buildString(currentLine, u8"Syntax Error: failure to find next Expression!");
+        return nullptr;
+    };
 
     if (op.second <= nextOp.second) {
         std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
@@ -83,12 +97,17 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         std::u8string sign = m_currentToken->value;
 
         getNextToken();
-        if (isUnaryOperator()) 
+        if (isUnaryOperator()) {
+            buildString(currentLine, u8"Syntax Error: double unary operator is not allowed!");
             return nullptr;
+        }
+            
 
         value = parseExpressionSingle();
-        if (value == nullptr) 
-            return nullptr;
+        if (value == nullptr) {        
+                buildString(currentLine, u8"Syntax Error: failure to parse Expression, invalid Value!");
+                return nullptr;
+            };
 
         if (sign == operators::PLUS || sign == operators::MINUS) {
             auto lhs = std::make_unique<NumberAST>(0);
@@ -98,13 +117,17 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             auto rhs = std::make_unique<NumberAST>(0);
             return std::make_unique<BinaryOperatorAST>(sign, std::move(value), std::move(rhs));
         }
+
+        buildString(currentLine, u8"Syntax Error: to parse Expression failure, check your Operators!");
         return nullptr;
     }
 
     if (isToken(TokenType::NUMBER)) {
         int intValue;
-        if (!toArabicConverter(m_currentToken->value, &intValue)) 
+        if (!toArabicConverter(m_currentToken->value, &intValue)) {
+            buildString(currentLine, u8"Syntax Error: failure to understand Roman numeral, Optime vale!");
             return nullptr;
+        }
 
         value = std::make_unique<NumberAST>(intValue);
         getNextToken();
@@ -134,12 +157,14 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
             std::unique_ptr<AST> index = parseExpression();
             if (!index) {
-                printError("Expected index for indexing array");
+                // printError("Expected index for indexing array");
+                buildString(currentLine, u8"Syntax Error: Expected index to index array with!");
                 return nullptr;
             }
 
             if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-                printError("Expected ']' after array index accessing");
+                // printError("Expected ']' after array index accessing");
+                buildString(currentLine, u8"Syntax Error: expeted ']' after array index access!");
                 return nullptr;
             }
             getNextToken(); // eat ]
@@ -150,11 +175,13 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     } else if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
         getNextToken();
         value = parseExpression();
-        if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) 
-            return nullptr;
-
+        if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
+                buildString(currentLine, u8"Syntax Error: didnt close ()!");
+                return nullptr;
+            }
         getNextToken();
     } else {
+        buildString(currentLine, u8"Syntax Error: Token not recognised...!");
         return nullptr;
     }
 
@@ -181,9 +208,11 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
     std::vector<std::unique_ptr<AST>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
         auto expression = parseExpression();
-        if (expression == nullptr) 
+        if (expression == nullptr) {
+            buildString(currentLine, u8"Syntax Error: missing expression!");
             return nullptr;
-
+        }
+            
         args.push_back(std::move(expression));
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
@@ -195,7 +224,9 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
             break;
         }
 
-        printError("Error: Expected ) in function call");
+        // printError("Error: Expected ) in function call");
+        buildString(currentLine, u8"Syntax Error: closing ) is expected in function call!");
+
         return nullptr;
     }
 

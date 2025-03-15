@@ -72,6 +72,10 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
         while (outStr[index] == ' ' || outStr[index] == '\t')
             index++;
 
+        if(outStr[index] != '\''){
+            dumpAndBuildError(u8"Expected ' after apere");
+        }
+        
         assert(outStr[index] == '\'' && "Expected ' after apere");
         index++; // eat '
         std::string includeFileName = "";
@@ -79,6 +83,8 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
             includeFileName += outStr[index];
             index++;
         }
+
+        if(outStr[index] != '\''){dumpAndBuildError(u8"Found no closing ' in apere");}
         assert(outStr[index] == '\'' && "Found no closing ' in apere");
         index++; // eat '
 
@@ -95,6 +101,8 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
             // Check if there is a circle in inclusion
             if (std::find(includingStack.begin(), includingStack.end(), includedPath) != includingStack.end()) {
+                
+                dumpAndBuildError(u8"Recursive including found");
                 assert(false && "Recursive including found");
             }
             
@@ -112,12 +120,16 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
                 }
             } 
         } catch (const std::filesystem::filesystem_error& e) {
+            dumpAndBuildError(u8"File doesn't exists");
             assert(false && "File doesn't exists");
         }
 
         pos = outStr.find(INCLUDE, index);
     }
     
+    if(includingStack.back() != mainFilePath){
+        dumpAndBuildError(u8"Import failure: includingStack.back() != mainFilePath");
+    }
     assert(includingStack.back() == mainFilePath);
     includingStack.pop_back();
 }

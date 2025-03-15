@@ -7,5 +7,5 @@ si(I < II):
     apere './tst1.lorem' 
     si(I<II):
 
-    
+    ;
 ;

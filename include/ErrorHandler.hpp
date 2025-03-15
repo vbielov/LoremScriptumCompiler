@@ -60,3 +60,8 @@ struct fileRange{
 
 
 void depthMapping(std::u8string fileName);
+
+
+void dumpAndBuildError(std::u8string text);
+
+void queueUndefinedError(std::u8string name);
