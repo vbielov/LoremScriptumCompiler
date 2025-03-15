@@ -107,7 +107,14 @@ scriborNum:
 	.type	main,@function
 main:
 	.cfi_startproc
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movl	$-2325, 4(%rsp)
+	leaq	4(%rsp), %rdi
+	callq	scriborNum@PLT
 	xorl	%eax, %eax
+	popq	%rcx
+	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main

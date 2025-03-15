@@ -4,6 +4,6 @@ apere './tst.lorem'
 
 si (¬veri):
     scriborNum(-MMCCCXXV)
-
+;
 
 si (veri):;

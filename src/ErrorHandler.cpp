@@ -3,7 +3,7 @@
 
 
 
-static std::u8string output = u8"----------------------- Error encountered in ";
+static std::u8string output = u8"----------------------- Error while compiling  ";
 static bool anyErrors = false;
 
 static std::vector<std::u8string> sourceArray;
@@ -265,19 +265,21 @@ void buildString(size_t line, std::u8string reason){ // add string parameter
     // std::string sLine = std::to_string(line);
     //std::u8string uLine(sLine.begin(), sLine.end());
 
+    rangeResult data = getFileName(line);
 
     std::filesystem::path relativePath = (const char*)file.c_str();
-    std::filesystem::path absolutePath = std::filesystem::absolute(relativePath);
     
-    std::u8string stringAbsPath=     absolutePath.generic_u8string();
+    std::u8string stringAbsPath = data.fileName;
 
     std::u8string uLine = toRomanConverter((int) line);
 
-    std::string sLine = std::to_string(line);
+    std::string sLine = std::to_string(data.displayline);
     std::u8string uLine2(sLine.begin(), sLine.end());
 
+    std::cout << (const char*) data.fileName.c_str() << std::endl;
+
     //TODO: try hide link => move to appropriate location
-    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine2 + u8"\x1b]8;;\x1b\\");
+    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine2 + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
 
     //build += uLine;
     build.append(u8"\n        \033[31m");

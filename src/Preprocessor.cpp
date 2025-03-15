@@ -23,16 +23,14 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
     outStr = readFileToU8String(mainFilePath);
 
+    //ErrorHandler, markers
     std::string depthVals = std::to_string(depthVal);
     std::u8string depthCount(depthVals.begin(), depthVals.end());
     std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
     std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
     depthMapping(mainFilePath.generic_u8string());
+    //
 
-    // size_t counter = 0;
-    // while(outStr.at(counter) != '\n'){
-    //     counter++;
-    // }
     bool setEnd = false;
     for (size_t i = 0; i < outStr.length(); i++){
         if(outStr.at(i) == '\n'){
@@ -53,18 +51,6 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
-
-    //for ErrorHandler
-    // bool existPos = pos != std::u8string::npos;
-    // if(!existPos){
-    //     setFile(mainFilePath.generic_u8string(), outStr, 0, existPos);
-    // } else {
-    //     setFile(mainFilePath.generic_u8string(), outStr, pos, existPos);
-    // }
-    
-    // if(isBody){
-    //     isBody = false;
-    // }
     
     while (pos != std::u8string::npos) {
         int indexBack = pos - 1;
