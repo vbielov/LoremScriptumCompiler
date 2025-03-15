@@ -1,5 +1,14 @@
 apere './std.lorem'
+apere './binarytree.lorem'
 
-si (¬veri):
-    scriborNum(-MMCCCXXV)
-;
+numerus[C] tree
+asertio success
+
+createBinaryTree(tree, C, O)
+
+addValue(tree, X)
+addValue(tree, V)
+addValue(tree, VII)
+addValue(tree, XX)
+
+scriborTree(tree)

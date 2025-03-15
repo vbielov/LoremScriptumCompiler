@@ -1,0 +1,134 @@
+apere './std.lorem'
+
+// Binary tree is represented as array. defaultValue is null value and cannot be added to tree
+nihil createBinaryTree = λ(numerus[X] tree, numerus size, numerus defaultValue):
+  tree[O] = defaultValue
+  tree[I] = size
+
+  ∑(numerus i = II, i < size, i++):
+    tree[i] = defaultValue
+  ;
+;
+
+numerus __getMiddle = λ(numerus left, numerus right):
+  retro left + (right-left) ÷ II
+;
+
+asertio __addValue = λ(numerus[X] tree, numerus left, numerus right, numerus value):
+  numerus middle = __getMiddle(left, right)
+
+  si tree[O] ⇔ tree[middle]:
+    // empty slot found - add value
+    tree[middle] = value
+    retro veri
+  ;
+
+  // if middle equals right or left side => end of tree size
+  si middle ⇔ right:
+    retro falso
+  ; nisi middle ⇔ left:
+    retro falso
+  ;
+
+  // Divide & conquer!
+  si tree[middle] > value:
+    // go left
+    retro __addValue(tree, left, middle-I, value)
+  ; nisi tree[middle] < value:
+    // go right
+    retro __addValue(tree, middle+I, right, value)
+  ;
+
+  // Value already added
+  retro falso
+
+;
+
+asertio addValue = λ(numerus[X] tree, numerus value):
+  retro __addValue(tree, II, tree[I]-I, value)
+;
+
+//                   middle
+//                     ^
+// [leftleft, leftright, rightleft, rightright]
+numerus[IV] __getnextBounds = λ(numerus left, numerus right):
+  si left ⇔ right:
+    retro [O, O, O, O]
+  ;
+
+  numerus middle = __getMiddle(left, right)
+  numerus[IV] bounds = [left, middle-I, middle+I, right]
+
+  si middle ⇔ left:
+    bounds[O] = O
+    bounds[I] = O
+  ; nisi middle ⇔ right:
+    bounds[II] = O
+    bounds[III] = O
+  ;
+
+  retro bounds
+;
+
+nihil scriborTree = λ(numerus[X] tree):
+  numerus qSize = C
+  numerus[C] q1Left
+  numerus[C] q1Right
+  numerus[C] q2Left
+  numerus[C] q2Right
+
+  ∑(numerus q = O, q < qSize, q++):
+    q1Left[q] = O
+    q1Right[q] = O
+    q2Left[q] = O
+    q2Right[q] = O
+  ;
+
+  // add root
+  q1Left[O] = II
+  q1Right[O] = tree[I]-I
+
+  ∑(q1Left[O] ≠ O):
+    numerus q2_index = O
+    ∑(numerus i = O, i < qSize, i++):
+      si q1Left[i] ⇔ O:
+        finio
+      ;
+
+      numerus rootPosition = __getMiddle(q1Left[i], q1Right[i])
+      numerus value = tree[rootPosition]
+      si value ≠ tree[O]:
+        // Value exists - print and add children
+        scriborNumWithoutNewLine(value)
+        litera[III] char = [' ', '\t', '\0']
+        printf(char)
+
+        numerus[IV] bounds = __getnextBounds(q1Left[i], q1Right[i])
+        
+        // Add bounds of left child
+        si bounds[O] ≠ O:
+          q2Left[q2_index] = bounds[O]
+          q2Right[q2_index] = bounds[I]
+          q2_index++
+        ;
+
+        // Add bounds of right child
+        si bounds[II] ≠ O:
+          q2Left[q2_index] = bounds[II]
+          q2Right[q2_index] = bounds[III]
+          q2_index++
+        ;
+      ;
+
+      // Remove entry
+      q1Left[i] = O
+      q1Right[i] = O
+    ;
+
+    scriborNewLine()
+    ∑(numerus j = O, j < q2_index, j++):
+      q1Left[j] = q2Left[j]
+      q1Right[j] = q2Right[j]
+    ;
+  ;
+;

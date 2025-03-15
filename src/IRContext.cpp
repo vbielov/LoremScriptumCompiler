@@ -40,7 +40,7 @@ const ScopeEntry* SymbolTable::lookupVariable(const std::u8string& name) const {
 }
 
 const ScopeEntry* SymbolTable::lookupFunction(const std::u8string& name) const { 
-    for (int i = (int)m_scopes.size(); i >= 0; i--) {
+    for (int i = (int)m_scopes.size()-1; i >= 0; i--) {
         const Scope& scope = m_scopes[i];
         auto iter = std::find_if(scope.functions.begin(), scope.functions.end(), [&name](const ScopeEntry& var) {
             return *var.name == name;
