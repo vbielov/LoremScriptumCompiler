@@ -25,11 +25,23 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
     std::string depthVals = std::to_string(depthVal);
     std::u8string depthCount(depthVals.begin(), depthVals.end());
-    std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount+ u8"\n";
-    std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount +u8"\n";
+    std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
+    std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
     depthMapping(mainFilePath.generic_u8string());
 
-    outStr = depth + outStr + depthEnd;
+    // size_t counter = 0;
+    // while(outStr.at(counter) != '\n'){
+    //     counter++;
+    // }
+    for (size_t i = 0; i < outStr.length(); i++){
+        if(outStr.at(i) == '\n'){
+            outStr.insert(i, depth);
+            break;
+        }
+    }
+
+
+    outStr = outStr + depthEnd;
 
     depthVal++;
 

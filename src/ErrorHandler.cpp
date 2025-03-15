@@ -99,15 +99,15 @@ void buildRanges(std::u8string& sourceCode){
     for(size_t i = 0; i < depth.size(); i++){
         std::string depthVals = std::to_string(i);
         std::u8string depthCount(depthVals.begin(), depthVals.end());
-        std::u8string depthStart = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount+u8"\n";
-        std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount+u8"\n";
+        std::u8string depthStart = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
+        std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
 
         size_t pos = sourceCode.find(depthStart); 
         size_t pos2 = sourceCode.find(depthEnd); 
 
 
         if (pos != std::u8string::npos && pos != std::u8string::npos) {
-            fileRange range(depth[i], getLineCountTilPos(sourceCode, pos)-1, getLineCountTilPos(sourceCode, pos2)-1);
+            fileRange range(depth[i], getLineCountTilPos(sourceCode, pos), getLineCountTilPos(sourceCode, pos2));
             temp.push_back(range);
 
             sourceCode.erase(pos2, depthEnd.length());  
@@ -132,41 +132,74 @@ void buildRanges(std::u8string& sourceCode){
 
     size_t i = 0;
     static std::vector<fileRange> temp2;
+    bool secondIteration = false;
 
-    while(1 < temp.size()){
-        if(temp[i].end > temp[i+1].end && temp[i].start > temp[i+1].start){ // somewhere in middle of program is import
-            fileRanges.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
-            fileRanges.push_back(temp[i+1]);
-            // i+1 is complete
-
-            temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
-            temp.erase(temp.begin()+i+1);
-
-
-        }else if(temp[i].end==temp[i+1].end && temp[i].start == temp[i+1].start){ // entire programm is 1 import
-            fileRanges.push_back(temp[i+1]); 
-            //i and i+1 are complete
-            temp.erase(temp.begin()+ i);
-            temp.erase(temp.begin()+i+1);
-
-        }else if(temp[i].end==temp[i+1].end && temp[i].start > temp[i+1].start){ // import at end of programm
-            //i and i+1 are complete
-            temp.erase(temp.begin()+i);
-            temp.erase(temp.begin()+i+1);
-
-        }else if(temp[i].end > temp[i+1].end && temp[i].start == temp[i+1].start){ // import at start of programm
-            fileRanges.push_back(temp[i+1]); 
-            temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
-            //i+1 is complete
-
-            temp.erase(temp.begin()+i+1);
-
+    do{
+        if(secondIteration){
+            temp = temp2;
+            temp2.clear();
         }
-    }
+        while(1 < temp.size()){
+            for(int i = 0; i < 2; i++){
+                std::cout << (const char*) temp[i].fileName.c_str() << " start line " << std::to_string(temp[i].start) << " end line " << std::to_string(temp[i].end) << std::endl ; 
+            
+            }
+            std::cout << std::endl;
 
-    if(temp.size() == 1){
-        fileRanges.push_back(temp[i]); 
-    }
+            if(temp[i].end < temp[i+1].end || temp[i].start > temp[i+1].start){
+                temp2.push_back(temp[i+1]);
+                temp.erase(temp.begin()+i+1);
+                if(temp.size() == 1){
+                    fileRanges.push_back(temp[i]); 
+                }
+                continue;
+            }
+
+            if(temp[i].end > temp[i+1].end && temp[i].start < temp[i+1].start){ // somewhere in middle of program is import
+                fileRanges.push_back(fileRangeBuilder(temp[i].fileName, temp[i].start, temp[i+1].end-1)); 
+                // fileRanges.push_back(temp[i+1]);
+                // i+1 is complete
+
+                temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
+
+                temp2.push_back(temp[i+1]);
+                
+                temp.erase(temp.begin()+i+1);
+
+
+            }else if(temp[i].end==temp[i+1].end && temp[i].start == temp[i+1].start){ // entire programm is 1 import
+                fileRanges.push_back(temp[i+1]); //TODO: FIX this is wonky
+                //i and i+1 are complete
+                //temp.erase(temp.begin()+ i);
+
+                temp2.push_back(temp[i+1]);
+                temp.erase(temp.begin()+i+1);
+
+            }else if(temp[i].end==temp[i+1].end && temp[i].start > temp[i+1].start){ // import at end of programm
+                //i and i+1 are complete
+                //temp.erase(temp.begin()+i);
+
+                temp2.push_back(temp[i+1]);
+                temp.erase(temp.begin()+i+1);
+
+            }else if(temp[i].end > temp[i+1].end && temp[i].start == temp[i+1].start){ // import at start of programm
+                //fileRanges.push_back(temp[i+1]); 
+                temp[i] = fileRangeBuilder(temp[i].fileName, temp[i+1].end+1, temp[i].end); //Set i to span rest 
+                //i+1 is complete
+
+                temp2.push_back(temp[i+1]);
+                temp.erase(temp.begin()+i+1);
+            }
+        }
+        secondIteration = true;
+
+        if(temp.size() == 1){
+            fileRanges.push_back(temp[i]); 
+        }
+
+    }while(!temp2.empty() && 1 < temp2.size());
+
+    
     
 
     for(int i = 0; i < fileRanges.size(); i++){
