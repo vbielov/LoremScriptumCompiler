@@ -1,3 +1,8 @@
-si (¬veri):
-    scriborNum(-MMCCCXXV)
+apere './std.lorem'
+
+nihil foo = λ(numerus value):
+    scriborNum(value)
 ;
+
+foo(D)
+scriborNum(D)
