@@ -28,9 +28,9 @@ rangeResult getFileName(size_t line){
     static std::vector<fileRange> temp;
 
     rangeResult closestMatch;
-    size_t distance ;
     size_t meantimeDist=0;
     bool firstMatch = true;
+    std::unordered_set<std::u8string> stringSet;
 
     for (size_t i = 0; i < fileRanges.size(); i++){
         size_t start = fileRanges[i].start;
@@ -38,30 +38,55 @@ rangeResult getFileName(size_t line){
 
 
         if(start <= line){
-        size_t displayline = line - start; //nonfunctional
             
         if(line == end){
-            distance = line-meantimeDist; //... difficult
 
-            if(firstMatch){
-                distance = displayline;
+            size_t position = start;
+            size_t distance = 1;
+            for (size_t j = 0; j < fileRanges.size()-1; j++){
+                if(fileRanges[j].start > position &&
+                position < line &&
+                fileRanges[j].start < line){
+                    distance+= fileRanges[j].start - position;
+                    position = fileRanges[j].end;
+    
+                }
+
+                
             }
 
-            closestMatch.displayline = distance+1;
+            distance += line-position;
+
+            closestMatch.displayline = distance;
+
             closestMatch.fileName = fileRanges[i].fileName;
+
             break;
         }
         
         if(line < end){
             
 
-            if(firstMatch){
-                distance = displayline;
-                firstMatch = false;
+            size_t position = start;
+            size_t distance = 1;
+            for (size_t j = 0; j < fileRanges.size()-1; j++){
+                if(fileRanges[j].start > position &&
+                position < line &&
+                fileRanges[j].start < line){
+                    distance+= fileRanges[j].start - position;
+                    position = fileRanges[j].end;
+    
+                }
+                
             }
 
-            closestMatch.displayline = distance+1;
+            distance += line-position;
+
+            closestMatch.displayline = distance;
+
             closestMatch.fileName = fileRanges[i].fileName;
+
+
         }
         
         }
