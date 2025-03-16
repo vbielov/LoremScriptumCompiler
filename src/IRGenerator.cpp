@@ -16,7 +16,7 @@ void IRGenerator::generateIRCode() {
         auto chkstr_ms = std::make_unique<FunctionPrototypeAST>(
             u8"___chkstk_ms", 
             std::make_unique<PrimitiveDataType>(PrimitiveType::VOID),
-            std::vector<std::unique_ptr<AST>>(),
+            std::vector<std::unique_ptr<TypeIdentifierPair>>(),
             false
         );
         chkstr_ms->codegen(m_context);
@@ -30,7 +30,7 @@ void IRGenerator::generateIRCode() {
             std::make_unique<FunctionPrototypeAST>(
                 u8"__chkstk",
                 std::make_unique<PrimitiveDataType>(PrimitiveType::VOID),
-                std::vector<std::unique_ptr<AST>>(),
+                std::vector<std::unique_ptr<TypeIdentifierPair>>(),
                 true
             ),
             std::make_unique<BlockAST>(std::move(block))

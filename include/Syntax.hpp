@@ -28,11 +28,10 @@ namespace keywords {
     inline constexpr std::u8string_view ELIF = u8"nisi";
     inline constexpr std::u8string_view ELSE = u8"ni";
     inline constexpr std::u8string_view INCLUDE = u8"apere";
-    inline constexpr std::u8string_view STRUCT = u8"rerum";
 
     inline constexpr std::u8string_view VALUES[] = {
         FUNCTION, RETURN, BREAK, FOR_LOOP,
-        IF, ELIF, ELSE, INCLUDE, STRUCT
+        IF, ELIF, ELSE, INCLUDE
     };
     inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
 }
@@ -42,9 +41,10 @@ namespace types {
     inline constexpr std::u8string_view BOOL = u8"asertio";
     inline constexpr std::u8string_view CHAR = u8"litera";
     inline constexpr std::u8string_view VOID = u8"nihil";
+    inline constexpr std::u8string_view STRUCT = u8"rerum";
 
     inline constexpr std::u8string_view VALUES[] = {
-        INT, BOOL, CHAR, VOID
+        INT, BOOL, CHAR, VOID, STRUCT
     };
     inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
 }

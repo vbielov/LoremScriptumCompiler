@@ -1,5 +1,6 @@
 	.text
 	.file	"testScript"
+<<<<<<< HEAD
 	.globl	scriborNum
 	.p2align	4, 0x90
 	.type	scriborNum,@function
@@ -117,10 +118,34 @@ foo:
 	.size	foo, .Lfunc_end1-foo
 	.cfi_endproc
 
+=======
+	.def	__chkstk;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__chkstk
+	.p2align	4, 0x90
+__chkstk:
+.seh_proc __chkstk
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	callq	___chkstk_ms
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	main;
+	.scl	2;
+	.type	32;
+	.endef
+>>>>>>> main
 	.globl	main
 	.p2align	4, 0x90
 	.type	main,@function
 main:
+<<<<<<< HEAD
 	.cfi_startproc
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
@@ -165,11 +190,28 @@ main:
 	popq	%r14
 	popq	%rbp
 	.cfi_def_cfa %rsp, 8
+=======
+.seh_proc main
+	pushq	%rbp
+	.seh_pushreg %rbp
+	subq	$32, %rsp
+	.seh_stackalloc 32
+	leaq	32(%rsp), %rbp
+	.seh_setframe %rbp, 32
+	.seh_endprologue
+	callq	__main
+	leaq	helloWorld(%rip), %rcx
+	callq	printf
+	xorl	%eax, %eax
+	addq	$32, %rsp
+	popq	%rbp
+>>>>>>> main
 	retq
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
 	.cfi_endproc
 
+<<<<<<< HEAD
 	.type	z,@object
 	.data
 	.weak	z
@@ -179,3 +221,10 @@ z:
 	.size	z, 4
 
 	.section	".note.GNU-stack","",@progbits
+=======
+	.data
+	.weak	helloWorld
+helloWorld:
+	.asciz	"Hello World!"
+
+>>>>>>> main

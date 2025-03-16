@@ -141,14 +141,14 @@ class FunctionPrototypeAST : public AST {
 private:
     std::u8string m_name;
     std::unique_ptr<IDataType> m_returnType;
-    std::vector<std::unique_ptr<AST>> m_args; // this should be only declarations
+    std::vector<std::unique_ptr<TypeIdentifierPair>> m_args; // this should be only declarations
     bool m_isDefined;
 
 public:
-    FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args, bool isDefined);
+    FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<TypeIdentifierPair>> args, bool isDefined);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
-    const std::vector<std::unique_ptr<AST>>& getArgs() const;
+    const std::vector<std::unique_ptr<TypeIdentifierPair>>& getArgs() const;
     bool isDefined() const;
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
@@ -240,11 +240,10 @@ public:
 
 class StructAST : public AST {
 private:
-    std::u8string m_name;
     std::unique_ptr<StructDataType> m_type;
 
 public:
-    StructAST(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes);
+    StructAST(std::unique_ptr<StructDataType> attributes);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;

@@ -55,13 +55,13 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     // Catch close/open more blocks than possible
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) {
         m_blockCount--;
-        //ErrorHandler
-        std::cout <<"close " << currentLine << std::endl;
-
+        
         lastOpenBlock.erase(lastOpenBlock.end());
-
-        std::cout << "blocksize"<< lastOpenBlock.size() << std::endl;
-        //
+        if (m_blockCount < 0) {
+            // Closing block that was never opend
+            m_isValid = false;
+            printUnknownTokenError();
+        }
     }
 
     //ErrorHandler

@@ -111,6 +111,12 @@ int main(int argc, const char** argv) {
     assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
     assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), linkLibraries);
 
-    lld::exitLld(0); // NOTE: it should not be used like this...
+    // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
+    //       Mingw doesn't support staticlly linking LLVM/LLD, for some reason => it will not allow exiting program without lld::exitLld(0), 
+    //       it's somehow related to this bug: https://reviews.llvm.org/D102684
+    #if defined(_WIN32)
+        lld::exitLld(0);
+    #endif
+
     return 0;
 }

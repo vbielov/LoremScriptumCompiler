@@ -56,6 +56,7 @@ private:
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
+    std::unique_ptr<AST> parseStructDeclaration();
 
     std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
     std::unique_ptr<AST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
@@ -64,6 +65,5 @@ private:
     std::unique_ptr<AST> parseExpression();
     std::unique_ptr<AST> parseExpressionSingle();
 
-    std::unique_ptr<FunctionPrototypeAST> parsePrototype(std::unique_ptr<IDataType> returnType, const std::u8string& funcName);
     std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(const std::u8string& identifier);
 };
