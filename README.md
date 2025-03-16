@@ -72,6 +72,13 @@ You can also click on the line to jump directly to the error in your code.
 Here is a short overview of the capabilities of LoremScriptum
 
 ```lorem
+nihil printf = λ(litera[O] str)
+
+litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
+printf(helloWorld)
+```
+
+```lorem
 apere './std.lorem'
 
 numerus var = III
@@ -220,10 +227,11 @@ The plugin will replace the following keywords:
 
 You can include other LoremScriptum files using the `apere` keyword. This is the equivalent of `#include` in other languages.
 
-The compiler will paste the content of the included file at the position of the `apere` keyword. Be aware that this can lead to multiple declarations of the same variable / function.
+The compiler will paste the content of the included file at the position of the `apere` keyword.
 
 **Example:**
 
 ```lorem
 apere './std.lorem'
+apere './lib.a'
 ```
