@@ -307,7 +307,7 @@ void StructAST::printTree(std::ostream &ostr, const std::string &indent, bool is
     ostr << "StructAST(" << (const char*)getName().c_str() << ")" << std::endl;
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (const auto& attr : m_type->attributes) {
-        printIndent(ostr, newIndent, attr == m_type->attributes.back());
-        ostr << (const char*)attr->type->toString().c_str() << " " << (const char*)attr->identifier.c_str() << std::endl;
+        printIndent(ostr, newIndent, &attr == &m_type->attributes.back());
+        ostr << (const char*)attr.type->toString().c_str() << " " << (const char*)attr.identifier.c_str() << std::endl;
     }
 }

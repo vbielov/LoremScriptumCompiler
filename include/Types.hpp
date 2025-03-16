@@ -54,6 +54,7 @@ public:
     std::u8string name;
     std::vector<TypeIdentifierPair> attributes;
 
+    StructDataType(const std::u8string& name);
     StructDataType(const std::u8string& name, std::vector<TypeIdentifierPair> attributes);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
     std::u8string toString() const override;

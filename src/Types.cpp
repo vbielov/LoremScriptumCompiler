@@ -59,15 +59,21 @@ std::u8string ArrayDataType::toString() const {
     return (std::u8string(it->first) + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
 }
 
-StructDataType::StructDataType(const std::u8string& name, std::vector<TypeIdentifierPair> attributes)
+StructDataType::StructDataType(const std::u8string& name)
+    : name(name), attributes() {}
+
+StructDataType::StructDataType(const std::u8string &name, std::vector<TypeIdentifierPair> attributes)
     : name(name), attributes(std::move(attributes)) {}
-    
+
 llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
-    std::vector<llvm::Type*> types(attributes.size());
-    for (const auto& attr : attributes) {
-        types.push_back(attr.type->getLLVMType(context));
+    if (!attributes.empty()) {
+        std::vector<llvm::Type*> structTypes(attributes.size());
+        for (const auto& attr : attributes) {
+            structTypes.push_back(attr.type->getLLVMType(context));
+        }
+        return llvm::StructType::create(context, structTypes, (const char*)name.c_str());
     }
-    return llvm::StructType::create(types, (const char*)name.c_str());
+    return llvm::StructType::create(context, (const char*)name.c_str());
 }
 
 std::u8string StructDataType::toString() const {

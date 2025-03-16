@@ -161,10 +161,10 @@ std::unique_ptr<AST> Parser::parseStructDeclaration() {
     getNextToken(); // eat '=' 
 
     auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
-    std::vector<std::unique_ptr<TypeIdentifierPair>> attributes;
+    std::vector<TypeIdentifierPair> attributes;
     attributes.reserve(hackyPrototype->getArgs().size());
     for (const auto& arg : hackyPrototype->getArgs()) {
-        attributes.push_back(std::make_unique<TypeIdentifierPair>(std::move(arg->type), arg->identifier));
+        attributes.emplace_back(std::move(arg->type), arg->identifier);
     }
     std::unique_ptr<StructDataType> type = std::make_unique<StructDataType>(identifier, std::move(attributes));
     s_structHashMap[identifier] = type.get();

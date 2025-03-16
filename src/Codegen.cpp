@@ -395,18 +395,30 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     // TODO(Vlad): Error
     if (!arrVar)
         return nullptr;
-
-    llvm::ArrayType* arrType = dyn_cast<llvm::ArrayType>(arrVar->type->getLLVMType(*context.context));
-    // TODO(Vlad): Error
-    if (!arrType)
+    
+    const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(arrVar->type);
+    if (arrType) {
+        llvm::ArrayType* type = dyn_cast<llvm::ArrayType>(arrType->getLLVMType(*context.context));
+        llvm::Value* index = m_index->codegen(context);
+        if (index->getType()->isPointerTy())
+            index = context.builder->CreateLoad(llvm::Type::getInt32Ty(*context.context), index, "loadtmp");
+    
+        static llvm::Value* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context.context), llvm::APInt(32, 0, true));
+        return context.builder->CreateInBoundsGEP(type, arrVar->value, {zero, index}, "arrIdx");
+    }
+    const StructDataType* structType = dynamic_cast<const StructDataType*>(arrVar->type);
+    if (structType) {
+        llvm::StructType* type = dyn_cast<llvm::StructType>(structType->getLLVMType(*context.context));
+        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
+        // TODO(Vlad): Error
+        if (!ref)
+            return nullptr;
+        assert(false && "Not implemented right now");
         return nullptr;
+    }
 
-    llvm::Value* index = m_index->codegen(context);
-    if (index->getType()->isPointerTy())
-        index = context.builder->CreateLoad(llvm::Type::getInt32Ty(*context.context), index, "loadtmp");
-
-    static llvm::Value* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context.context), llvm::APInt(32, 0, true));
-    return context.builder->CreateInBoundsGEP(arrType, arrVar->value, {zero, index}, "arrIdx");
+    // TODO(Vlad): Error
+    return nullptr;
 }
 
 llvm::Value* StructAST::codegen([[maybe_unused]] IRContext& context) {
