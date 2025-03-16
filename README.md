@@ -96,14 +96,13 @@ numerus foo = λ(numerus a, numerus b):
 
 ### How to: Types
 
-There are a total of 5 types in LoremScriptum:
+There are a total of **4** types in LoremScriptum:
 
 | LoremScriptum | Equivalent | Example                |
 | ------------- | ---------- | ---------------------- |
 | numerus       | int        | O, XLII                |
 | asertio       | boolean    | veri, falso            |
 | litera        | char       | 'a', '\n'              |
-| rerum         | struct     | (numerus a, asertio b) |
 | nihil         | void       | /                      |
 
 > [!NOTE]  
@@ -130,7 +129,6 @@ An identifier can be any combination of letters, numbers and underscores. but it
 numerus var = II + (IX + I) * IV
 asertio isTrue = veri
 litera letter = 'a'
-rerum struct = (numerus a, asertio b)
 ```
 
 You can also declare functions using the following syntax: `type identifier = λ(parameters): ... ;`
