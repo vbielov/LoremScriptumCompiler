@@ -1,5 +1,7 @@
 #include "Parser.hpp"
 
+static std::unordered_map<std::u8string, StructDataType*> s_structHashMap;
+
 /**
  * An Instruction can be a declaration, assignment or function call
  * 
@@ -138,6 +140,39 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
 }
 
 /**
+ * A Declaration of a struct
+ *
+ * currentToken is a type "rerum"
+ *
+ * Examples:
+ *    - rerum name (type attribute, ...)
+ *      ^ we are always here
+ */
+std::unique_ptr<AST> Parser::parseStructDeclaration() {
+    getNextToken(); // eat rerum
+
+    if (!isToken(TokenType::IDENTIFIER)) 
+        return nullptr;
+    std::u8string identifier = m_currentToken->value;
+    getNextToken(); // eat identifier
+
+    if (!isToken(TokenType::OPERATOR, u8"=")) 
+        return nullptr;
+    getNextToken(); // eat '=' 
+
+    auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
+    std::vector<std::unique_ptr<TypeIdentifierPair>> attributes;
+    attributes.reserve(hackyPrototype->getArgs().size());
+    for (const auto& arg : hackyPrototype->getArgs()) {
+        attributes.push_back(std::make_unique<TypeIdentifierPair>(std::move(arg->type), arg->identifier));
+    }
+    std::unique_ptr<StructDataType> type = std::make_unique<StructDataType>(identifier, std::move(attributes));
+    s_structHashMap[identifier] = type.get();
+
+    return std::make_unique<StructAST>(std::move(type));
+}
+
+/**
  * A Declaration can be just init or init and assign. It can also be a function declaration
  *
  * currentToken is at first token of declaration. It is always TYPE
@@ -147,39 +182,45 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
  *    - numerus var = I
  *    - numerus var = λ(...): [Block] ;
  *    - nihil   var = λ(...): [Block] ;
+ *      ^ we are always here
  */
 std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
-    std::u8string typeStr = m_currentToken->value;
-    auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
-    assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unknown type");
-    PrimitiveType primitiveType = typeIter->second;
-    getNextToken(); // eat type
-
-    bool isArray = false;
-    int arrSize = 0;
-    if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
-        // it's array declaration
-        isArray = true;
-        // TODO(Vlad): maybe thats can be a more then a number?
-        getNextToken(); // eat '['
-        if (!isToken(TokenType::NUMBER)) {
-            printError("Expected number after [ for array declaration");
-            return nullptr; 
-        }
-        toArabicConverter(m_currentToken->value, &arrSize);
-        getNextToken(); // eat number
-        if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-            printError("Expected ']' in array declaration");
-            return nullptr;
-        }
-        getNextToken(); // eat ']'
-    }
-
     std::unique_ptr<IDataType> dataType;
-    if (isArray)
-        dataType = std::make_unique<ArrayDataType>(primitiveType, arrSize);
-    else
-        dataType = std::make_unique<PrimitiveDataType>(primitiveType);
+    std::u8string typeStr = m_currentToken->value;
+    if (typeStr == types::STRUCT) {
+        return parseStructDeclaration();
+    } else {
+        auto structIter = s_structHashMap.find(typeStr);
+        if (structIter != s_structHashMap.end()) {
+            dataType = std::make_unique<StructDataType>(structIter->first);
+        } else {
+            auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
+            assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unknown type");
+            PrimitiveType primitiveType = typeIter->second;
+            getNextToken(); // eat type
+        
+            if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+                // it's array declaration
+                // TODO(Vlad): maybe thats can be a more then a number?
+                getNextToken(); // eat '['
+                if (!isToken(TokenType::NUMBER)) {
+                    printError("Expected number after [ for array declaration");
+                    return nullptr; 
+                }
+                int arrSize = 0;
+                toArabicConverter(m_currentToken->value, &arrSize);
+                getNextToken(); // eat number
+                if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
+                    printError("Expected ']' in array declaration");
+                    return nullptr;
+                }
+                getNextToken(); // eat ']'
+                dataType = std::make_unique<ArrayDataType>(primitiveType, arrSize);
+            } else {
+                dataType = std::make_unique<PrimitiveDataType>(primitiveType);
+            }
+        }
+    }
 
     if (!isToken(TokenType::IDENTIFIER)) 
         return nullptr;
@@ -199,7 +240,9 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     // λ
     if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         return parseInstructionFunction(identifier, std::move(dataType));
-    } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) { 
+    } 
+    // Array initialization
+    else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) { 
         getNextToken(); // eat '['
         std::vector<std::unique_ptr<AST>> elements;
         // while != ']'
@@ -221,7 +264,9 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         }
         getNextToken(); // eat ']'
         expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements));
-    } else {
+    }
+    // Expression
+    else {
         expression = parseExpression();
     }
     
@@ -244,7 +289,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
  */
 std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     getNextToken(); // eat '('
-    std::vector<std::unique_ptr<AST>> args;
+    std::vector<std::unique_ptr<TypeIdentifierPair>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) 
             return nullptr;
@@ -284,7 +329,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         else
             dataType = std::make_unique<PrimitiveDataType>(primitiveType);
         
-        args.push_back(std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType)));
+        args.emplace_back(std::make_unique<TypeIdentifierPair>(std::move(dataType), identifier));
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();

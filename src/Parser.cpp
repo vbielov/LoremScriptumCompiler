@@ -37,7 +37,7 @@ std::unique_ptr<BlockAST> Parser::parse() {
     auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(
         u8"main", 
         std::move(mainReturnType),
-        std::vector<std::unique_ptr<AST>>(),
+        std::vector<std::unique_ptr<TypeIdentifierPair>>(),
         true
     );
     auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));

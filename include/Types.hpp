@@ -42,19 +42,19 @@ public:
     std::u8string toString() const override;
 };
 
-
-struct StructAttribute {
-    std::u8string name;
+struct TypeIdentifierPair {
     std::unique_ptr<IDataType> type;
-};
+    std::u8string identifier;
 
+    TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier);
+};
 
 class StructDataType : public IDataType {
 public:
     std::u8string name;
-    std::vector<std::unique_ptr<StructAttribute>> attributes;
+    std::vector<TypeIdentifierPair> attributes;
 
-    StructDataType(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes);
+    StructDataType(const std::u8string& name, std::vector<TypeIdentifierPair> attributes);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
     std::u8string toString() const override;
 };

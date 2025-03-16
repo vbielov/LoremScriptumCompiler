@@ -1,8 +1,5 @@
-apere './std.lorem'
+rerum vector = ( numerus x, numerus y )
 
-nihil foo = λ(numerus value):
-    scriborNum(value)
-;
-
-foo(D)
-scriborNum(D)
+vector point
+point[x] = V
+point[y] = XV

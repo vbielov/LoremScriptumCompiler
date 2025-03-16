@@ -86,7 +86,7 @@ const IDataType* FuncCallAST::getType(const IRContext& context) {
     return context.symbolTable.lookupFunction(m_calleeIdentifier)->type;
 }
 
-FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<AST>> args, bool isDefined)
+FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<TypeIdentifierPair>> args, bool isDefined)
     : m_name(std::move(name))
     , m_returnType(std::move(returnType))
     , m_args(std::move(args))
@@ -100,7 +100,7 @@ const IDataType* FunctionPrototypeAST::getType([[maybe_unused]] const IRContext&
     return m_returnType.get();
 }
 
-const std::vector<std::unique_ptr<AST>>& FunctionPrototypeAST::getArgs() const {
+const std::vector<std::unique_ptr<TypeIdentifierPair>>& FunctionPrototypeAST::getArgs() const {
     return m_args;
 }
 
@@ -160,10 +160,8 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     return m_type.get();
 }
 
-StructAST::StructAST(const std::u8string& name, std::vector<std::unique_ptr<StructAttribute>> attributes)
-    : m_type(nullptr) {
-    m_type = std::make_unique<StructDataType>(name, std::move(attributes));
-}
+StructAST::StructAST(std::unique_ptr<StructDataType> type)
+    : m_type(std::move(type)) {}
 
 const std::u8string& StructAST::getName() const {
     return m_type->name;
@@ -240,7 +238,8 @@ void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& inde
 
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (size_t i = 0; i < m_args.size(); i++) {
-        m_args[i]->printTree(ostr, newIndent, i == m_args.size() - 1);
+        printIndent(ostr, newIndent, i == m_args.size() - 1);
+        ostr << (const char*)m_args[i]->type->toString().c_str() << " " << (const char*)m_args[i]->identifier.c_str() << std::endl;
     }
 }
 
@@ -309,6 +308,6 @@ void StructAST::printTree(std::ostream &ostr, const std::string &indent, bool is
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     for (const auto& attr : m_type->attributes) {
         printIndent(ostr, newIndent, attr == m_type->attributes.back());
-        ostr << (const char*)attr->type->toString().c_str() << " " << (const char*)attr->name.c_str() << std::endl;
+        ostr << (const char*)attr->type->toString().c_str() << " " << (const char*)attr->identifier.c_str() << std::endl;
     }
 }

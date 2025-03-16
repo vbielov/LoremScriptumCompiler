@@ -203,7 +203,7 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
     std::vector<llvm::Type*> argTypes;
     argTypes.reserve(m_args.size() + 1);
     for (const auto& arg : m_args) {
-        llvm::Type* type = arg->getType(context)->getLLVMType(*context.context);
+        llvm::Type* type = arg->type->getLLVMType(*context.context);
         argTypes.push_back(llvm::PointerType::get(type, 0));
     }
 
@@ -219,7 +219,7 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
     llvm::Function* function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, cStr(m_name), *context.theModule);
 
     for (size_t i = 0; i < m_args.size(); i++) {
-        function->getArg(i)->setName(cStr(m_args[i]->getName()));
+        function->getArg(i)->setName(cStr(m_args[i]->identifier));
     }
     if(!isExtern && function->arg_size() > m_args.size()) {
         function->getArg(function->arg_size()-1)->setName(RETURN_ARG_NAME);
@@ -243,7 +243,7 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
     // Record function arguments in the syntax table
     const auto& arguments = m_prototype->getArgs();
     for (size_t i = 0; i < arguments.size(); i++) {
-        context.symbolTable.addVariable(arguments[i]->getName(), arguments[i]->getType(context), function->getArg(i));
+        context.symbolTable.addVariable(arguments[i]->identifier, arguments[i]->type.get(), function->getArg(i));
     }
     m_body->codegen(context);
 
@@ -409,6 +409,6 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     return context.builder->CreateInBoundsGEP(arrType, arrVar->value, {zero, index}, "arrIdx");
 }
 
-llvm::Value* StructAST::codegen(IRContext& context) {
+llvm::Value* StructAST::codegen([[maybe_unused]] IRContext& context) {
     return nullptr;
 }
