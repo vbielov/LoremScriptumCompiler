@@ -111,5 +111,6 @@ const Token& Parser::getNextToken() {
         return *m_currentToken;
     }
     m_currentToken++;
+    assert(m_currentToken != m_tokens.end());
     return *m_currentToken; 
 }

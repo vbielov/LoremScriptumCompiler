@@ -345,7 +345,13 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         printError("Error: Expected ')' in function declaration");
         return nullptr;
     }
+
+    if(!isToken(TokenType::PUNCTUATION, u8")")) {
+        printError("Error: Expected ')' in function declaration");
+        return nullptr;
+    }
     getNextToken(); // eat ')'
+
 
     while(isToken(TokenType::NEW_LINE)) {
         getNextToken();

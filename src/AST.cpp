@@ -167,7 +167,7 @@ const std::u8string& StructAST::getName() const {
     return m_type->name;
 }
 
-const IDataType* StructAST::getType(const IRContext &context) {
+const IDataType* StructAST::getType([[maybe_unused]] const IRContext &context) {
     return m_type.get();
 }
 

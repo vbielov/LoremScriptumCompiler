@@ -9,10 +9,13 @@ TEST(BasicTest, TestLexerWithBasicCode) {
     {
         auto expectedToken = EXPECTED_TOKENS[i];
         auto actualToken = token[i];
-        // std::cout << "{TokenType::" << TOKEN_TYPE_LABELS[(int)actualToken.type] << ", u8\"" << (const char*)(actualToken.value.c_str()) << "\"}," << std::endl;
         EXPECT_EQ(actualToken.type, expectedToken.type);
         EXPECT_STREQ((const char*)(actualToken.value.c_str()), (const char*)(expectedToken.value.c_str()));
+        
     }
-    
+    // for(const auto& actualToken : token) {
+    //     std::cout << "{TokenType::" << TOKEN_TYPE_LABELS[(int)actualToken.type] << ", u8\"" << (const char*)(actualToken.value.c_str()) << "\"}," << std::endl;
+    // }
+
     EXPECT_EQ(token.size(), EXPECTED_TOKENS.size());
 }

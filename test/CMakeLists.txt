@@ -37,7 +37,7 @@ include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.c)
 list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*[/\\]main\\.cpp$")
 add_executable(lscTest ${SRCS} ${PROJECT_SOURCES})
 target_include_directories(lscTest PRIVATE ${INCLUDE_DIR})
