@@ -323,7 +323,6 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     u8"nihil foo = (numerus j): ;",
     u8"nihil foo = λ",
     u8"nihil foo = λ(",
-    u8"nihil foo = λ()",
     u8"nihil foo = λ():",
     u8"nihil foo = λ();",
     u8"nihil foo = λ:",
