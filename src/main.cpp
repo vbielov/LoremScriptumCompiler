@@ -8,6 +8,7 @@
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
+#include "ErrorHandler.hpp"
 #include <cstdlib>
 #include "Preprocessor.hpp"
 
@@ -28,10 +29,17 @@ int main(int argc, const char** argv) {
     std::vector<std::filesystem::path> includeStack;
     std::vector<std::filesystem::path> linkLibraries;
     processPreprocessors(mainFilePath, sourceCode, includeStack, linkLibraries);
+    
     if (sourceCode.empty()) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }
+
+    //ErrorHandler grabbing source code pointer
+    buildRanges(sourceCode);
+    grabSource(sourceCode, inputFilePathStr); //TODO: start thread maybe and lock ErrorHandler in meantime
+    //
+    
 
     std::cout << "----------------------- Source Code: ----------------------- " << std::endl
               << std::endl;
@@ -54,6 +62,14 @@ int main(int argc, const char** argv) {
               << std::endl;
     Parser parser = Parser(tokens);
     std::unique_ptr<AST> tree = parser.parse();
+
+    // ErrorHandler
+    if(error()){ // check if any errors occured
+        dumpErrorLog();
+        return 1;
+    }
+    //
+
     if (tree) {
         tree->printTree(std::cout, "", false);
     } else {
@@ -71,6 +87,14 @@ int main(int argc, const char** argv) {
 
     IRGenerator codeGenerator = IRGenerator(fileName.c_str(), tree);
     codeGenerator.generateIRCode();
+
+    // ErrorHandler
+    if(error()){ // check if any errors occured
+        dumpErrorLog();
+        return 1;
+    }
+    //
+
     std::cout << codeGenerator.getIRCodeString()<< std::endl;
 
     // Assembler

@@ -1,4 +1,5 @@
 #include "IRContext.hpp"
+#include "ErrorHandler.hpp"
 
 ScopeEntry::ScopeEntry(const std::u8string* name, const IDataType* type, llvm::Value* value)
     : name(name), type(type), value(value) {}
@@ -35,7 +36,9 @@ const ScopeEntry* SymbolTable::lookupVariable(const std::u8string& name) const {
         if (iter != scope.variables.end()) {
             return iter.base();
         }
+        
     }
+    queueUndefinedError(u8"variable not found: '" + name +u8"' check your scopes!");
     return nullptr;
 }
 
