@@ -1,4 +1,5 @@
 #include "Preprocessor.hpp"
+#include "ErrorHandler.hpp"
 
 static std::vector<std::filesystem::path> s_includedFiles;
 
@@ -10,14 +11,47 @@ static std::u8string readFileToU8String(std::filesystem::path& filePath) {
     return std::u8string(content.begin(), content.end());  // Convert to u8string
 }
 
+
+static bool isBody = true;
+static size_t depthVal = 0;
 void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack, std::vector<std::filesystem::path>& outLibraries) {
+    
+
+    
     s_includedFiles.push_back(mainFilePath);
     includingStack.push_back(mainFilePath);
 
     outStr = readFileToU8String(mainFilePath);
 
+    //ErrorHandler, markers
+    std::string depthVals = std::to_string(depthVal);
+    std::u8string depthCount(depthVals.begin(), depthVals.end());
+    std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
+    std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
+    depthMapping(mainFilePath.generic_u8string());
+    //
+
+    bool setEnd = false;
+    for (size_t i = 0; i < outStr.length(); i++){
+        if(outStr.at(i) == '\n'){
+            outStr.insert(i, depth);
+            setEnd=true;
+            break;
+        }
+    }
+
+    if(!setEnd){
+        outStr.append(depth);
+    }
+
+
+    outStr = outStr + depthEnd;
+
+    depthVal++;
+
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
+    
     while (pos != std::u8string::npos) {
         int indexBack = pos - 1;
         bool valid = true;
@@ -38,6 +72,10 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
         while (outStr[index] == ' ' || outStr[index] == '\t')
             index++;
 
+        if(outStr[index] != '\''){
+            dumpAndBuildError(u8"Expected ' after apere");
+        }
+        
         assert(outStr[index] == '\'' && "Expected ' after apere");
         index++; // eat '
         std::string includeFileName = "";
@@ -45,11 +83,15 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
             includeFileName += outStr[index];
             index++;
         }
+
+        if(outStr[index] != '\''){dumpAndBuildError(u8"Found no closing ' in apere");}
         assert(outStr[index] == '\'' && "Found no closing ' in apere");
         index++; // eat '
 
         outStr.erase(pos, index - pos); // remove appere
+
         index = pos;
+
 
         // insert file if it's not included yet
         try {
@@ -59,6 +101,8 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
             // Check if there is a circle in inclusion
             if (std::find(includingStack.begin(), includingStack.end(), includedPath) != includingStack.end()) {
+                
+                dumpAndBuildError(u8"Recursive including found");
                 assert(false && "Recursive including found");
             }
             
@@ -76,12 +120,16 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
                 }
             } 
         } catch (const std::filesystem::filesystem_error& e) {
+            dumpAndBuildError(u8"File doesn't exists");
             assert(false && "File doesn't exists");
         }
 
         pos = outStr.find(INCLUDE, index);
     }
     
+    if(includingStack.back() != mainFilePath){
+        dumpAndBuildError(u8"Import failure: includingStack.back() != mainFilePath");
+    }
     assert(includingStack.back() == mainFilePath);
     includingStack.pop_back();
 }

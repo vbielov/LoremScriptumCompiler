@@ -1,4 +1,5 @@
 #include "Parser.hpp"
+#include "ErrorHandler.hpp"
 
 static std::unordered_map<std::u8string, StructDataType*> s_structHashMap;
 
@@ -348,6 +349,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     getNextToken(); // eat ')'
 
     while(isToken(TokenType::NEW_LINE)) {
+        currentLine++;
         getNextToken();
     }
 
@@ -368,22 +370,31 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
  */
 std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     if (m_blockCount != 0) {
-        printError("Function Declaration is only allowed at top-level");
+        // printError("Function Declaration is only allowed at top-level");+
+        buildString(currentLine, u8"Syntax Error: Function Declaration is only allowed at top-level!");
         return nullptr;
     }
 
     getNextToken(); // eat λ
-    if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) return nullptr;
+    if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
+        buildString(currentLine, u8"Syntax Error: opening bracket expected '(' !");
+        return nullptr;
+    }
 
     auto prototype = parseInstructionPrototype(identifier, std::move(type));
-    if (prototype == nullptr) 
-        return nullptr;
+    if (prototype == nullptr) {
+            buildString(currentLine, u8"Syntax Error: prototype function failed.."); //TODO: unsure how to trigger
+            return nullptr;
+        }
 
     if (!prototype->isDefined())
         return prototype; // it's a extern defined function
 
     auto funcBlock = parseBlock();
-    if (funcBlock == nullptr) return nullptr;
+    if (funcBlock == nullptr){
+        buildString(currentLine, u8"Syntax Error: empty/invalid function Block!");
+         return nullptr;
+        }
 
     return std::make_unique<FunctionAST>(std::move(prototype), std::move(funcBlock));
 }

@@ -30,4 +30,5 @@ inline const char* TOKEN_TYPE_LABELS[] = {
 struct Token {
     TokenType type;
     std::u8string value; 
+    size_t line; //TODO: ?
 };
