@@ -11,7 +11,8 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 
 	// Detect platform that user is using and compile for it
 	#if defined(_WIN32)
-		targetTriple = "x86_64-pc-windows-msvc"; 
+		// NOTE: For some reason "x86_64-w64-mingw32" triple produces ELF objects, but on windows we expect PE
+		targetTriple = "x86_64-pc-windows-gnu";
 	#elif defined(__linux__)
 		targetTriple = sys::getDefaultTargetTriple();
 	#endif
@@ -130,6 +131,7 @@ void Assembler::compileToExecutable(const char* objectFilePath, const char* exec
 
 	if (!result.canRunAgain) {
 		llvm::errs() << "Error: Linker cannot run again, exiting...\n"; 
+		llvm::errs().flush();
 		lld::exitLld(result.retCode);
 		return;
 	}
