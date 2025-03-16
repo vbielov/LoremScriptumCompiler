@@ -18,10 +18,9 @@ set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(PROJECT_INCLUDE ${CMAKE_CURRENT_LIST_DIR}/include/)
-file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp ${CMAKE_CURRENT_LIST_DIR}/src/*.c)
 
-if(NOT BUILD_TESTS)
-    add_definitions(-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING)
+if((NOT DEFINED BUILD_TEST) OR (NOT BUILD_TESTS))
     
     find_package(LLD REQUIRED CONFIG)
     find_package(LLVM REQUIRED CONFIG)
@@ -37,7 +36,8 @@ if(NOT BUILD_TESTS)
 
     include_directories(${LLVM_INCLUDE_DIRS})
     include_directories(${LLD_INCLUDE_DIRS})
-    add_definitions(${LLVM_DEFINITIONS})
+    separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+    # add_definitions(${LLVM_DEFINITIONS_LIST})
 
     if(WIN32)
         set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)
@@ -48,14 +48,16 @@ if(NOT BUILD_TESTS)
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 
     target_compile_options(${PROJECT_NAME} PRIVATE ${LLVM_CXXFLAGS})
-    # NOTE: On windows LLD_EXPORTED_TARGETS contains lld library which doesn't come with mingw, and we don't need it.
-    target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
+    # NOTE(#1): On windows LLD_EXPORTED_TARGETS contains lld library which doesn't come with mingw, and we don't need it.
+    # NOTE(#2): Mingw doesn't support staticlly linking LLVM/LLD, for some reason. 
+    if(WIN32)
+        target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
+    endif(WIN32)
+
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        LINK_SEARCH_START_STATIC ON
-        LINK_SEARCH_END_STATIC ON
-    )
 # ---------------------------- TESTING ----------------------------
 else()
     # Download and unpack googletest at configure time

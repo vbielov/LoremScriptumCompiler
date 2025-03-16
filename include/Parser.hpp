@@ -1,72 +1,36 @@
 #pragma once
-#include <unordered_map>
-#include "AST.hpp"
-#include "Lexer.hpp"
-#include "RomanNumber.hpp"
 #include <format>
-
-// TODO(Vlad): Just followed tutorial here, need to add types, single operators, controll flow and so much more.
-// https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html
+#include "AST.hpp"
+#include "Token.hpp"
+#include "RomanNumber.hpp"
 
 class Parser {
-   private:
-    Lexer* m_lexer;
-    Token m_currentToken;
-
+private:
+    const std::vector<Token>& m_tokens;
+    std::vector<Token>::const_iterator m_currentToken;
+    
     int m_loopCount;
     int m_blockCount;
     bool m_isValid;
     bool m_isTest;
     std::vector<std::unique_ptr<AST>> m_topLevelDeclarations;
 
-    // source: https://en.wikipedia.org/wiki/Order_of_operations
-    // smaller number means higher priority
-    inline static const std::unordered_map<std::u8string, int> BINARY_OPERATION_PRIORITY = {
-        {u8"!", 2},
-        {u8"¬", 2},
-        {u8"^", 2},
-
-        {u8"×", 3},
-        {u8"÷", 3},
-        {u8"%", 3},
-
-        {u8"+", 4},
-        {u8"-", 4},
-
-        {u8"<", 6},
-        {u8"≥", 6},
-        {u8"≤", 6},
-        {u8">", 6},
-
-        {u8"⇔", 7},
-        {u8"≠", 7},
-
-        {u8"∧", 11},
-
-        {u8"∨", 12},
-
-        {u8"=", 14},
-    };
-
-   public:
-    Parser(Lexer& lexer);
-    Parser(Lexer& lexer, bool isTest);
+public:
+    Parser(const std::vector<Token>& tokens);
+    Parser(const std::vector<Token>& tokens, bool isTest);
 
     bool isValid();
     std::unique_ptr<BlockAST> parse();
 
-   private:
-    /// @brief Get the precedence of the pending binary operator token.
-    int getTokenPrecedence() const;
-
-    Token& getNextToken();
+private:
+    const Token& getNextToken();
 
     bool isInsideLoop();
     bool isFinishedBlock();
     bool isExpressionEnd();
     bool isToken(TokenType type);
-    bool isToken(TokenType type, std::u8string value);
-    bool isToken(std::u8string value);
+    bool isToken(TokenType type, const std::u8string_view& value);
+    bool isToken(const std::u8string_view& value);
     bool isUnaryOperator();
 
     void printError(std::string error);
@@ -80,21 +44,21 @@ class Parser {
     std::unique_ptr<AST> parseStatementFlow();
     std::unique_ptr<IfAST> parseStatementBranching();
     std::unique_ptr<AST> parseStatementLooping();
-
+    
     // --- Instruction section ---
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
+    std::unique_ptr<AST> parseStructDeclaration();
 
-    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize);
-    std::unique_ptr<FunctionAST> parseInstructionFunction(const std::u8string& type, const std::u8string& identifier, bool returnsArray, int arrSize);
+    std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
+    std::unique_ptr<AST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
 
     // --- Expression section ---
     std::unique_ptr<AST> parseExpression();
     std::unique_ptr<AST> parseExpressionSingle();
 
-    std::unique_ptr<FunctionPrototypeAST> parsePrototype(const std::u8string& returnType, const std::u8string& funcName);
     std::unique_ptr<FuncCallAST> parseExpressionFunctionCall(const std::u8string& identifier);
 };

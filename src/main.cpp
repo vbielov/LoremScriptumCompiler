@@ -9,16 +9,7 @@
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
 #include <cstdlib>
-
-std::u8string readFileToU8String(const std::string& filePath) {
-    std::ifstream file(filePath, std::ios::binary);  // Open file in binary mode
-    if (!file) {
-        return u8"";
-    }
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    return std::u8string(content.begin(), content.end());  // Convert to u8string
-}
+#include "Preprocessor.hpp"
 
 int main(int argc, const char** argv) {
     if (argc < 2) {
@@ -31,15 +22,12 @@ int main(int argc, const char** argv) {
     std::string inputFilePathStr = inputFilePath;
     size_t lastindex = inputFilePathStr.find_last_of("."); 
     std::string rawFilePath = inputFilePathStr.substr(0, lastindex);
-    std::string objFileName = rawFilePath + ".o";
-    std::string asmFileName = rawFilePath + ".asm";
-    std::string exeFileName = rawFilePath;
-    std::string fileName = std::filesystem::path(inputFilePathStr).stem().string();
-    #if defined(_WIN32)
-        exeFileName += ".exe";
-    #endif
 
-    std::u8string sourceCode = readFileToU8String(inputFilePath);
+    std::filesystem::path mainFilePath = std::filesystem::canonical(inputFilePathStr);
+    std::u8string sourceCode = u8"";
+    std::vector<std::filesystem::path> includeStack;
+    std::vector<std::filesystem::path> linkLibraries;
+    processPreprocessors(mainFilePath, sourceCode, includeStack, linkLibraries);
     if (sourceCode.empty()) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
@@ -54,17 +42,17 @@ int main(int argc, const char** argv) {
     std::cout << "----------------------- Tokens: ----------------------- " << std::endl
               << std::endl;
     Lexer lexer = Lexer(sourceCode);
-    Token token;
-    while ((token = lexer.getNextToken()).type != TokenType::EOF_TOKEN) {
+    std::vector<Token> tokens;
+    lexer.tokenize(tokens);
+    for(const auto& token : tokens) {
         std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
     }
     std::cout << std::endl;
-    lexer = Lexer(sourceCode);  // reset Lexer
 
     // Parser
     std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl
               << std::endl;
-    Parser parser = Parser(lexer);
+    Parser parser = Parser(tokens);
     std::unique_ptr<AST> tree = parser.parse();
     if (tree) {
         tree->printTree(std::cout, "", false);
@@ -79,22 +67,32 @@ int main(int argc, const char** argv) {
 
     // Generate IR
     std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
+    std::string fileName = std::filesystem::path(inputFilePathStr).stem().string();
+
     IRGenerator codeGenerator = IRGenerator(fileName.c_str(), tree);
     codeGenerator.generateIRCode();
     std::cout << codeGenerator.getIRCodeString()<< std::endl;
 
     // Assembler
     std::cout << "----------------------- Assembly: ----------------------- " << std::endl << std::endl;
-    
+    std::string objFileName = rawFilePath + ".o";
+    std::string asmFileName = rawFilePath + ".asm";
+    std::string exeFileName = rawFilePath;
+    #if defined(_WIN32)
+        exeFileName += ".exe";
+    #endif
+
     Assembler assembler;
     assembler.compileToObjectFile(asmFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::AssemblyFile);
     assembler.compileToObjectFile(objFileName.c_str(), codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
+    assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), linkLibraries);
 
-    std::u8string assembly = readFileToU8String(asmFileName);
-    std::cout << (const char*)(assembly.c_str()) << std::endl;
+    // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
+    //       Mingw doesn't support staticlly linking LLVM/LLD, for some reason => it will not allow exiting program without lld::exitLld(0), 
+    //       it's somehow related to this bug: https://reviews.llvm.org/D102684
+    #if defined(_WIN32)
+        lld::exitLld(0);
+    #endif
 
-    assembler.compileToExecutable(objFileName.c_str(), exeFileName.c_str(), codeGenerator.getModule());
-
-    lld::exitLld(0); // NOTE: it should not be used like this...
     return 0;
 }
