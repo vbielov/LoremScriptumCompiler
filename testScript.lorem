@@ -4,5 +4,10 @@ nihil foo = λ(numerus value):
     scriborNum(value)
 ;
 
+numerus z = MMM
+∑(numerus i = 0, i < XLVIII, i++):
+    scriborNum(z×i)
+;
+
 foo(D)
 scriborNum(D)

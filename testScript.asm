@@ -101,61 +101,81 @@ scriborNum:
 .Lfunc_end0:
 	.size	scriborNum, .Lfunc_end0-scriborNum
 	.cfi_endproc
-	.seh_endproc
 
-	.def	foo;
-	.scl	2;
-	.type	32;
-	.endef
 	.globl	foo
 	.p2align	4, 0x90
+	.type	foo,@function
 foo:
-.seh_proc foo
-	subq	$40, %rsp
-	.seh_stackalloc 40
-	.seh_endprologue
-	callq	scriborNum
-	nop
-	addq	$40, %rsp
+	.cfi_startproc
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	callq	scriborNum@PLT
+	popq	%rax
+	.cfi_def_cfa_offset 8
 	retq
-	.seh_endproc
+.Lfunc_end1:
+	.size	foo, .Lfunc_end1-foo
+	.cfi_endproc
 
 	.globl	main
 	.p2align	4, 0x90
 	.type	main,@function
 main:
 	.cfi_startproc
-	pushq	%rax
+	pushq	%rbp
 	.cfi_def_cfa_offset 16
-	movq	test@GOTPCREL(%rip), %rdi
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%r14
+	pushq	%rbx
+	subq	$16, %rsp
+	.cfi_offset %rbx, -32
+	.cfi_offset %r14, -24
+	movq	z@GOTPCREL(%rip), %rbx
+	cmpl	$47, -20(%rbp)
+	jg	.LBB2_3
+	.p2align	4, 0x90
+.LBB2_2:
+	movq	%rsp, %rax
+	leaq	-16(%rax), %rdi
+	movq	%rdi, %rsp
+	movl	(%rbx), %ecx
+	imull	-20(%rbp), %ecx
+	movl	%ecx, -16(%rax)
 	callq	scriborNum@PLT
-	movl	$-2325, 4(%rsp)
-	leaq	4(%rsp), %rdi
+	incl	-20(%rbp)
+	cmpl	$47, -20(%rbp)
+	jle	.LBB2_2
+.LBB2_3:
+	movq	%rsp, %r14
+	leaq	-16(%r14), %rbx
+	movq	%rbx, %rsp
+	movq	%rsp, %rax
+	leaq	-16(%rax), %rdi
+	movq	%rdi, %rsp
+	movl	$500, -16(%rax)
+	callq	foo@PLT
+	movl	$500, -16(%r14)
+	movq	%rbx, %rdi
 	callq	scriborNum@PLT
-.seh_proc main
-	subq	$40, %rsp
-	.seh_stackalloc 40
-	.seh_endprologue
-	movl	$500, 32(%rsp)
-	leaq	32(%rsp), %rcx
-	callq	foo
-	movl	$500, 36(%rsp)
-	leaq	36(%rsp), %rcx
-	callq	scriborNum
 	xorl	%eax, %eax
-	popq	%rcx
-	.cfi_def_cfa_offset 8
+	leaq	-16(%rbp), %rsp
+	popq	%rbx
+	popq	%r14
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
 	retq
-.Lfunc_end1:
-	.size	main, .Lfunc_end1-main
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
 	.cfi_endproc
 
-	.type	test,@object
+	.type	z,@object
 	.data
-	.weak	test
+	.weak	z
 	.p2align	2, 0x0
-test:
-	.long	6
-	.size	test, 4
+z:
+	.long	3000
+	.size	z, 4
 
 	.section	".note.GNU-stack","",@progbits
