@@ -230,7 +230,7 @@ void buildString(size_t line, std::u8string reason){
     build.append(u8"\n        \033[31m");
 
     // append line from
-    if(sourceArray.size() >= line-1){
+    if(sourceArray.size() > line-1){
         build.append(sourceArray[line-1]);
     } else {
         build.append(u8"failure to obtain line");
