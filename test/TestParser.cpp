@@ -3,8 +3,9 @@
 // --- General section ---
 
 std::string runParser(std::u8string& input) {
-    Lexer lexer(input);
-    Parser parser(lexer, true);
+    std::vector<Token> token;
+    Lexer(input).tokenize(token);
+    Parser parser(token, true);
     auto block = parser.parse();
 
     std::ostringstream oss;
@@ -16,8 +17,9 @@ std::string runParser(std::u8string& input) {
 }
 
 std::string runParserInvalid(std::u8string& input) {
-    Lexer lexer(input);
-    Parser parser(lexer, true);
+    std::vector<Token> token;
+    Lexer(input).tokenize(token);
+    Parser parser(token, true);
     auto block = parser.parse();
 
     std::ostringstream oss;
