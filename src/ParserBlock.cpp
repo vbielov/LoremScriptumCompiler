@@ -37,8 +37,19 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     }
 
     // Catch close/open more blocks than possible
-    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
+    if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) {
         m_blockCount--;
+        if (m_blockCount < 0) {
+            // Closing block that was never opend
+            m_isValid = false;
+            printUnknownTokenError();
+        }
+    }
+
+    if (isToken(TokenType::EOF_TOKEN) && m_blockCount != 0) {
+        m_isValid = false;
+        printError("Error: Unexpected end of file. A block was opened but never closed.");
+    }
 
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
         getNextToken();
