@@ -26,10 +26,9 @@
  */
 std::unique_ptr<AST> Parser::parseExpression() {
     auto left = parseExpressionSingle();
-    if (left == nullptr){
-        buildString(currentLine, u8"Syntax Error: left side of Expression is missing!");
+    if (left == nullptr)
         return nullptr;
-    } 
+ 
     
     if (isExpressionEnd()) return left;
     
@@ -50,7 +49,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
         }
 
     if (isExpressionEnd()) {
-        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
+        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right), currentLine);
     }
 
     if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) return nullptr;
@@ -64,11 +63,11 @@ std::unique_ptr<AST> Parser::parseExpression() {
     };
 
     if (op.second <= nextOp.second) {
-        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right));
-        return std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(priorityOp), std::move(nextExpression));
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right), currentLine);
+        return std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(priorityOp), std::move(nextExpression), currentLine);
     } else {
-        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(right), std::move(nextExpression));
-        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(priorityOp));
+        std::unique_ptr<AST> priorityOp = std::make_unique<BinaryOperatorAST>(std::u8string(nextOp.first), std::move(right), std::move(nextExpression), currentLine);
+        return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(priorityOp), currentLine);
     }
 }
 
@@ -110,12 +109,12 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             };
 
         if (sign == operators::PLUS || sign == operators::MINUS) {
-            auto lhs = std::make_unique<NumberAST>(0);
-            return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value));
+            auto lhs = std::make_unique<NumberAST>(0, currentLine);
+            return std::make_unique<BinaryOperatorAST>(sign, std::move(lhs), std::move(value), currentLine);
         } else if (sign == operators::NOT){
             // only left is important
-            auto rhs = std::make_unique<NumberAST>(0);
-            return std::make_unique<BinaryOperatorAST>(sign, std::move(value), std::move(rhs));
+            auto rhs = std::make_unique<NumberAST>(0, currentLine);
+            return std::make_unique<BinaryOperatorAST>(sign, std::move(value), std::move(rhs), currentLine);
         }
 
         buildString(currentLine, u8"Syntax Error: to parse Expression failure, check your Operators!");
@@ -129,7 +128,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             return nullptr;
         }
 
-        value = std::make_unique<NumberAST>(intValue);
+        value = std::make_unique<NumberAST>(intValue, currentLine);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
         char letter = m_currentToken->value[0];
@@ -139,13 +138,13 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         if(m_currentToken->value == u8"\\t") letter = '\t';
         if(m_currentToken->value == u8"\\r") letter = '\r';
         
-        value = std::make_unique<CharAST>(letter);
+        value = std::make_unique<CharAST>(letter, currentLine);
         getNextToken();
 
     } else if (isToken(TokenType::BOOL)) {
         bool state = m_currentToken->value == boolean_types::TRUE;
         getNextToken(); // eat bool
-        return std::make_unique<BoolAST>(state);
+        return std::make_unique<BoolAST>(state, currentLine);
 
     } else if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken->value;
@@ -168,15 +167,15 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
                 return nullptr;
             }
             getNextToken(); // eat ]
-            return std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
+            return std::make_unique<AccessArrayElementAST>(identifier, std::move(index), currentLine);
         } else {
-            value = std::make_unique<VariableReferenceAST>(identifier);
+            value = std::make_unique<VariableReferenceAST>(identifier, currentLine);
         }
     } else if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
         getNextToken();
         value = parseExpression();
         if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
-                buildString(currentLine, u8"Syntax Error: didnt close ()!");
+                buildString(currentLine, u8"Syntax Error: didnt close )!");
                 return nullptr;
             }
         getNextToken();
@@ -231,5 +230,5 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
     }
 
     getNextToken();
-    return std::make_unique<FuncCallAST>(identifier, std::move(args));
+    return std::make_unique<FuncCallAST>(identifier, std::move(args), currentLine);
 }

@@ -65,7 +65,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
         getNextToken();
 
-    return std::make_unique<BlockAST>(std::move(statements));
+    return std::make_unique<BlockAST>(std::move(statements), currentLine);
 }
 
 bool Parser::isFinishedBlock() {

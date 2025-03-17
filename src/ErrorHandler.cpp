@@ -14,8 +14,6 @@ static std::vector<std::u8string> depth;
 
 static std::u8string file;
 
-size_t currentLine = 0;
-
 
 
 struct rangeResult {
@@ -28,8 +26,6 @@ rangeResult getFileName(size_t line){
     static std::vector<fileRange> temp;
 
     rangeResult closestMatch;
-    size_t meantimeDist=0;
-    bool firstMatch = true;
     std::unordered_set<std::u8string> stringSet;
 
     for (size_t i = 0; i < fileRanges.size(); i++){
@@ -44,9 +40,7 @@ rangeResult getFileName(size_t line){
                 size_t position = start;
                 size_t distance = 1;
                 for (size_t j = 0; j < fileRanges.size()-1; j++){
-                    if(fileRanges[j].start > position &&
-                    position < line &&
-                    fileRanges[j].start < line){
+                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
                         distance+= fileRanges[j].start - position;
                         position = fileRanges[j].end;
         
@@ -56,38 +50,26 @@ rangeResult getFileName(size_t line){
                 }
 
                 distance += line-position;
-
                 closestMatch.displayline = distance;
-
                 closestMatch.fileName = fileRanges[i].fileName;
 
                 break;
             }
-        
-        if(line < end){
             
-
-            size_t position = start;
-            size_t distance = 1;
-            for (size_t j = 0; j < fileRanges.size()-1; j++){
-                if(fileRanges[j].start > position &&
-                position < line &&
-                fileRanges[j].start < line){
-                    distance+= fileRanges[j].start - position;
-                    position = fileRanges[j].end;
-    
+            if(line < end){
+                size_t position = start;
+                size_t distance = 1;
+                for (size_t j = 0; j < fileRanges.size()-1; j++){
+                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
+                        distance+= fileRanges[j].start - position;
+                        position = fileRanges[j].end;
+                    }                
                 }
-                
+
+                distance += line-position;
+                closestMatch.displayline = distance;
+                closestMatch.fileName = fileRanges[i].fileName;
             }
-
-            distance += line-position;
-
-            closestMatch.displayline = distance;
-
-            closestMatch.fileName = fileRanges[i].fileName;
-
-
-        }
         
         }
     }
