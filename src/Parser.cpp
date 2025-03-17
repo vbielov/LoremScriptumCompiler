@@ -25,22 +25,23 @@ std::unique_ptr<BlockAST> Parser::parse() {
 
     auto block = parseBlock();
 
-    std::unique_ptr<AST> pseudoReturnValue = std::make_unique<NumberAST>(0);
-    auto pseudoReturn = std::make_unique<ReturnAST>(std::move(pseudoReturnValue));
+    std::unique_ptr<AST> pseudoReturnValue = std::make_unique<NumberAST>(0, currentLine);
+    auto pseudoReturn = std::make_unique<ReturnAST>(std::move(pseudoReturnValue), currentLine);
 
     auto pseudoBlockInstr = std::vector<std::unique_ptr<AST>>();
     pseudoBlockInstr.push_back(std::move(block));
     pseudoBlockInstr.push_back(std::move(pseudoReturn));
-    auto pseudoBlock = std::make_unique<BlockAST>(std::move(pseudoBlockInstr));
+    auto pseudoBlock = std::make_unique<BlockAST>(std::move(pseudoBlockInstr), currentLine);
 
     std::unique_ptr<IDataType> mainReturnType = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
     auto pseudoFunctionPrototype = std::make_unique<FunctionPrototypeAST>(
         u8"main", 
         std::move(mainReturnType),
         std::vector<std::unique_ptr<TypeIdentifierPair>>(),
-        true
+        true,
+        currentLine
     );
-    auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock));
+    auto pseudoFunction = std::make_unique<FunctionAST>(std::move(pseudoFunctionPrototype), std::move(pseudoBlock), currentLine);
 
     m_topLevelDeclarations.push_back(std::move(pseudoFunction));
 
@@ -61,7 +62,7 @@ std::unique_ptr<BlockAST> Parser::parse() {
     //     return aPriority > bPriority;
     // });
 
-    return std::make_unique<BlockAST>(std::move(m_topLevelDeclarations));
+    return std::make_unique<BlockAST>(std::move(m_topLevelDeclarations), currentLine);
 }
 
 
