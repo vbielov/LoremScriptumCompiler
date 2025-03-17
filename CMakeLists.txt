@@ -53,7 +53,7 @@ if(NOT BUILD_TESTS)
     if(WIN32)
         target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
     else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -static ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
+        target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++  ${LLVM_LIBS} ${LLVM_LDFLAGS} ${LLD_EXPORTED_TARGETS})
     endif(WIN32)
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})

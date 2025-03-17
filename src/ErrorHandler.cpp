@@ -14,8 +14,6 @@ static std::vector<std::u8string> depth;
 
 static std::u8string file;
 
-size_t currentLine = 0;
-
 
 
 struct rangeResult {
@@ -28,8 +26,6 @@ rangeResult getFileName(size_t line){
     static std::vector<fileRange> temp;
 
     rangeResult closestMatch;
-    size_t meantimeDist=0;
-    bool firstMatch = true;
     std::unordered_set<std::u8string> stringSet;
 
     for (size_t i = 0; i < fileRanges.size(); i++){
@@ -39,55 +35,41 @@ rangeResult getFileName(size_t line){
 
         if(start <= line){
             
-        if(line == end){
+            if(line == end){
 
-            size_t position = start;
-            size_t distance = 1;
-            for (size_t j = 0; j < fileRanges.size()-1; j++){
-                if(fileRanges[j].start > position &&
-                position < line &&
-                fileRanges[j].start < line){
-                    distance+= fileRanges[j].start - position;
-                    position = fileRanges[j].end;
-    
-                }
-
-                
-            }
-
-            distance += line-position;
-
-            closestMatch.displayline = distance;
-
-            closestMatch.fileName = fileRanges[i].fileName;
-
-            break;
-        }
+                size_t position = start;
+                size_t distance = 1;
+                for (size_t j = 0; j < fileRanges.size()-1; j++){
+                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
+                        distance+= fileRanges[j].start - position;
+                        position = fileRanges[j].end;
         
-        if(line < end){
-            
+                    }
 
-            size_t position = start;
-            size_t distance = 1;
-            for (size_t j = 0; j < fileRanges.size()-1; j++){
-                if(fileRanges[j].start > position &&
-                position < line &&
-                fileRanges[j].start < line){
-                    distance+= fileRanges[j].start - position;
-                    position = fileRanges[j].end;
-    
+                    
                 }
-                
+
+                distance += line-position;
+                closestMatch.displayline = distance;
+                closestMatch.fileName = fileRanges[i].fileName;
+
+                break;
             }
+            
+            if(line < end){
+                size_t position = start;
+                size_t distance = 1;
+                for (size_t j = 0; j < fileRanges.size()-1; j++){
+                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
+                        distance+= fileRanges[j].start - position;
+                        position = fileRanges[j].end;
+                    }                
+                }
 
-            distance += line-position;
-
-            closestMatch.displayline = distance;
-
-            closestMatch.fileName = fileRanges[i].fileName;
-
-
-        }
+                distance += line-position;
+                closestMatch.displayline = distance;
+                closestMatch.fileName = fileRanges[i].fileName;
+            }
         
         }
     }
@@ -222,7 +204,6 @@ void buildString(size_t line, std::u8string reason){
     std::string sLine = std::to_string(data.displayline);
     std::u8string uLine2(sLine.begin(), sLine.end());
 
-    std::cout << (const char*) data.fileName.c_str() << std::endl;
 
     build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
 
@@ -254,6 +235,8 @@ void dumpErrorLog(){
 
 
 void dumpAndBuildError(std::u8string text){
+    anyErrors = true;
+
     std::u8string output;
     output.append(u8"\n \033[1;41mError\033[0m ");
     output.append(text);
@@ -263,6 +246,7 @@ void dumpAndBuildError(std::u8string text){
 
 
 void queueUndefinedError(std::u8string text){
+    anyErrors = true;
     output.append(u8"\n \033[1;41mError\033[0m ");
     output.append(text);
     output.append(u8"\n\n\n");

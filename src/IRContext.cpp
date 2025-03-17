@@ -52,5 +52,6 @@ const ScopeEntry* SymbolTable::lookupFunction(const std::u8string& name) const {
             return iter.base();
         }
     }
+    queueUndefinedError(u8"function not found: '" + name +u8"' check your scopes!");
     return nullptr;
 }

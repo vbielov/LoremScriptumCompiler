@@ -42,12 +42,12 @@ std::unique_ptr<AST> Parser::parseStatementFlow() {
         }
         getNextToken(); // eat finio
         
-        return std::make_unique<BreakAST>();
+        return std::make_unique<BreakAST>(currentLine);
     }
 
     if (isToken(keywords::RETURN)) {
         getNextToken();
-        return std::make_unique<ReturnAST>(parseExpression());
+        return std::make_unique<ReturnAST>(parseExpression(), currentLine);
     }
     if (isToken(keywords::IF)) 
         return parseStatementBranching();
@@ -106,7 +106,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
             return nullptr;
         }
         pseudoIf.emplace_back(std::move(elifBranch));
-        elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf));
+        elseBlock = std::make_unique<BlockAST>(std::move(pseudoIf), currentLine);
     } else if (isToken(TokenType::KEYWORD, keywords::ELSE)) {
         getNextToken();
 
@@ -122,10 +122,10 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
         }
     } else {
         auto emptyInstructions = std::vector<std::unique_ptr<AST>>();
-        elseBlock = std::make_unique<BlockAST>(std::move(emptyInstructions));
+        elseBlock = std::make_unique<BlockAST>(std::move(emptyInstructions), currentLine);
     }
 
-    return std::make_unique<IfAST>(std::move(condition), std::move(ifBlock), std::move(elseBlock));
+    return std::make_unique<IfAST>(std::move(condition), std::move(ifBlock), std::move(elseBlock), currentLine);
 }
 
 /**
@@ -213,10 +213,10 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     auto loopWrapper = std::vector<std::unique_ptr<AST>>();
     if (endExpression != nullptr) {
         auto elseBlockInstr = std::vector<std::unique_ptr<AST>>();
-        std::unique_ptr<AST> breakAst = std::make_unique<BreakAST>();
+        std::unique_ptr<AST> breakAst = std::make_unique<BreakAST>(currentLine);
         elseBlockInstr.emplace_back(std::move(breakAst));
-        auto elseBlock = std::make_unique<BlockAST>(std::move(elseBlockInstr));
-        auto endAST = std::make_unique<IfAST>(std::move(endExpression), std::move(loopBlock), std::move(elseBlock));
+        auto elseBlock = std::make_unique<BlockAST>(std::move(elseBlockInstr), currentLine);
+        auto endAST = std::make_unique<IfAST>(std::move(endExpression), std::move(loopBlock), std::move(elseBlock), currentLine);
         loopWrapper.emplace_back(std::move(endAST));
     }
 
@@ -225,15 +225,15 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     }
 
     if (!loopWrapper.empty()) {
-        loopBlock = std::make_unique<BlockAST>(std::move(loopWrapper));
+        loopBlock = std::make_unique<BlockAST>(std::move(loopWrapper), currentLine);
     }
-    auto loopAST = std::make_unique<LoopAST>(std::move(loopBlock));
+    auto loopAST = std::make_unique<LoopAST>(std::move(loopBlock), currentLine);
 
     if (declaration != nullptr) {
         auto outerLoopWrapper = std::vector<std::unique_ptr<AST>>();
         outerLoopWrapper.emplace_back(std::move(declaration));
         outerLoopWrapper.emplace_back(std::move(loopAST));
-        return std::make_unique<BlockAST>(std::move(outerLoopWrapper));
+        return std::make_unique<BlockAST>(std::move(outerLoopWrapper), currentLine);
     } else {
         return loopAST;
     }

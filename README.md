@@ -49,7 +49,8 @@ To build and use the LoremScriptum compiler, follow these steps:
    ```
 
 > [!TIP]
-> For a better programming experience we **strongly** recommend using VS Code with the [LoremScriptum Extension](https://marketplace.visualstudio.com/items?itemName=BackBencher.loremscriptum)
+> For a better programming experience we **strongly** recommend using VS Code with the [LoremScriptum Extension](https://marketplace.visualstudio.com/items?itemName=BackBencher.loremscriptum)  
+> _For more information on how to use the extension, see [this](#how-to-special-keywords--operators) section below._
 
 ## Our Compiler structure
 
@@ -62,8 +63,9 @@ The LoremScriptum compiler is divided into 4 main parts all of which are written
 
 ## Custom Error Handling
 
-The compiler uses a custom error handling system to provide detailed error messages to help the user understand what went wrong.  
-You can also click on the line to jump directly to the error in your code.
+The compiler uses a custom error handling system to provide detailed error messages to help the user understand what went wrong.
+If the compiler encounters an error, it will try to regain control and continue parsing the code to find more errors.  
+You can also click on the line number to jump directly to the error in your code.
 
 ![Error Handling](./resources/img/showcase_error_handling.png)
 
@@ -105,12 +107,12 @@ numerus foo = λ(numerus a, numerus b):
 
 There are a total of **4** types in LoremScriptum:
 
-| LoremScriptum | Equivalent | Example                |
-| ------------- | ---------- | ---------------------- |
-| numerus       | int        | O, XLII                |
-| asertio       | boolean    | veri, falso            |
-| litera        | char       | 'a', '\n'              |
-| nihil         | void       | /                      |
+| LoremScriptum | Equivalent | Example     |
+| ------------- | ---------- | ----------- |
+| numerus       | int        | O, XLII     |
+| asertio       | boolean    | veri, falso |
+| litera        | char       | 'a', '\n'   |
+| nihil         | void       | /           |
 
 > [!NOTE]  
 > _nihil_ can only be used in function declarations.  

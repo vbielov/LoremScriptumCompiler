@@ -1,5 +1,6 @@
 #include "AST.hpp"
 #include "IRContext.hpp"
+#include "ErrorHandler.hpp"
 
 llvm::Value* BlockAST::codegen(IRContext& context) {
     for (auto& node : m_instructions) {
@@ -53,9 +54,11 @@ llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
 
 llvm::Value* VariableReferenceAST::codegen(IRContext& context) {
     auto entry = context.symbolTable.lookupVariable(m_name);
-    // TODO(Vlad): Error
-    if (!entry)
+    
+    if (!entry){
+        buildString(line, u8"Syntax Error: variable '" + m_name + u8"' not defined!");
         return nullptr;
+    }
     return entry->value;
 }
 
@@ -83,6 +86,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
                 if (!leftType->isIntegerTy() || !rightType->isIntegerTy())
                 {
                     m_RHS->printTree(std::cout, "", false);
+                    buildString(line, u8"Syntax Error: Type does not match!");
                     return nullptr;
                 }
 
@@ -95,8 +99,10 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             // Global initialization
             auto constant = llvm::dyn_cast<llvm::Constant>(right);
             // TODO(Vlad): Error
-            if (!constant) 
-                return nullptr;
+            if (!constant) {
+                    buildString(line, u8"Syntax Error: right side isnt a constant!");
+                    return nullptr;
+                }
             globalVar->setInitializer(constant);
         }
         return nullptr;
@@ -139,6 +145,8 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
     }
 
     // TODO(Vlad): Error
+    buildString(line, u8"Syntax Error: wrong operator!");
+
     return nullptr;
 }
 
@@ -188,9 +196,10 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
     }
 
     // TODO(Vlad): Error
-    if (!entry)
+    if (!entry){
+        buildString(line, u8"Syntax Error: wrong operator!");
         return nullptr;
-
+    }
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
     llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
@@ -232,8 +241,10 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
 llvm::Value* FunctionAST::codegen(IRContext& context) {
     llvm::Function* function = dyn_cast<llvm::Function>(m_prototype->codegen(context));
     // TODO: Error
-    if (!function->empty()) // it's a redifinition
+    if (!function->empty()){ // it's a redifinition
+        buildString(line, u8"Syntax Error: redefinition is not allowed!");
         return nullptr;
+    }
     
     llvm::BasicBlock* entryBlock = llvm::BasicBlock::Create(*context.context, "entry", function);
     context.builder->SetInsertPoint(entryBlock);
@@ -277,8 +288,10 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     // TODO(Vlad): Error
-    if (!currentBlock)
+    if (!currentBlock){    
+        buildString(line, u8"Syntax Error: return in global scope is not allowed!");
         return nullptr;
+    }
 
     llvm::Function* function = currentBlock->getParent();
     if (function->getName() == "main") // main needs a value return
@@ -293,8 +306,10 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 llvm::Value* BreakAST::codegen(IRContext& context) {
     llvm::BasicBlock* returnBlock = context.afterLoop.top();
     // TODO(Vlad): Error
-    if (!returnBlock)
+    if (!returnBlock){
+        buildString(line, u8"Syntax Error: break outside of loop is not allowed!");
         return nullptr;
+    }
 
     context.builder->CreateBr(returnBlock);
     return nullptr;
@@ -361,9 +376,9 @@ llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
     llvm::BasicBlock* block = context.builder->GetInsertBlock();
     if (block) {
         for (size_t i = 0; i < m_elements.size(); i++) {
-            std::unique_ptr<AST> array = std::make_unique<AccessArrayElementAST>(m_name, std::make_unique<NumberAST>((int)i));
+            std::unique_ptr<AST> array = std::make_unique<AccessArrayElementAST>(m_name, std::make_unique<NumberAST>((int)i, line), line);
             auto& value = m_elements[i];
-            auto assigment = std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(array), std::move(value));
+            auto assigment = std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(array), std::move(value), line);
             assigment->codegen(context);
         }
     } else {
@@ -372,18 +387,24 @@ llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
         for(auto& element : m_elements) {
             llvm::Constant* constant = dyn_cast<llvm::ConstantInt>(element->codegen(context));
             // TODO(Vlad): Error
-            if (!constant)
+            if (!constant){
+                buildString(line, u8"Syntax Error: only const values are allowed in array init in global space!");
                 return nullptr;
+            }
             constants.push_back(constant);
         }
         llvm::GlobalVariable* globalArr = context.theModule->getGlobalVariable(cStr(m_name));
         // TODO(Vlad): Error
-        if (!globalArr)    
+        if (!globalArr){
+            buildString(line, u8"Syntax Error: unknown declaratin for array '" + m_name + u8"' !");
             return nullptr;
+        }
         llvm::ArrayType* arrType = llvm::dyn_cast<llvm::ArrayType>(globalArr->getValueType());
         // TODO(Vlad): Error
-        if (!arrType)
+        if (!arrType){
+            buildString(line, u8"Syntax Error: type missmatch !");
             return nullptr;
+        }
         llvm::Constant* initArray = llvm::ConstantArray::get(arrType, constants);
         globalArr->setInitializer(initArray);
     }
@@ -393,8 +414,9 @@ llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
 llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
     // TODO(Vlad): Error
-    if (!arrVar)
-        return nullptr;
+    if (!arrVar){
+        buildString(line, u8"Syntax Error: array not found '" +m_name+ u8"' !");
+        return nullptr;}
     
     const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(arrVar->type);
     if (arrType) {
@@ -434,6 +456,7 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     }
 
     // TODO(Vlad): Error
+    buildString(line, u8"Syntax Error: type missmatch!");
     return nullptr;
 }
 

@@ -18,6 +18,8 @@ void printIndent(std::ostream& ostr, const std::string& indent, bool isLast);
 /// @brief Abstract Syntax Tree: Base class
 class AST {
 public:
+    AST() {}
+
     virtual ~AST() = default;
 
     /// @warning Will assert, if node has no name
@@ -31,54 +33,63 @@ public:
 
     /// @warning Abstract method, has to implemented in every AST
     virtual void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const = 0;
+
+    virtual size_t getLine() const = 0;
 };
 
 
 class BlockAST : public AST {
 private:
     std::vector<std::unique_ptr<AST>> m_instructions;
+    size_t line;
 
 public:
-    BlockAST(std::vector<std::unique_ptr<AST>> instructions);
+    BlockAST(std::vector<std::unique_ptr<AST>> instructions, size_t line);
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class NumberAST : public AST {
 private:
     int m_value;
+    size_t line;
 
 public:
-    NumberAST(int value);
+    NumberAST(int value, size_t line);
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
-
+    size_t getLine() const override;
 };
 
 
 class CharAST : public AST {
 private:
     char8_t m_char;
+    size_t line;
 
 public:
-    CharAST(char8_t character);
+    CharAST(char8_t character, size_t line);
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class BoolAST : public AST {
 private:
     bool m_bool;
+    size_t line;
 
 public:
-    BoolAST(bool boolean);
+    BoolAST(bool boolean, size_t line);
     const IDataType* getType(const IRContext& context) override;
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
@@ -86,26 +97,30 @@ class VariableDeclarationAST : public AST {
 private:
     std::u8string m_name;
     std::unique_ptr<IDataType> m_type;
+    size_t line;
 
 public:
-    VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type);
+    VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class VariableReferenceAST : public AST {
 private:
     std::u8string m_name;
+    size_t line;
 
 public:
-    VariableReferenceAST(const std::u8string& name);
+    VariableReferenceAST(const std::u8string& name, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
+    size_t getLine() const override;
 };
 
 
@@ -113,12 +128,14 @@ class BinaryOperatorAST : public AST {
 private:
     std::u8string m_op;  // TODO(Vlad): replace with enum?
     std::unique_ptr<AST> m_LHS, m_RHS;
+    size_t line;
 
 public:
-    BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS);
+    BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS, size_t line);
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
@@ -126,13 +143,15 @@ class FuncCallAST : public AST {
 private:
     std::u8string m_calleeIdentifier;
     std::vector<std::unique_ptr<AST>> m_args;
+    size_t line;
 
 public:
-    FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args);
+    FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
@@ -143,15 +162,17 @@ private:
     std::unique_ptr<IDataType> m_returnType;
     std::vector<std::unique_ptr<TypeIdentifierPair>> m_args; // this should be only declarations
     bool m_isDefined;
+    size_t line;
 
 public:
-    FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<TypeIdentifierPair>> args, bool isDefined);
+    FunctionPrototypeAST(const std::u8string& name, std::unique_ptr<IDataType> returnType, std::vector<std::unique_ptr<TypeIdentifierPair>> args, bool isDefined, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     const std::vector<std::unique_ptr<TypeIdentifierPair>>& getArgs() const;
     bool isDefined() const;
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
+    size_t getLine() const override;
 };
 
 
@@ -160,32 +181,41 @@ class FunctionAST : public AST {
 private:
     std::unique_ptr<FunctionPrototypeAST> m_prototype;
     std::unique_ptr<BlockAST> m_body;
+    size_t line;
+
 public:
-    FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body);
+    FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class ReturnAST : public AST {
 private:
     std::unique_ptr<AST> m_expr;
+    size_t line;
 
 public:
-    ReturnAST(std::unique_ptr<AST> expr);
+    ReturnAST(std::unique_ptr<AST> expr, size_t line);
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class BreakAST : public AST {
+private:
+    size_t line;
+
 public:
-    BreakAST();
+    BreakAST(size_t line);
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
@@ -194,22 +224,26 @@ private:
     std::unique_ptr<AST> m_cond;
     std::unique_ptr<BlockAST> m_then;
     std::unique_ptr<BlockAST> m_else;
+    size_t line;
 
 public:
-    IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else);
+    IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else, size_t line);
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class LoopAST : public AST {
 private:
     std::unique_ptr<BlockAST> m_body;
+    size_t line;
 
 public:
-    LoopAST(std::unique_ptr<BlockAST> body);
+    LoopAST(std::unique_ptr<BlockAST> body, size_t line);
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 // Maybe just replace it already in parser with blockAST of assigments?
@@ -217,10 +251,13 @@ class ArrayInitializationAST : public AST {
 private:
     std::u8string m_name;
     std::vector<std::unique_ptr<AST>> m_elements;
+    size_t line;
+
 public:
-    ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements);
+    ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements, size_t line);
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 class AccessArrayElementAST : public AST {
@@ -228,24 +265,28 @@ private:
     std::u8string m_name;
     std::unique_ptr<AST> m_index; 
     std::unique_ptr<IDataType> m_type; // this is cached type and will be defined after getType() is called
+    size_t line;
 
 public:
-    AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index);
+    AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };
 
 
 class StructAST : public AST {
 private:
     std::unique_ptr<StructDataType> m_type;
+    size_t line;
 
 public:
-    StructAST(std::unique_ptr<StructDataType> attributes);
+    StructAST(std::unique_ptr<StructDataType> attributes, size_t line);
     const std::u8string& getName() const override;
     const IDataType* getType(const IRContext& context) override; 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
+    size_t getLine() const override;
 };

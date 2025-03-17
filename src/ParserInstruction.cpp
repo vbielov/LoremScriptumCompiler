@@ -25,7 +25,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
             m_topLevelDeclarations.push_back(std::move(declaration));
             
             auto pseudoEmptyInstr = std::vector<std::unique_ptr<AST>>();
-            return std::make_unique<BlockAST>(std::move(pseudoEmptyInstr));
+            return std::make_unique<BlockAST>(std::move(pseudoEmptyInstr), currentLine);
         } else {
             return parseInstructionDeclaration();
         }
@@ -67,8 +67,8 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
     if (expression == nullptr) 
         return nullptr;
     
-    std::unique_ptr<AST> reference = std::make_unique<VariableReferenceAST>(identifier);
-    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(reference), std::move(expression));
+    std::unique_ptr<AST> reference = std::make_unique<VariableReferenceAST>(identifier, currentLine);
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(reference), std::move(expression), currentLine);
 }
 
 // the same as above, but for arrays, current token is '['
@@ -97,8 +97,8 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
     if (expression == nullptr) 
         return nullptr;
     
-    std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index));
-    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(arrReference), std::move(expression));
+    std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index), currentLine);
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(arrReference), std::move(expression), currentLine);
 }
 
 /**
@@ -126,7 +126,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
     if (op->first == m_currentToken->value && (op->first == operators::PLUS || op->first == operators::MINUS)) {
         // var++ or var--
         getNextToken();
-        expression = std::make_unique<NumberAST>(1);
+        expression = std::make_unique<NumberAST>(1, currentLine);
 
         if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) return nullptr;
     } else if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
@@ -136,8 +136,8 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         expression = parseExpression();
     } else return nullptr;
 
-    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(std::u8string(op->first), std::make_unique<VariableReferenceAST>(identifier), std::move(expression));
-    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::make_unique<VariableReferenceAST>(identifier), std::move(rhs));
+    std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(std::u8string(op->first), std::make_unique<VariableReferenceAST>(identifier, currentLine), std::move(expression), currentLine);
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::make_unique<VariableReferenceAST>(identifier, currentLine), std::move(rhs), currentLine);
 }
 
 /**
@@ -170,7 +170,7 @@ std::unique_ptr<AST> Parser::parseStructDeclaration() {
     std::unique_ptr<StructDataType> type = std::make_unique<StructDataType>(identifier, std::move(attributes));
     s_structHashMap[identifier] = type.get();
 
-    return std::make_unique<StructAST>(std::move(type));
+    return std::make_unique<StructAST>(std::move(type), currentLine);
 }
 
 /**
@@ -229,8 +229,8 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
-    if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
-        return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType));
+    if (isToken(TokenType::NEW_LINE)) {
+        return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
     }
     
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) 
@@ -252,7 +252,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
             std::unique_ptr<AST> element = parseExpression();
             elements.push_back(std::move(element));
             if (!elements.back() || isToken(TokenType::EOF_TOKEN)) {
-                printError("Error when parsing elements of array initialization");
+                buildString(currentLine, u8"Error when parsing elements of array initialization");
                 return nullptr;
             }
             if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
@@ -261,11 +261,11 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         }
         
         if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { // ']'
-            printError("Expected ] in array initalization");
+            buildString(currentLine, u8"Expected ] in array initalization");
             return nullptr;
         }
         getNextToken(); // eat ']'
-        expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements));
+        expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements), currentLine);
     }
     // Expression
     else {
@@ -275,8 +275,8 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (expression == nullptr) 
         return nullptr;
     
-    std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType));
-    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression));
+    std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
 }
 
 /**
@@ -361,7 +361,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     }
 
     bool isDefined = isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN);
-    return std::make_unique<FunctionPrototypeAST>(identifier, std::move(type), std::move(args), isDefined);
+    return std::make_unique<FunctionPrototypeAST>(identifier, std::move(type), std::move(args), isDefined, currentLine);
 }
 
 /**
@@ -403,5 +403,5 @@ std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& ident
          return nullptr;
         }
 
-    return std::make_unique<FunctionAST>(std::move(prototype), std::move(funcBlock));
+    return std::make_unique<FunctionAST>(std::move(prototype), std::move(funcBlock), currentLine);
 }

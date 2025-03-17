@@ -39,13 +39,6 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         }
     }
 
-    for(size_t i = 0; !lastOpenBlock.empty() && i < lastOpenBlock.size(); i++){ //TODO DELETE
-        std::cout << lastOpenBlock[i] << " ";
-    }
-    std::cout << std::endl;
-
-
-
 
     // Catch close/open more blocks than possible
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) {
@@ -61,7 +54,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     //ErrorHandler
     if (m_blockCount < 0 || (isToken(TokenType::EOF_TOKEN) && m_blockCount != 0)) {
-        if(m_blockCount != 0 && lastOpenBlock.size() >= 1){
+        if(m_blockCount != 0 && lastOpenBlock.size() > 1){
 
             buildString(lastOpenBlock.back(), u8"ControlFlow Error: brackets arent closed");
             lastOpenBlock.erase(lastOpenBlock.end());
@@ -72,7 +65,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) 
         getNextToken();
 
-    return std::make_unique<BlockAST>(std::move(statements));
+    return std::make_unique<BlockAST>(std::move(statements), currentLine);
 }
 
 bool Parser::isFinishedBlock() {
