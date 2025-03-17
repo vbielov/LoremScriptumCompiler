@@ -1,4 +1,5 @@
 #include "Lexer.hpp"
+size_t lexerLine = 1;
 
 Lexer::Lexer(const std::u8string& sourceCode) 
     : m_souceCode(&sourceCode)
@@ -30,6 +31,7 @@ Token Lexer::getNextToken() {
     // New line
     if (getCharAt(m_charIterator) == u8'\n') {
         m_charIterator++;
+        lexerLine++; // check
         return {TokenType::NEW_LINE, u8""};
     }
 

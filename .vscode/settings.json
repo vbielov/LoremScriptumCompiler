@@ -117,6 +117,7 @@
     "valarray": "cpp",
     "__verbose_abort": "cpp",
     "execution": "cpp",
-    "__node_handle": "cpp"
+    "__node_handle": "cpp",
+    "*.def": "cpp"
   }
 }

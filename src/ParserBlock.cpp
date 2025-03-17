@@ -54,7 +54,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
 
     //ErrorHandler
     if (m_blockCount < 0 || (isToken(TokenType::EOF_TOKEN) && m_blockCount != 0)) {
-        if(m_blockCount != 0 && lastOpenBlock.size() >= 1){
+        if(m_blockCount != 0 && lastOpenBlock.size() > 1){
 
             buildString(lastOpenBlock.back(), u8"ControlFlow Error: brackets arent closed");
             lastOpenBlock.erase(lastOpenBlock.end());

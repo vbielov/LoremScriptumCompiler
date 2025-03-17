@@ -39,30 +39,30 @@ rangeResult getFileName(size_t line){
 
         if(start <= line){
             
-        if(line == end){
+            if(line == end){
 
-            size_t position = start;
-            size_t distance = 1;
-            for (size_t j = 0; j < fileRanges.size()-1; j++){
-                if(fileRanges[j].start > position &&
-                position < line &&
-                fileRanges[j].start < line){
-                    distance+= fileRanges[j].start - position;
-                    position = fileRanges[j].end;
-    
+                size_t position = start;
+                size_t distance = 1;
+                for (size_t j = 0; j < fileRanges.size()-1; j++){
+                    if(fileRanges[j].start > position &&
+                    position < line &&
+                    fileRanges[j].start < line){
+                        distance+= fileRanges[j].start - position;
+                        position = fileRanges[j].end;
+        
+                    }
+
+                    
                 }
 
-                
+                distance += line-position;
+
+                closestMatch.displayline = distance;
+
+                closestMatch.fileName = fileRanges[i].fileName;
+
+                break;
             }
-
-            distance += line-position;
-
-            closestMatch.displayline = distance;
-
-            closestMatch.fileName = fileRanges[i].fileName;
-
-            break;
-        }
         
         if(line < end){
             
@@ -222,7 +222,6 @@ void buildString(size_t line, std::u8string reason){
     std::string sLine = std::to_string(data.displayline);
     std::u8string uLine2(sLine.begin(), sLine.end());
 
-    std::cout << (const char*) data.fileName.c_str() << std::endl;
 
     build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
 
