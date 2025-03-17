@@ -1,18 +1,9 @@
-nihil printf = λ(litera[O] str)
+apere './std.lorem'
 
-<<<<<<< HEAD
-nihil foo = λ(numerus value):
-    scriborNum(value)
-;
+rerum vector = (numerus x, numerus y)
+vector point
+point[x] = V
+point[y] = VI
 
-numerus z = MMM
-∑(numerus i = 0, i < XLVIII, i++):
-    scriborNum(z×i)
-;
-
-foo(D)
-scriborNum(D)
-=======
-litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
-printf(helloWorld)
->>>>>>> main
+scriborNum(point[x])
+scriborNum(point[y])

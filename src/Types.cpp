@@ -63,17 +63,21 @@ StructDataType::StructDataType(const std::u8string& name)
     : name(name), attributes() {}
 
 StructDataType::StructDataType(const std::u8string &name, std::vector<TypeIdentifierPair> attributes)
-    : name(name), attributes(std::move(attributes)) {}
+    : name(name), attributes(std::move(attributes)) {
+    s_structsTypeMap[name] = this;
+}
 
 llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
     if (!attributes.empty()) {
-        std::vector<llvm::Type*> structTypes(attributes.size());
+        std::vector<llvm::Type*> attrTypes;
+        attrTypes.reserve(attributes.size());
         for (const auto& attr : attributes) {
-            structTypes.push_back(attr.type->getLLVMType(context));
+            attrTypes.push_back(attr.type->getLLVMType(context));
         }
-        return llvm::StructType::create(context, structTypes, (const char*)name.c_str());
+        llvm::StructType* structType = llvm::StructType::create(context, attrTypes, (const char*)name.c_str());
+        return structType;
     }
-    return llvm::StructType::create(context, (const char*)name.c_str());
+    return llvm::StructType::getTypeByName(context, (const char*)name.c_str());
 }
 
 std::u8string StructDataType::toString() const {

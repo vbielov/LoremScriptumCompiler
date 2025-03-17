@@ -151,8 +151,25 @@ const std::u8string& AccessArrayElementAST::getName() const {
 }
 
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
+    const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
+    if (!entry)
+        return nullptr;
+
+    const StructDataType* structType = dynamic_cast<const StructDataType*>(entry->type);
+    if (structType && s_structsTypeMap.find(structType->name) != s_structsTypeMap.end()) {
+        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
+        if (!ref) {
+            return nullptr;
+        }
+        for (const auto& attr : s_structsTypeMap[structType->name]->attributes) {
+            if (attr.identifier == ref->getName())
+                return attr.type.get();
+        }
+        // TODO(Vlad): Error
+        return nullptr;
+    }
+ 
     if (!m_type) {
-        const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
         const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(entry->type);
         m_type = std::make_unique<PrimitiveDataType>(arrType->type);
     }

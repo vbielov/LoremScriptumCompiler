@@ -413,8 +413,24 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
         // TODO(Vlad): Error
         if (!ref)
             return nullptr;
-        assert(false && "Not implemented right now");
-        return nullptr;
+
+        auto iter = s_structsTypeMap.find(structType->name);
+        if (iter == s_structsTypeMap.end())
+            return nullptr;
+
+        auto cashedType = iter->second;
+        
+        int index = -1;
+        for(size_t i = 0; i < cashedType->attributes.size(); i++) {
+            if (cashedType->attributes[i].identifier == ref->getName()) {
+                index = i;
+            }
+        }
+        // TODO(Vlad): Error
+        if (index == -1)
+            return nullptr;
+
+        return context.builder->CreateStructGEP(type, arrVar->value, index, "structIdx");
     }
 
     // TODO(Vlad): Error
@@ -422,5 +438,5 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
 }
 
 llvm::Value* StructAST::codegen([[maybe_unused]] IRContext& context) {
-    return nullptr;
+    return (llvm::Value*)getType(context)->getLLVMType(*context.context);
 }

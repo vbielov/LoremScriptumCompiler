@@ -16,7 +16,7 @@ static std::unordered_map<std::u8string, StructDataType*> s_structHashMap;
  *      - var--
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
-    if (isToken(TokenType::TYPE)) {
+    if (isToken(TokenType::TYPE) || s_structHashMap.find(m_currentToken->value) != s_structHashMap.end()) {
         if (m_blockCount == 0 && !m_isTest) {
             // is Top level declaration
             auto declaration = parseInstructionDeclaration();
@@ -194,6 +194,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         auto structIter = s_structHashMap.find(typeStr);
         if (structIter != s_structHashMap.end()) {
             dataType = std::make_unique<StructDataType>(structIter->first);
+            getNextToken(); // eat struct identifier
         } else {
             auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
             assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unknown type");
@@ -228,7 +229,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
-    if (isToken(TokenType::NEW_LINE)) {
+    if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
         return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType));
     }
     

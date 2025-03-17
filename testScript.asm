@@ -1,124 +1,11 @@
 	.text
+	.def	@feat.00;
+	.scl	3;
+	.type	0;
+	.endef
+	.globl	@feat.00
+.set @feat.00, 0
 	.file	"testScript"
-<<<<<<< HEAD
-	.globl	scriborNum
-	.p2align	4, 0x90
-	.type	scriborNum,@function
-scriborNum:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	pushq	%r14
-	pushq	%rbx
-	subq	$16, %rsp
-	.cfi_offset %rbx, -32
-	.cfi_offset %r14, -24
-	movl	(%rdi), %eax
-	movl	%eax, -20(%rbp)
-	testl	%eax, %eax
-	jns	.LBB0_2
-	movq	%rsp, %rax
-	leaq	-16(%rax), %rdi
-	movq	%rdi, %rsp
-	movw	$45, -16(%rax)
-	callq	printf@PLT
-	negl	-20(%rbp)
-.LBB0_2:
-	movq	%rsp, %rcx
-	leaq	-16(%rcx), %rax
-	movq	%rax, %rsp
-	movq	%rsp, %rbx
-	addq	$-80, %rbx
-	movq	%rbx, %rsp
-	movl	$0, -16(%rcx)
-	cmpl	$10, -20(%rbp)
-	jl	.LBB0_5
-	.p2align	4, 0x90
-.LBB0_4:
-	movslq	(%rax), %rcx
-	movslq	-20(%rbp), %rdx
-	imulq	$1717986919, %rdx, %rsi
-	movq	%rsi, %rdi
-	shrq	$63, %rdi
-	sarq	$34, %rsi
-	addl	%edi, %esi
-	addl	%esi, %esi
-	leal	(%rsi,%rsi,4), %esi
-	subl	%esi, %edx
-	addl	$48, %edx
-	incl	(%rax)
-	movl	%edx, (%rbx,%rcx,4)
-	movslq	-20(%rbp), %rcx
-	imulq	$1717986919, %rcx, %rcx
-	movq	%rcx, %rdx
-	shrq	$63, %rdx
-	sarq	$34, %rcx
-	addl	%edx, %ecx
-	movl	%ecx, -20(%rbp)
-	cmpl	$10, -20(%rbp)
-	jge	.LBB0_4
-.LBB0_5:
-	movq	%rsp, %rcx
-	leaq	-16(%rcx), %r14
-	movq	%r14, %rsp
-	movslq	(%rax), %rdx
-	movl	-20(%rbp), %esi
-	addl	$48, %esi
-	movl	%esi, (%rbx,%rdx,4)
-	movl	(%rax), %edx
-	leal	1(%rdx), %esi
-	movl	%esi, (%rax)
-	movl	%edx, -16(%rcx)
-	cmpl	$0, (%r14)
-	js	.LBB0_8
-	.p2align	4, 0x90
-.LBB0_7:
-	movq	%rsp, %rax
-	leaq	-16(%rax), %rdi
-	movq	%rdi, %rsp
-	movslq	(%r14), %rcx
-	movzbl	(%rbx,%rcx,4), %ecx
-	movb	%cl, -16(%rax)
-	movb	$0, -15(%rax)
-	callq	printf@PLT
-	decl	(%r14)
-	cmpl	$0, (%r14)
-	jns	.LBB0_7
-.LBB0_8:
-	movq	%rsp, %rax
-	leaq	-16(%rax), %rdi
-	movq	%rdi, %rsp
-	movw	$10, -16(%rax)
-	callq	printf@PLT
-	leaq	-16(%rbp), %rsp
-	popq	%rbx
-	popq	%r14
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
-	retq
-.Lfunc_end0:
-	.size	scriborNum, .Lfunc_end0-scriborNum
-	.cfi_endproc
-
-	.globl	foo
-	.p2align	4, 0x90
-	.type	foo,@function
-foo:
-	.cfi_startproc
-	pushq	%rax
-	.cfi_def_cfa_offset 16
-	callq	scriborNum@PLT
-	popq	%rax
-	.cfi_def_cfa_offset 8
-	retq
-.Lfunc_end1:
-	.size	foo, .Lfunc_end1-foo
-	.cfi_endproc
-
-=======
 	.def	__chkstk;
 	.scl	2;
 	.type	32;
@@ -136,95 +23,202 @@ __chkstk:
 	retq
 	.seh_endproc
 
+	.def	scriborNewLine;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	scriborNewLine
+	.p2align	4, 0x90
+scriborNewLine:
+.seh_proc scriborNewLine
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	movw	$10, 38(%rsp)
+	leaq	38(%rsp), %rcx
+	callq	printf
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	__scriborNum;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	__scriborNum
+	.p2align	4, 0x90
+__scriborNum:
+.seh_proc __scriborNum
+	pushq	%rbp
+	.seh_pushreg %rbp
+	pushq	%rsi
+	.seh_pushreg %rsi
+	pushq	%rdi
+	.seh_pushreg %rdi
+	subq	$16, %rsp
+	.seh_stackalloc 16
+	leaq	16(%rsp), %rbp
+	.seh_setframe %rbp, 16
+	.seh_endprologue
+	movl	(%rcx), %eax
+	movl	%eax, -4(%rbp)
+	testl	%eax, %eax
+	jns	.LBB2_2
+	movl	$16, %eax
+	callq	___chkstk_ms
+	subq	%rax, %rsp
+	movq	%rsp, %rcx
+	movw	$45, (%rcx)
+	subq	$32, %rsp
+	callq	printf
+	addq	$32, %rsp
+	negl	-4(%rbp)
+.LBB2_2:
+	movl	$16, %eax
+	callq	___chkstk_ms
+	subq	%rax, %rsp
+	movq	%rsp, %rcx
+	movl	$80, %eax
+	callq	___chkstk_ms
+	subq	%rax, %rsp
+	movq	%rsp, %rsi
+	movl	$0, (%rcx)
+	cmpl	$10, -4(%rbp)
+	jl	.LBB2_5
+	.p2align	4, 0x90
+.LBB2_4:
+	movslq	(%rcx), %rax
+	movslq	-4(%rbp), %rdx
+	imulq	$1717986919, %rdx, %r8
+	movq	%r8, %r9
+	shrq	$63, %r9
+	sarq	$34, %r8
+	addl	%r9d, %r8d
+	addl	%r8d, %r8d
+	leal	(%r8,%r8,4), %r8d
+	subl	%r8d, %edx
+	addl	$48, %edx
+	incl	(%rcx)
+	movl	%edx, (%rsi,%rax,4)
+	movslq	-4(%rbp), %rax
+	imulq	$1717986919, %rax, %rax
+	movq	%rax, %rdx
+	shrq	$63, %rdx
+	sarq	$34, %rax
+	addl	%edx, %eax
+	movl	%eax, -4(%rbp)
+	cmpl	$10, -4(%rbp)
+	jge	.LBB2_4
+.LBB2_5:
+	movl	$16, %eax
+	callq	___chkstk_ms
+	subq	%rax, %rsp
+	movq	%rsp, %rdi
+	movslq	(%rcx), %rax
+	movl	-4(%rbp), %edx
+	addl	$48, %edx
+	movl	%edx, (%rsi,%rax,4)
+	movl	(%rcx), %eax
+	leal	1(%rax), %edx
+	movl	%edx, (%rcx)
+	movl	%eax, (%rdi)
+	cmpl	$0, (%rdi)
+	js	.LBB2_8
+	.p2align	4, 0x90
+.LBB2_7:
+	movl	$16, %eax
+	callq	___chkstk_ms
+	subq	%rax, %rsp
+	movq	%rsp, %rcx
+	movslq	(%rdi), %rax
+	movzbl	(%rsi,%rax,4), %eax
+	movb	%al, (%rcx)
+	movb	$0, 1(%rcx)
+	subq	$32, %rsp
+	callq	printf
+	addq	$32, %rsp
+	decl	(%rdi)
+	cmpl	$0, (%rdi)
+	jns	.LBB2_7
+.LBB2_8:
+	movq	%rbp, %rsp
+	popq	%rdi
+	popq	%rsi
+	popq	%rbp
+	retq
+	.seh_endproc
+
+	.def	scriborNum;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	scriborNum
+	.p2align	4, 0x90
+scriborNum:
+.seh_proc scriborNum
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	callq	__scriborNum
+	callq	scriborNewLine
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
+	.def	scriborNumWithoutNewLine;
+	.scl	2;
+	.type	32;
+	.endef
+	.globl	scriborNumWithoutNewLine
+	.p2align	4, 0x90
+scriborNumWithoutNewLine:
+.seh_proc scriborNumWithoutNewLine
+	subq	$40, %rsp
+	.seh_stackalloc 40
+	.seh_endprologue
+	callq	__scriborNum
+	nop
+	addq	$40, %rsp
+	retq
+	.seh_endproc
+
 	.def	main;
 	.scl	2;
 	.type	32;
 	.endef
->>>>>>> main
 	.globl	main
 	.p2align	4, 0x90
-	.type	main,@function
 main:
-<<<<<<< HEAD
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register %rbp
-	pushq	%r14
-	pushq	%rbx
-	subq	$16, %rsp
-	.cfi_offset %rbx, -32
-	.cfi_offset %r14, -24
-	movq	z@GOTPCREL(%rip), %rbx
-	cmpl	$47, -20(%rbp)
-	jg	.LBB2_3
-	.p2align	4, 0x90
-.LBB2_2:
-	movq	%rsp, %rax
-	leaq	-16(%rax), %rdi
-	movq	%rdi, %rsp
-	movl	(%rbx), %ecx
-	imull	-20(%rbp), %ecx
-	movl	%ecx, -16(%rax)
-	callq	scriborNum@PLT
-	incl	-20(%rbp)
-	cmpl	$47, -20(%rbp)
-	jle	.LBB2_2
-.LBB2_3:
-	movq	%rsp, %r14
-	leaq	-16(%r14), %rbx
-	movq	%rbx, %rsp
-	movq	%rsp, %rax
-	leaq	-16(%rax), %rdi
-	movq	%rdi, %rsp
-	movl	$500, -16(%rax)
-	callq	foo@PLT
-	movl	$500, -16(%r14)
-	movq	%rbx, %rdi
-	callq	scriborNum@PLT
-	xorl	%eax, %eax
-	leaq	-16(%rbp), %rsp
-	popq	%rbx
-	popq	%r14
-	popq	%rbp
-	.cfi_def_cfa %rsp, 8
-=======
 .seh_proc main
 	pushq	%rbp
 	.seh_pushreg %rbp
-	subq	$32, %rsp
-	.seh_stackalloc 32
+	pushq	%rsi
+	.seh_pushreg %rsi
+	subq	$40, %rsp
+	.seh_stackalloc 40
 	leaq	32(%rsp), %rbp
 	.seh_setframe %rbp, 32
 	.seh_endprologue
 	callq	__main
-	leaq	helloWorld(%rip), %rcx
-	callq	printf
+	movabsq	$25769803781, %rax
+	movq	%rax, point(%rip)
+	leaq	point(%rip), %rcx
+	leaq	point+4(%rip), %rsi
+	callq	scriborNum
+	movq	%rsi, %rcx
+	callq	scriborNum
 	xorl	%eax, %eax
-	addq	$32, %rsp
+	addq	$40, %rsp
+	popq	%rsi
 	popq	%rbp
->>>>>>> main
 	retq
-.Lfunc_end2:
-	.size	main, .Lfunc_end2-main
-	.cfi_endproc
+	.seh_endproc
 
-<<<<<<< HEAD
-	.type	z,@object
-	.data
-	.weak	z
-	.p2align	2, 0x0
-z:
-	.long	3000
-	.size	z, 4
+	.bss
+	.weak	point
+	.p2align	3, 0x0
+point:
+	.quad	0
 
-	.section	".note.GNU-stack","",@progbits
-=======
-	.data
-	.weak	helloWorld
-helloWorld:
-	.asciz	"Hello World!"
-
->>>>>>> main
