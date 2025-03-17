@@ -254,6 +254,8 @@ void dumpErrorLog(){
 
 
 void dumpAndBuildError(std::u8string text){
+    anyErrors = true;
+
     std::u8string output;
     output.append(u8"\n \033[1;41mError\033[0m ");
     output.append(text);
@@ -263,6 +265,7 @@ void dumpAndBuildError(std::u8string text){
 
 
 void queueUndefinedError(std::u8string text){
+    anyErrors = true;
     output.append(u8"\n \033[1;41mError\033[0m ");
     output.append(text);
     output.append(u8"\n\n\n");
