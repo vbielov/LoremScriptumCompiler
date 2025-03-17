@@ -39,13 +39,6 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         }
     }
 
-    for(size_t i = 0; !lastOpenBlock.empty() && i < lastOpenBlock.size(); i++){ //TODO DELETE
-        std::cout << lastOpenBlock[i] << " ";
-    }
-    std::cout << std::endl;
-
-
-
 
     // Catch close/open more blocks than possible
     if (isToken(TokenType::PUNCTUATION, punctuation::BLOCK_CLOSE)) {
