@@ -1,1 +1,6 @@
 build/
+
+# Ignore top level generated code
+/*.o
+/*.asm
+/*.exe
