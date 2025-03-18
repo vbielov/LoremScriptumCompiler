@@ -6,7 +6,8 @@ Parser::Parser(const std::vector<Token>& tokens)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
-    , m_isTest(false) {}
+    , m_isTest(false)
+    , m_structHashMap() {}
 
 Parser::Parser(const std::vector<Token>& tokens, bool isTest) 
     : m_tokens(tokens)
@@ -14,7 +15,8 @@ Parser::Parser(const std::vector<Token>& tokens, bool isTest)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
-    , m_isTest(isTest) {}
+    , m_isTest(isTest)
+    , m_structHashMap() {}
 
 
 std::unique_ptr<BlockAST> Parser::parse() {

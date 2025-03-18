@@ -63,9 +63,7 @@ StructDataType::StructDataType(const std::u8string& name)
     : name(name), attributes() {}
 
 StructDataType::StructDataType(const std::u8string &name, std::vector<TypeIdentifierPair> attributes)
-    : name(name), attributes(std::move(attributes)) {
-    s_structsTypeMap[name] = this;
-}
+    : name(name), attributes(std::move(attributes)) {}
 
 llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
     if (!attributes.empty()) {
@@ -81,7 +79,15 @@ llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
 }
 
 std::u8string StructDataType::toString() const {
-    return u8"TODO";
+    std::u8string str = name + u8" {";
+    for(const auto& attr : attributes) {
+        str += attr.type->toString() + u8" " + attr.identifier;
+        if (&attr != &attributes.back()) {
+            str += u8", ";
+        }
+    }
+    str += u8"}";
+    return str;
 }
 
 TypeIdentifierPair::TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier)

@@ -1,7 +1,7 @@
 apere './std.lorem'
 
 rerum vector = (numerus x, numerus y)
-vector point
+vector point 
 point[x] = V
 point[y] = VI
 

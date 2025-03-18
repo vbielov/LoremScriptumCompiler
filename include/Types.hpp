@@ -61,5 +61,3 @@ class StructDataType : public IDataType {
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
     std::u8string toString() const override;
 };
-
-inline std::unordered_map<std::u8string, StructDataType*> s_structsTypeMap;

@@ -27,6 +27,10 @@ void SymbolTable::addFunction(const std::u8string& name, const IDataType* type, 
     m_scopes.back().functions.emplace_back(&name, type, value);
 }
 
+void SymbolTable::addStruct(const std::u8string& name, const StructDataType* type) {
+    m_structsTypeMap[name] = type;
+}
+
 const ScopeEntry* SymbolTable::lookupVariable(const std::u8string& name) const {
     for (int i = (int)m_scopes.size()-1; i >= 0; i--) {
         const Scope& scope = m_scopes[i];
@@ -38,7 +42,7 @@ const ScopeEntry* SymbolTable::lookupVariable(const std::u8string& name) const {
         }
         
     }
-    queueUndefinedError(u8"variable not found: '" + name +u8"' check your scopes!");
+    queueUndefinedError(u8"variable not found: '" + name + u8"' check your scopes!");
     return nullptr;
 }
 
@@ -52,6 +56,14 @@ const ScopeEntry* SymbolTable::lookupFunction(const std::u8string& name) const {
             return iter.base();
         }
     }
-    queueUndefinedError(u8"function not found: '" + name +u8"' check your scopes!");
+    queueUndefinedError(u8"function not found: '" + name + u8"' check your scopes!");
+    return nullptr;
+}
+
+const StructDataType* SymbolTable::lookupStruct(const std::u8string& name) const {
+    auto iter = m_structsTypeMap.find(name);
+    if (iter != m_structsTypeMap.end())
+        return iter->second;
+    queueUndefinedError(u8"struct not found: '" + name + u8"' !");
     return nullptr;
 }
