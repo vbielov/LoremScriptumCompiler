@@ -172,7 +172,7 @@ void buildString(size_t line, std::u8string reason){
     
     std::u8string stringAbsPath = data.fileName;
 
-    std::u8string uLine = toRomanConverter((int) line);
+    std::u8string uLine = toRomanConverter(data.displayline);
 
     std::string sLine = std::to_string(data.displayline);
     std::u8string uLine2(sLine.begin(), sLine.end());
