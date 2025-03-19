@@ -45,8 +45,8 @@ private:
     const std::string* m_irCode;
 
 public:
-    void compileToObjectFile(const char* objectFileName, Module* module, CodeGenFileType fileType);
-    void compileToExecutable(const char* objectFilePath, const char* executableFilePath, std::vector<std::filesystem::path>& linkLibraries);
+    void compileToObjectFile(const std::filesystem::path& objectFilePath, Module* module, CodeGenFileType fileType);
+    void compileToExecutable(const std::filesystem::path& objectFilePath, const std::filesystem::path& executableFilePath, std::vector<std::filesystem::path>& linkLibraries);
 
 private:
     static std::filesystem::path storeFileTmp(const char* name, const unsigned char* compressedData, size_t compressedSize, size_t originalSize);

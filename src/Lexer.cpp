@@ -12,6 +12,14 @@ void Lexer::tokenize(std::vector<Token>& outTokens) {
         if (token.type == TokenType::EOF_TOKEN)
             break;
     }
+
+    #if !defined(NDEBUG)
+    std::cout << "----------------------- Tokens: ----------------------- " << std::endl << std::endl;
+    for(const auto& token : outTokens) {
+        std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
+    }
+    std::cout << std::endl;
+    #endif
 }
 
 Token Lexer::getNextToken() {

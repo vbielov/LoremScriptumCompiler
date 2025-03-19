@@ -457,7 +457,7 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
             }
         } else if (number) {
             index = number->getValue();
-            if (index >= iter->attributes.size() || index < 0) {
+            if (index >= (int)iter->attributes.size() || index < 0) {
                 std::string indexStr = std::to_string(index);
                 buildString(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
                 return nullptr;

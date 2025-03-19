@@ -12,6 +12,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
     set(CMAKE_RELEASE_POSTFIX "_release")
+    add_definitions(-DNDEBUG) # for some reason it's not set with CMAKE_BUILD_TYPE=Release
 endif()
 
 set(CMAKE_CURRENT_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
@@ -37,7 +38,7 @@ if(NOT BUILD_TESTS)
     include_directories(${LLVM_INCLUDE_DIRS})
     include_directories(${LLD_INCLUDE_DIRS})
     separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-    # add_definitions(${LLVM_DEFINITIONS_LIST})
+    add_definitions(${LLVM_DEFINITIONS_LIST})
 
     if(WIN32)
         set(WINDOWS_RESOURCES ${CMAKE_SOURCE_DIR}/resources/icon.o)

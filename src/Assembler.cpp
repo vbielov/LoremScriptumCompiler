@@ -1,6 +1,6 @@
 #include "Assembler.hpp"
 
-void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, CodeGenFileType fileType) {
+void Assembler::compileToObjectFile(const std::filesystem::path& objectFilePath, Module* module, CodeGenFileType fileType) {
 	InitializeAllTargetInfos();
 	InitializeAllTargets();
 	InitializeAllTargetMCs();
@@ -36,7 +36,7 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 	module->setDataLayout(TheTargetMachine->createDataLayout());
 
 	std::error_code errorCode;
-	raw_fd_ostream dest(objectFilePath, errorCode, sys::fs::OF_None);
+	raw_fd_ostream dest(objectFilePath.string(), errorCode, sys::fs::OF_None);
 
 	if (errorCode) {
 		llvm::errs() << "Could not open file: " << errorCode.message();
@@ -52,6 +52,14 @@ void Assembler::compileToObjectFile(const char* objectFilePath, Module* module, 
 
 	pass.run(*module);
 	dest.flush();
+
+    #if !defined(NDEBUG)
+	if (fileType != CodeGenFileType::AssemblyFile) {
+		std::filesystem::path asmFilePath = objectFilePath.parent_path() / objectFilePath.stem();
+		asmFilePath += ".asm";
+		compileToObjectFile(asmFilePath, module, CodeGenFileType::AssemblyFile);
+	}
+	#endif
 }
 
 struct IncludedBinaryFile {
@@ -61,13 +69,14 @@ struct IncludedBinaryFile {
 	size_t originalSize;
 };
 
-void Assembler::compileToExecutable(const char* objectFilePath, const char* executableFilePath, std::vector<std::filesystem::path>& linkLibraries) {
+
+void Assembler::compileToExecutable(const std::filesystem::path& objectFilePath, const std::filesystem::path& executableFilePath, std::vector<std::filesystem::path>& linkLibraries) {
 	lld::Result result;
 	std::vector<std::string> args;
 	lld::DriverDef drivers[1] = {};
 
 	#if defined(_WIN32)
-		IncludedBinaryFile includedFiles[] = {
+		const IncludedBinaryFile INCLUDED_FILES[] = {
 			IncludedBinaryFile{ .name = "crt2.o", .compressedData = CRT2, .compressedSize = sizeof(CRT2), .originalSize = CRT2_ORIGINAL_SIZE },
 			IncludedBinaryFile{ .name = "libgcc.a", .compressedData = LIBGCC, .compressedSize = sizeof(LIBGCC), .originalSize = LIBGCC_ORIGINAL_SIZE },
 			IncludedBinaryFile{ .name = "libmingw32.a", .compressedData = LIBMINGW32, .compressedSize = sizeof(LIBMINGW32), .originalSize = LIBMINGW32_ORIGINAL_SIZE },
@@ -77,18 +86,18 @@ void Assembler::compileToExecutable(const char* objectFilePath, const char* exec
 		};
 
 		args.push_back("ld");
-		args.push_back(objectFilePath);
+		args.push_back(objectFilePath.string());
 		args.push_back("-o");
-		args.push_back(executableFilePath);
+		args.push_back(executableFilePath.string());
 
-		for (const auto& file : includedFiles) {
+		for (const auto& file : INCLUDED_FILES) {
 			auto path = storeFileTmp(file.name, file.compressedData, file.compressedSize, file.originalSize);
 			args.push_back(path.string());
 		}
 
 		drivers[0] = {lld::MinGW, &lld::mingw::link};
 	#elif defined(__linux__)
-		IncludedBinaryFile includedFiles[] = {
+		const IncludedBinaryFile INCLUDED_FILES[] = {
 			IncludedBinaryFile{ .name = "crt1.o", .compressedData = CRT1, .compressedSize = sizeof(CRT1), .originalSize = CRT1_ORIGINAL_SIZE },
 			IncludedBinaryFile{ .name = "crti.o", .compressedData = CRTI, .compressedSize = sizeof(CRTI), .originalSize = CRTI_ORIGINAL_SIZE },
 			IncludedBinaryFile{ .name = "crtn.o", .compressedData = CRTN, .compressedSize = sizeof(CRTN), .originalSize = CRTN_ORIGINAL_SIZE },
@@ -102,7 +111,7 @@ void Assembler::compileToExecutable(const char* objectFilePath, const char* exec
 		args.push_back("-o");
 		args.push_back(executableFilePath);
 
-		for (const auto& file : includedFiles) {
+		for (const auto& file : INCLUDED_FILES) {
 			auto path = storeFileTmp(file.name, file.compressedData, file.compressedSize, file.originalSize);
 			args.push_back(path.string());
 		}
@@ -138,7 +147,12 @@ void Assembler::compileToExecutable(const char* objectFilePath, const char* exec
 
 	llvm::outs().flush();
 	llvm::errs().flush();
-	std::cout << "Linked successfuly" << std::endl;
+
+	#ifdef NDEBUG
+	std::filesystem::remove(objectFilePath);
+	#else
+	std::cout << "Linked successfully!" << std::endl;
+	#endif
 }
 
 std::filesystem::path Assembler::storeFileTmp(const char* name, const unsigned char* compressedData, size_t compressedSize, size_t originalSize) {

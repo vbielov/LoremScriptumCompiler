@@ -188,7 +188,7 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
         NumberAST* number = dynamic_cast<NumberAST*>(m_index.get());
         if (number) {
             int index = number->getValue();
-            if (index >= structType->attributes.size() || index < 0) {
+            if (index >= (int)structType->attributes.size() || index < 0) {
                 std::string indexStr = std::to_string(index);
                 buildString(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
                 return nullptr;

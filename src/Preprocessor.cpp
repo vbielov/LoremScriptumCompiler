@@ -1,34 +1,38 @@
 #include "Preprocessor.hpp"
-#include "ErrorHandler.hpp"
 
-static std::vector<std::filesystem::path> s_includedFiles;
-
-static std::u8string readFileToU8String(std::filesystem::path& filePath) {
-    std::ifstream file = std::ifstream(filePath, std::ios::binary);  // Open file in binary mode
-    assert(file && "File doesn't exist");
-
-    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    return std::u8string(content.begin(), content.end());  // Convert to u8string
+Preprocessor::Preprocessor()
+    : m_includedFiles()
+    , m_linkLibraries()
+    , m_depthVal(0) {}
+    
+std::u8string Preprocessor::process(std::filesystem::path& mainFilePath) {
+    m_includedFiles.clear();
+    std::u8string sourceCode;
+    std::vector<std::filesystem::path> stack;
+    processRecursively(mainFilePath, sourceCode, stack);
+    #if !defined(NDEBUG)
+    std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
+    std::cout << (const char*)(sourceCode.c_str()) << std::endl << std::endl;
+    #endif
+    return sourceCode;
 }
 
+const std::vector<std::filesystem::path>& Preprocessor::getLinkLibs() const {
+    return m_linkLibraries;
+}
 
-static size_t depthVal = 0;
-void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack, std::vector<std::filesystem::path>& outLibraries) {
-    
-
-    
-    s_includedFiles.push_back(mainFilePath);
+void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack) {
+    m_includedFiles.push_back(mainFilePath);
     includingStack.push_back(mainFilePath);
 
     outStr = readFileToU8String(mainFilePath);
 
     //ErrorHandler, markers
-    std::string depthVals = std::to_string(depthVal);
+    std::string depthVals = std::to_string(m_depthVal);
     std::u8string depthCount(depthVals.begin(), depthVals.end());
     std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
     std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
     depthMapping(mainFilePath.generic_u8string());
-    //
 
     bool setEnd = false;
     for (size_t i = 0; i < outStr.length(); i++){
@@ -43,10 +47,8 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
         outStr.append(depth);
     }
 
-
     outStr = outStr + depthEnd;
-
-    depthVal++;
+    m_depthVal++;
 
     const std::u8string INCLUDE = u8"apere";
     size_t pos = outStr.find(INCLUDE, 0);
@@ -91,7 +93,6 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
 
         index = pos;
 
-
         // insert file if it's not included yet
         try {
             std::filesystem::path includedPath = std::filesystem::canonical(
@@ -106,16 +107,16 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
             }
             
             // Don't include files that are already included
-            if (std::find(s_includedFiles.begin(), s_includedFiles.end(), includedPath) == s_includedFiles.end()) {
+            if (std::find(m_includedFiles.begin(), m_includedFiles.end(), includedPath) == m_includedFiles.end()) {
                 auto extension = includedPath.extension();
                 if (extension == ".lorem") {
                     std::u8string includedCode;
-                    processPreprocessors(includedPath, includedCode, includingStack, outLibraries); 
+                    processRecursively(includedPath, includedCode, includingStack); 
                     outStr.insert(pos, includedCode);
                     index += includedCode.length();
                 } else if (extension == ".a" || extension == ".lib") {
-                    outLibraries.push_back(includedPath);
-                    s_includedFiles.push_back(includedPath);
+                    m_linkLibraries.push_back(includedPath);
+                    m_includedFiles.push_back(includedPath);
                 }
             } 
         } catch (const std::filesystem::filesystem_error& e) {
@@ -131,4 +132,12 @@ void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& ou
     }
     assert(includingStack.back() == mainFilePath);
     includingStack.pop_back();
+}
+
+std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) {
+    std::ifstream file = std::ifstream(filePath, std::ios::binary);  // Open file in binary mode
+    assert(file && "File doesn't exist");
+
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    return std::u8string(content.begin(), content.end());  // Convert to u8string
 }

@@ -42,6 +42,11 @@ void IRGenerator::generateIRCode() {
     #endif
 
     m_root->codegen(m_context);
+
+    #if !defined(NDEBUG)
+    std::cout << "----------------------- LLVM IR Code: ----------------------- " << std::endl << std::endl;
+    std::cout << getIRCodeString() << std::endl;
+    #endif
 }
 
 llvm::Module* IRGenerator::getModule() {
