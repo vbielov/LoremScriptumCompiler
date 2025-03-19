@@ -15,13 +15,14 @@ const IDataType* AST::getType([[maybe_unused]] const IRContext& context) {
     return nullptr;
 }
 
-
- BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions, size_t line)
-    :m_instructions(std::move(instructions)), line(line) {}
+BlockAST::BlockAST(std::vector<std::unique_ptr<AST>> instructions, size_t line)
+    : m_instructions(std::move(instructions))
+    , m_line(line) {}
 
 
 NumberAST::NumberAST(int value, size_t line) 
-    :m_value(value), line(line) {}
+    : m_value(value)
+    , m_line(line) {}
 
 const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::INT);
@@ -29,7 +30,8 @@ const IDataType* NumberAST::getType([[maybe_unused]] const IRContext& context) {
 }
 
 CharAST::CharAST(char8_t character, size_t line) 
-    :m_char(character), line(line) {}
+    : m_char(character)
+    , m_line(line) {}
 
 const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::CHAR);
@@ -37,7 +39,8 @@ const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) {
 }
 
 BoolAST::BoolAST(bool boolean, size_t line)
-    :m_bool(boolean), line(line) {}
+    : m_bool(boolean)
+    , m_line(line) {}
 
 const IDataType* BoolAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::BOOL);
@@ -45,7 +48,7 @@ const IDataType* BoolAST::getType([[maybe_unused]] const IRContext& context) {
 }
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type, size_t line)
-    :m_name(name), m_type(std::move(type)), line(line) {}
+    : m_name(name), m_type(std::move(type)), m_line(line) {}
 
 const std::u8string& VariableDeclarationAST::getName() const {
     return m_name;
@@ -56,7 +59,7 @@ const IDataType* VariableDeclarationAST::getType([[maybe_unused]] const IRContex
 }
 
 VariableReferenceAST::VariableReferenceAST(const std::u8string& name, size_t line)
-    :m_name(std::move(name)), line(line) {}
+    : m_name(std::move(name)), m_line(line) {}
 
 const std::u8string& VariableReferenceAST::getName() const {
     return m_name;
@@ -67,17 +70,19 @@ const IDataType* VariableReferenceAST::getType(const IRContext& context) {
 }
 
 BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS, size_t line) 
-    :m_op(op)
+    : m_op(op)
     , m_LHS(std::move(LHS))
-    , m_RHS(std::move(RHS)), line(line) {}
+    , m_RHS(std::move(RHS))
+    , m_line(line) {}
 
 const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& context) {
     return m_LHS->getType(context);
 }
 
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args, size_t line)
-    :m_calleeIdentifier(std::move(callee))
-    , m_args(std::move(args)), line(line) {}
+    : m_calleeIdentifier(std::move(callee))
+    , m_args(std::move(args))
+    , m_line(line) {}
 
 const std::u8string& FuncCallAST::getName() const {
     return m_calleeIdentifier;
@@ -91,7 +96,8 @@ FunctionPrototypeAST::FunctionPrototypeAST(const std::u8string& name, std::uniqu
     : m_name(std::move(name))
     , m_returnType(std::move(returnType))
     , m_args(std::move(args))
-    , m_isDefined(isDefined) , line(line){}
+    , m_isDefined(isDefined)
+    , m_line(line){}
 
 const std::u8string& FunctionPrototypeAST::getName() const {
     return m_name;
@@ -111,7 +117,8 @@ bool FunctionPrototypeAST::isDefined() const {
 
 FunctionAST::FunctionAST(std::unique_ptr<FunctionPrototypeAST> prototype, std::unique_ptr<BlockAST> body, size_t line)
     : m_prototype(std::move(prototype))
-    , m_body(std::move(body)) , line(line){}
+    , m_body(std::move(body))
+    , m_line(line){}
 
 const std::u8string& FunctionAST::getName() const {
     return m_prototype->getName();
@@ -122,7 +129,8 @@ const IDataType* FunctionAST::getType(const IRContext& context) {
 }
 
 ReturnAST::ReturnAST(std::unique_ptr<AST> expr, size_t line) 
-    : m_expr(std::move(expr)), line(line) {}
+    : m_expr(std::move(expr))
+    , m_line(line) {}
 
 const IDataType* ReturnAST::getType(const IRContext& context) {
     return m_expr->getType(context);
@@ -131,31 +139,57 @@ const IDataType* ReturnAST::getType(const IRContext& context) {
 IfAST::IfAST(std::unique_ptr<AST> cond, std::unique_ptr<BlockAST> then, std::unique_ptr<BlockAST> _else, size_t line)
     : m_cond(std::move(cond))
     , m_then(std::move(then))
-    , m_else(std::move(_else)), line(line) {}
+    , m_else(std::move(_else))
+    , m_line(line) {}
 
 BreakAST::BreakAST(size_t line)
-    : line(line) {}
+    : m_line(line) {}
 
 LoopAST::LoopAST(std::unique_ptr<BlockAST> body, size_t line) 
-    : m_body(std::move(body)), line(line) {}
+    : m_body(std::move(body))
+    , m_line(line) {}
     
 
 ArrayInitializationAST::ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements, size_t line)
     : m_name(name)
-    , m_elements(std::move(elements)), line(line) {}
+    , m_elements(std::move(elements))
+    , m_line(line) {}
 
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index, size_t line)
     : m_name(name)
     , m_index(std::move(index))
-    , m_type(nullptr) , line(line){}
+    , m_type(nullptr)
+    , m_line(line) {}
 
 const std::u8string& AccessArrayElementAST::getName() const {
     return m_name;
 }
 
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
+    const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
+    if (!entry) {
+        buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+        return nullptr;
+    }
+
+    const StructDataType* structType = dynamic_cast<const StructDataType*>(entry->type); // this is struct type without attributes
+    if (structType)
+        structType = context.symbolTable.lookupStruct(structType->name); // this one is with attributes
+    if (structType) {
+        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
+        if (!ref) {
+            buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+            return nullptr;
+        }
+        for (const auto& attr : structType->attributes) {
+            if (attr.identifier == ref->getName())
+                return attr.type.get();
+        }
+        buildString(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
+        return nullptr;
+    }
+ 
     if (!m_type) {
-        const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
         const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(entry->type);
         m_type = std::make_unique<PrimitiveDataType>(arrType->type);
     }
@@ -164,7 +198,7 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
 }
 
 StructAST::StructAST(std::unique_ptr<StructDataType> type, size_t line)
-    : m_type(std::move(type)) , line(line){}
+    : m_type(std::move(type)), m_line(line){}
 
 const std::u8string& StructAST::getName() const {
     return m_type->name;
@@ -196,9 +230,8 @@ void BlockAST::printTree(std::ostream& ostr, const std::string& indent, bool isL
     }
 }
 
-size_t BlockAST::getLine() const
-{
-    return line;
+size_t BlockAST::getLine() const {
+    return m_line;
 }
 
 void NumberAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -206,9 +239,8 @@ void NumberAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     ostr << "NumberAST(" << m_value << ")" << std::endl;
 }
 
-size_t NumberAST::getLine() const
-{
-    return line;
+size_t NumberAST::getLine() const {
+    return m_line;
 }
 
 void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -216,15 +248,10 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     ostr << "CharAST('" << (char)m_char << "')" << std::endl;
 }
 
-size_t CharAST::getLine() const
-{
-    return line;
+size_t CharAST::getLine() const {
+    return m_line;
 }
 
-size_t VariableReferenceAST::getLine() const
-{
-    return line;
-}
 void VariableDeclarationAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
 {
     printIndent(ostr, indent, isLast);
@@ -232,14 +259,17 @@ void VariableDeclarationAST::printTree(std::ostream &ostr, const std::string &in
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
 
-size_t VariableDeclarationAST::getLine() const
-{
-    return line;
+size_t VariableDeclarationAST::getLine() const {
+    return m_line;
 }
 
 void VariableReferenceAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     ostr << "VariableReferenceAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+}
+
+size_t VariableReferenceAST::getLine() const {
+    return m_line;
 }
 
 void BinaryOperatorAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -250,9 +280,8 @@ void BinaryOperatorAST::printTree(std::ostream& ostr, const std::string& indent,
     m_RHS->printTree(ostr, newIndent, true);
 }
 
-size_t BinaryOperatorAST::getLine() const
-{
-    return line;
+size_t BinaryOperatorAST::getLine() const {
+    return m_line;
 }
 
 void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -264,9 +293,8 @@ void FuncCallAST::printTree(std::ostream& ostr, const std::string& indent, bool 
     }
 }
 
-size_t FuncCallAST::getLine() const
-{
-    return line;
+size_t FuncCallAST::getLine() const {
+    return m_line;
 }
 
 void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -281,9 +309,8 @@ void FunctionPrototypeAST::printTree(std::ostream& ostr, const std::string& inde
     }
 }
 
-size_t FunctionPrototypeAST::getLine() const
-{
-    return line;
+size_t FunctionPrototypeAST::getLine() const {
+    return m_line;
 }
 
 void FunctionAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -294,9 +321,8 @@ void FunctionAST::printTree(std::ostream& ostr, const std::string& indent, bool 
     m_body->printTree(ostr, newIndent, true);
 }
 
-size_t FunctionAST::getLine() const
-{
-    return line;
+size_t FunctionAST::getLine() const {
+    return m_line;
 }
 
 void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -306,21 +332,18 @@ void ReturnAST::printTree(std::ostream& ostr, const std::string& indent, bool is
     if (m_expr) m_expr->printTree(ostr, newIndent, true);
 }
 
-size_t ReturnAST::getLine() const
-{
-    return line;
+size_t ReturnAST::getLine() const {
+    return m_line;
 }
 
-void BreakAST::printTree(std::ostream &ostr, const std::string& indent, bool isLast) const
-{
+void BreakAST::printTree(std::ostream &ostr, const std::string& indent, bool isLast) const {
     printIndent(ostr, indent, isLast);
     std::string newIndent = indent + (isLast ? "    " : "│   ");
     ostr << "BreakAST" << std::endl;
 }
 
-size_t BreakAST::getLine() const
-{
-    return line;
+size_t BreakAST::getLine() const {
+    return m_line;
 }
 
 void IfAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -332,9 +355,8 @@ void IfAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast
     if (m_else) m_else->printTree(ostr, newIndent, true);
 }
 
-size_t IfAST::getLine() const
-{
-    return line;
+size_t IfAST::getLine() const {
+    return m_line;
 }
 
 void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -344,9 +366,8 @@ void LoopAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     m_body->printTree(ostr, newIndent, true);
 }
 
-size_t LoopAST::getLine() const
-{
-    return line;
+size_t LoopAST::getLine() const {
+    return m_line;
 }
 
 void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -356,9 +377,8 @@ void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& ind
     m_index->printTree(ostr, newIndent, true);
 }
 
-size_t AccessArrayElementAST::getLine() const
-{
-    return line;
+size_t AccessArrayElementAST::getLine() const {
+    return m_line;
 }
 
 void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
@@ -370,9 +390,8 @@ void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& in
     }
 }
 
-size_t ArrayInitializationAST::getLine() const
-{
-    return line;
+size_t ArrayInitializationAST::getLine() const {
+    return m_line;
 }
 
 void BoolAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const {
@@ -380,9 +399,8 @@ void BoolAST::printTree(std::ostream &ostr, const std::string &indent, bool isLa
     ostr << "BoolAST(" << (m_bool ? "true" : "false") << ")" << std::endl;
 }
 
-size_t BoolAST::getLine() const
-{
-    return line;
+size_t BoolAST::getLine() const {
+    return m_line;
 }
 
 void StructAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const {
@@ -395,7 +413,6 @@ void StructAST::printTree(std::ostream &ostr, const std::string &indent, bool is
     }
 }
 
-size_t StructAST::getLine() const
-{
-    return line;
+size_t StructAST::getLine() const {
+    return m_line;
 }

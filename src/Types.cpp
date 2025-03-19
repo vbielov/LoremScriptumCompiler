@@ -67,17 +67,27 @@ StructDataType::StructDataType(const std::u8string &name, std::vector<TypeIdenti
 
 llvm::Type* StructDataType::getLLVMType(llvm::LLVMContext& context) const {
     if (!attributes.empty()) {
-        std::vector<llvm::Type*> structTypes(attributes.size());
+        std::vector<llvm::Type*> attrTypes;
+        attrTypes.reserve(attributes.size());
         for (const auto& attr : attributes) {
-            structTypes.push_back(attr.type->getLLVMType(context));
+            attrTypes.push_back(attr.type->getLLVMType(context));
         }
-        return llvm::StructType::create(context, structTypes, (const char*)name.c_str());
+        llvm::StructType* structType = llvm::StructType::create(context, attrTypes, (const char*)name.c_str());
+        return structType;
     }
-    return llvm::StructType::create(context, (const char*)name.c_str());
+    return llvm::StructType::getTypeByName(context, (const char*)name.c_str());
 }
 
 std::u8string StructDataType::toString() const {
-    return u8"TODO";
+    std::u8string str = name + u8" {";
+    for(const auto& attr : attributes) {
+        str += attr.type->toString() + u8" " + attr.identifier;
+        if (&attr != &attributes.back()) {
+            str += u8", ";
+        }
+    }
+    str += u8"}";
+    return str;
 }
 
 TypeIdentifierPair::TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier)

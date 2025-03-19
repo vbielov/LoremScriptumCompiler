@@ -42,6 +42,7 @@ public:
     std::u8string toString() const override;
 };
 
+
 struct TypeIdentifierPair {
     std::unique_ptr<IDataType> type;
     std::u8string identifier;
@@ -49,11 +50,12 @@ struct TypeIdentifierPair {
     TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier);
 };
 
+
 class StructDataType : public IDataType {
-public:
+    public:
     std::u8string name;
     std::vector<TypeIdentifierPair> attributes;
-
+    
     StructDataType(const std::u8string& name);
     StructDataType(const std::u8string& name, std::vector<TypeIdentifierPair> attributes);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 

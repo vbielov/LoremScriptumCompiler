@@ -1,8 +1,6 @@
 #include "Parser.hpp"
 #include "ErrorHandler.hpp"
 
-static std::unordered_map<std::u8string, StructDataType*> s_structHashMap;
-
 /**
  * An Instruction can be a declaration, assignment or function call
  * 
@@ -16,7 +14,7 @@ static std::unordered_map<std::u8string, StructDataType*> s_structHashMap;
  *      - var--
  */
 std::unique_ptr<AST> Parser::parseInstruction() { 
-    if (isToken(TokenType::TYPE)) {
+    if (isToken(TokenType::TYPE) || m_structHashMap.find(m_currentToken->value) != m_structHashMap.end()) {
         if (m_blockCount == 0 && !m_isTest) {
             // is Top level declaration
             auto declaration = parseInstructionDeclaration();
@@ -168,7 +166,7 @@ std::unique_ptr<AST> Parser::parseStructDeclaration() {
         attributes.emplace_back(std::move(arg->type), arg->identifier);
     }
     std::unique_ptr<StructDataType> type = std::make_unique<StructDataType>(identifier, std::move(attributes));
-    s_structHashMap[identifier] = type.get();
+    m_structHashMap[identifier] = type.get();
 
     return std::make_unique<StructAST>(std::move(type), currentLine);
 }
@@ -191,9 +189,10 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (typeStr == types::STRUCT) {
         return parseStructDeclaration();
     } else {
-        auto structIter = s_structHashMap.find(typeStr);
-        if (structIter != s_structHashMap.end()) {
+        auto structIter = m_structHashMap.find(typeStr);
+        if (structIter != m_structHashMap.end()) {
             dataType = std::make_unique<StructDataType>(structIter->first);
+            getNextToken(); // eat struct identifier
         } else {
             auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
             assert(typeIter != STR_TO_PRIMITIVE_MAP.end() && "Unknown type");

@@ -1,10 +1,9 @@
+apere './std.lorem'
 
-nihil printf = λ(litera[O] str)
+rerum vector = (numerus x, numerus y)
+vector point 
+point[x] = V
+point[y] = VI
 
-litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
-printf(helloWorld)
-
-nihil scriborNewLine = λ():
-    litera[II] newLine = ['\n', '\0']
-    printf(newLine)
-//apere './std.lorem'
+scriborNum(point[x])
+scriborNum(point[y])

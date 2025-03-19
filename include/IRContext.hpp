@@ -34,14 +34,18 @@ struct Scope {
 class SymbolTable {
 private:
     std::vector<Scope> m_scopes; 
+    std::unordered_map<std::u8string, const StructDataType*> m_structsTypeMap;
+
 public:
     SymbolTable();
     void enterScope();
     void exitScope();
     void addVariable(const std::u8string& name, const IDataType* type, llvm::Value* value);
     void addFunction(const std::u8string& name, const IDataType* type, llvm::Value* value);
+    void addStruct(const std::u8string& name, const StructDataType* type);
     const ScopeEntry* lookupVariable(const std::u8string& name) const;
     const ScopeEntry* lookupFunction(const std::u8string& name) const;
+    const StructDataType* lookupStruct(const std::u8string& name) const;
 };
 
 struct IRContext {

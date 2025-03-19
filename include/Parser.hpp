@@ -14,6 +14,7 @@ private:
     bool m_isValid;
     bool m_isTest;
     std::vector<std::unique_ptr<AST>> m_topLevelDeclarations;
+    std::unordered_map<std::u8string, StructDataType*> m_structHashMap;
 
 public:
     Parser(const std::vector<Token>& tokens);
