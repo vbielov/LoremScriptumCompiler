@@ -12,7 +12,6 @@ static std::u8string readFileToU8String(std::filesystem::path& filePath) {
 }
 
 
-static bool isBody = true;
 static size_t depthVal = 0;
 void processPreprocessors(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack, std::vector<std::filesystem::path>& outLibraries) {
     

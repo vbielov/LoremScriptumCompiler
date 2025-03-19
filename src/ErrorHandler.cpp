@@ -3,23 +3,36 @@
 
 
 
-static std::u8string output = u8"----------------------- Error while compiling  ";
-static bool anyErrors = false;
+static std::u8string output = u8"----------------------- Error while compiling  "; // stores log
 
-static std::vector<std::u8string> sourceArray;
-static std::vector<fileLength> fileIndexes;
+
+static std::vector<std::u8string> sourceArray; // vector containing lines
 static std::vector<fileRange> fileRanges;
-
 static std::vector<std::u8string> depth;
 
-static std::u8string file;
+std::u8string file; // filename that gets compiled
+
+static bool anyErrors = false;
+
+// ---------- helper methods/procedures ---------- 
+
+size_t calcDistance(size_t line, size_t start){ // iterates over file ranges to calculate line of the correct source file
+    size_t position = start;
+    size_t distance = 1;
+    for (size_t j = 0; j < fileRanges.size()-1; j++){
+        if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
+            distance+= fileRanges[j].start - position;
+            position = fileRanges[j].end;
+        }        
+    }
+
+    distance += line-position;
+
+    return distance;
+}
 
 
 
-struct rangeResult {
-    std::u8string fileName;
-    size_t displayline;
-};
 
 rangeResult getFileName(size_t line){
 
@@ -28,7 +41,7 @@ rangeResult getFileName(size_t line){
     rangeResult closestMatch;
     std::unordered_set<std::u8string> stringSet;
 
-    for (size_t i = 0; i < fileRanges.size(); i++){
+    for (size_t i = 0; i < fileRanges.size(); i++){ // finds correct sourcefile
         size_t start = fileRanges[i].start;
         size_t end = fileRanges[i].end;
 
@@ -36,41 +49,15 @@ rangeResult getFileName(size_t line){
         if(start <= line){
             
             if(line == end){
-
-                size_t position = start;
-                size_t distance = 1;
-                for (size_t j = 0; j < fileRanges.size()-1; j++){
-                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
-                        distance+= fileRanges[j].start - position;
-                        position = fileRanges[j].end;
-        
-                    }
-
-                    
-                }
-
-                distance += line-position;
-                closestMatch.displayline = distance;
+                closestMatch.displayline = calcDistance(line, start);
                 closestMatch.fileName = fileRanges[i].fileName;
-
                 break;
             }
             
             if(line < end){
-                size_t position = start;
-                size_t distance = 1;
-                for (size_t j = 0; j < fileRanges.size()-1; j++){
-                    if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
-                        distance+= fileRanges[j].start - position;
-                        position = fileRanges[j].end;
-                    }                
-                }
-
-                distance += line-position;
-                closestMatch.displayline = distance;
+                closestMatch.displayline = calcDistance(line, start);
                 closestMatch.fileName = fileRanges[i].fileName;
             }
-        
         }
     }
 
@@ -99,20 +86,7 @@ size_t getLineCountTilPos(std::u8string text, size_t pos){
     return line;
 }
 
-
-void setFile(std::u8string fileName, std::u8string code, size_t pos, bool noPos){
-    fileLength file(fileName, getLineCount(code), getLineCountTilPos(code, pos), pos, noPos);
-    fileIndexes.push_back(file);
-};
-
-
-fileRange fileRangeBuilder(std::u8string fileName, size_t start, size_t end) {
-    fileRange newRange;
-    newRange.fileName = fileName;
-    newRange.start = start;
-    newRange.end = end;
-    return newRange;
-}
+// ---------- end of helper methods ---------- 
 
 void buildRanges(std::u8string& sourceCode){
 
@@ -139,7 +113,7 @@ void buildRanges(std::u8string& sourceCode){
 
     }
 
-    std::sort(temp.begin(), temp.end(), [](const fileRange& a, const fileRange& b) {
+    std::sort(temp.begin(), temp.end(), [](const fileRange& a, const fileRange& b) { // sort required so that file origin algorithm works
         return a.start < b.start;
     });
 
@@ -147,11 +121,10 @@ void buildRanges(std::u8string& sourceCode){
 }
 
 
-
-
 void depthMapping(std::u8string fileName){
     depth.push_back(fileName);
 }
+
 
 void grabSource(std::u8string sourceCode, std::string fileLocation){
     std::u8string line = u8"";
@@ -199,7 +172,7 @@ void buildString(size_t line, std::u8string reason){
     
     std::u8string stringAbsPath = data.fileName;
 
-    std::u8string uLine = toRomanConverter((int) line);
+    std::u8string uLine = toRomanConverter(data.displayline);
 
     std::string sLine = std::to_string(data.displayline);
     std::u8string uLine2(sLine.begin(), sLine.end());

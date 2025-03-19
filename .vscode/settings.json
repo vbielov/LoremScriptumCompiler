@@ -118,6 +118,18 @@
     "__verbose_abort": "cpp",
     "execution": "cpp",
     "__node_handle": "cpp",
-    "*.def": "cpp"
+    "*.def": "cpp",
+    "*.inc": "cpp",
+    "cassert": "cpp",
+    "ccomplex": "cpp",
+    "cerrno": "cpp",
+    "cfloat": "cpp",
+    "ciso646": "cpp",
+    "climits": "cpp",
+    "ctgmath": "cpp",
+    "print": "cpp",
+    "cstdbool": "cpp",
+    "version": "cpp",
+    "__config": "cpp"
   }
 }
