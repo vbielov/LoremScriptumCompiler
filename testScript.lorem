@@ -1,9 +1,7 @@
 apere './std.lorem'
 
 rerum vector = (numerus x, numerus y)
-vector point 
-point[x] = V
-point[y] = VI
 
+vector point = [V, VI]
 scriborNum(point[x])
 scriborNum(point[y])

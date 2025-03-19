@@ -386,27 +386,31 @@ llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
         constants.reserve(m_elements.size());
         for(auto& element : m_elements) {
             llvm::Constant* constant = dyn_cast<llvm::ConstantInt>(element->codegen(context));
-            // TODO(Vlad): Error
             if (!constant){
                 buildString(m_line, u8"Syntax Error: only const values are allowed in array init in global space!");
                 return nullptr;
             }
             constants.push_back(constant);
         }
-        llvm::GlobalVariable* globalArr = context.theModule->getGlobalVariable(cStr(m_name));
-        // TODO(Vlad): Error
-        if (!globalArr){
-            buildString(m_line, u8"Syntax Error: unknown declaratin for array '" + m_name + u8"' !");
+        llvm::GlobalVariable* globalVar = context.theModule->getGlobalVariable(cStr(m_name));
+        if (!globalVar){
+            buildString(m_line, u8"Syntax Error: unknown declaratin for array/struct '" + m_name + u8"' !");
             return nullptr;
         }
-        llvm::ArrayType* arrType = llvm::dyn_cast<llvm::ArrayType>(globalArr->getValueType());
-        // TODO(Vlad): Error
-        if (!arrType){
-            buildString(m_line, u8"Syntax Error: Only arrays are allowed to have initialization with [...]!");
+        llvm::ArrayType* arrType = llvm::dyn_cast<llvm::ArrayType>(globalVar->getValueType());
+        if (arrType){
+            llvm::Constant* initArray = llvm::ConstantArray::get(arrType, constants);
+            globalVar->setInitializer(initArray);
             return nullptr;
         }
-        llvm::Constant* initArray = llvm::ConstantArray::get(arrType, constants);
-        globalArr->setInitializer(initArray);
+        llvm::StructType* structType = llvm::dyn_cast<llvm::StructType>(globalVar->getValueType());
+        if (structType) {
+            llvm::Constant* initStruct = llvm::ConstantStruct::get(structType, constants);
+            globalVar->setInitializer(initStruct);
+            return nullptr;
+        }
+        buildString(m_line, u8"Syntax Error: Only arrays are allowed to have initialization with [...]!");
+        return nullptr;
     }
     return nullptr;
 }
@@ -430,29 +434,39 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
     }
     const StructDataType* structType = dynamic_cast<const StructDataType*>(arrVar->type);
     if (structType) {
-        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
-        if (!ref) {
-            buildString(m_line, u8"Syntax Error: Wrong syntax accessing struct attribute!");
-            return nullptr;
-        }
-
+        int index = -1;
         auto iter = context.symbolTable.lookupStruct(structType->name);
         if (!iter) {
             buildString(m_line, u8"Syntax Error: Struct with name: '" + structType->name + u8"' isn't declared!");
             return nullptr;
         }
 
-        int index = -1;
-        for(size_t i = 0; i < iter->attributes.size(); i++) {
-            if (iter->attributes[i].identifier == ref->getName()) {
-                index = i;
+        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
+        NumberAST* number = dynamic_cast<NumberAST*>(m_index.get());
+
+        if (ref) {
+            for(size_t i = 0; i < iter->attributes.size(); i++) {
+                if (iter->attributes[i].identifier == ref->getName()) {
+                    index = i;
+                    break;
+                }
             }
-        }
-        if (index == -1) {
-            buildString(m_line, u8"Syntax Error: Can't find '" + ref->getName() + u8"' attribute in '" + m_name + u8"' struct!");
+            if (index == -1) {
+                buildString(m_line, u8"Syntax Error: Can't find '" + ref->getName() + u8"' attribute in '" + m_name + u8"' struct!");
+                return nullptr;
+            }
+        } else if (number) {
+            index = number->getValue();
+            if (index >= iter->attributes.size() || index < 0) {
+                std::string indexStr = std::to_string(index);
+                buildString(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
+                return nullptr;
+            }
+        } else {
+            buildString(m_line, u8"Syntax Error: Wrong syntax accessing struct attribute!");
             return nullptr;
         }
-
+        
         return context.builder->CreateStructGEP(iter->getLLVMType(*context.context), arrVar->value, index, "structIdx");
     }
 

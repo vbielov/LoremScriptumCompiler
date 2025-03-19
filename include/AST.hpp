@@ -63,6 +63,7 @@ public:
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
     size_t getLine() const override;
+    int getValue() const;
 };
 
 

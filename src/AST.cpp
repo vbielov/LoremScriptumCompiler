@@ -177,15 +177,25 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
         structType = context.symbolTable.lookupStruct(structType->name); // this one is with attributes
     if (structType) {
         VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
-        if (!ref) {
-            buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+        if (ref) {
+            for (const auto& attr : structType->attributes) {
+                if (attr.identifier == ref->getName())
+                    return attr.type.get();
+            }
+            buildString(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
             return nullptr;
+        } 
+        NumberAST* number = dynamic_cast<NumberAST*>(m_index.get());
+        if (number) {
+            int index = number->getValue();
+            if (index >= structType->attributes.size() || index < 0) {
+                std::string indexStr = std::to_string(index);
+                buildString(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
+                return nullptr;
+            }
+            return structType->attributes[index].type.get();
         }
-        for (const auto& attr : structType->attributes) {
-            if (attr.identifier == ref->getName())
-                return attr.type.get();
-        }
-        buildString(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
+        buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
         return nullptr;
     }
  
@@ -241,6 +251,10 @@ void NumberAST::printTree(std::ostream& ostr, const std::string& indent, bool is
 
 size_t NumberAST::getLine() const {
     return m_line;
+}
+
+int NumberAST::getValue() const {
+    return m_value;
 }
 
 void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
