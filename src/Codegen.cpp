@@ -141,7 +141,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
     } else if (m_op == operators::OR) {
         return context.builder->CreateOr(left, right, "ortmp");
     } else if (m_op == operators::NOT) {
-        return context.builder->CreateNeg(left, "negtmp");
+        return context.builder->CreateXor(left, llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(*context.context), true), "negtmp");
     }
 
     // TODO(Vlad): Error

@@ -94,35 +94,28 @@ void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::
         index = pos;
 
         // insert file if it's not included yet
-        try {
-            std::filesystem::path includedPath = std::filesystem::canonical(
-                mainFilePath.parent_path() / std::filesystem::path(includeFileName)
-            );
+        std::filesystem::path includedPath = mainFilePath.parent_path() / std::filesystem::path(includeFileName);
 
-            // Check if there is a circle in inclusion
-            if (std::find(includingStack.begin(), includingStack.end(), includedPath) != includingStack.end()) {
-                
-                dumpAndBuildError(u8"Recursive including found");
-                assert(false && "Recursive including found");
-            }
+        // Check if there is a circle in inclusion
+        if (std::find(includingStack.begin(), includingStack.end(), includedPath) != includingStack.end()) {
             
-            // Don't include files that are already included
-            if (std::find(m_includedFiles.begin(), m_includedFiles.end(), includedPath) == m_includedFiles.end()) {
-                auto extension = includedPath.extension();
-                if (extension == ".lorem") {
-                    std::u8string includedCode;
-                    processRecursively(includedPath, includedCode, includingStack); 
-                    outStr.insert(pos, includedCode);
-                    index += includedCode.length();
-                } else if (extension == ".a" || extension == ".lib" || extension == ".o") {
-                    m_linkLibraries.push_back(includedPath);
-                    m_includedFiles.push_back(includedPath);
-                }
-            } 
-        } catch (const std::filesystem::filesystem_error& e) {
-            dumpAndBuildError(u8"File doesn't exists");
-            assert(false && "File doesn't exists");
+            dumpAndBuildError(u8"Recursive including found");
+            assert(false && "Recursive including found");
         }
+        
+        // Don't include files that are already included
+        if (std::find(m_includedFiles.begin(), m_includedFiles.end(), includedPath) == m_includedFiles.end()) {
+            auto extension = includedPath.extension();
+            if (extension == ".lorem") {
+                std::u8string includedCode;
+                processRecursively(includedPath, includedCode, includingStack); 
+                outStr.insert(pos, includedCode);
+                index += includedCode.length();
+            } else if (extension == ".a" || extension == ".lib" || extension == ".o") {
+                m_linkLibraries.push_back(includedPath);
+                m_includedFiles.push_back(includedPath);
+            }
+        } 
 
         pos = outStr.find(INCLUDE, index);
     }
@@ -136,7 +129,11 @@ void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::
 
 std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) {
     std::ifstream file = std::ifstream(filePath, std::ios::binary);  // Open file in binary mode
-    assert(file && "File doesn't exist");
+    if (!file) {
+        std::string pathStr = filePath.string();
+        dumpAndBuildError(u8"File " + std::u8string(pathStr.begin(), pathStr.end()) + u8" isn't found");
+        assert(false);
+    }
 
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     return std::u8string(content.begin(), content.end());  // Convert to u8string
