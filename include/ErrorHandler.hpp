@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <unordered_set>
 #include <iostream>
+#include "RomanNumber.hpp"
 
 struct fileLength{
     std::u8string fileName;

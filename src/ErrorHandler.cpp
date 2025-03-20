@@ -1,10 +1,6 @@
 #include "ErrorHandler.hpp"
-#include "RomanNumber.hpp"
-
-
 
 static std::u8string output = u8"----------------------- Error while compiling  "; // stores log
-
 
 static std::vector<std::u8string> sourceArray; // vector containing lines
 static std::vector<fileRange> fileRanges;

@@ -114,7 +114,7 @@ void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::
                     processRecursively(includedPath, includedCode, includingStack); 
                     outStr.insert(pos, includedCode);
                     index += includedCode.length();
-                } else if (extension == ".a" || extension == ".lib") {
+                } else if (extension == ".a" || extension == ".lib" || extension == ".o") {
                     m_linkLibraries.push_back(includedPath);
                     m_includedFiles.push_back(includedPath);
                 }

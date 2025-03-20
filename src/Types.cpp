@@ -59,6 +59,9 @@ std::u8string ArrayDataType::toString() const {
     return (std::u8string(it->first) + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
 }
 
+TypeIdentifierPair::TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier)
+    : type(std::move(type)), identifier(identifier) {}
+
 StructDataType::StructDataType(const std::u8string& name)
     : name(name), attributes() {}
 
@@ -89,6 +92,3 @@ std::u8string StructDataType::toString() const {
     str += u8"}";
     return str;
 }
-
-TypeIdentifierPair::TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier)
-    : type(std::move(type)), identifier(identifier) {}
