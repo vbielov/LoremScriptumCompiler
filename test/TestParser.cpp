@@ -240,6 +240,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "                    ├── NumberAST(3)\n"
         "                    └── NumberAST(4)\n"
     ),
+
     // Function Declaration
     std::make_pair(
         u8"nihil foo = λ(): ;",
@@ -266,39 +267,81 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "                └── BinaryOperatorAST('+')\n"
         "                    ├── NumberAST(1)\n"
         "                    └── NumberAST(2)\n"
+    ),
+    std::make_pair(
+        u8"nihil foo = λ(numerus id): id = id + I ;",
+        "└── BlockAST\n"
+        "    └── FunctionAST\n"
+        "        ├── FunctionPrototypeAST(nihil foo)\n"
+        "        │   └── numerus id\n"
+        "        └── BlockAST\n"
+        "            └── BinaryOperatorAST('=')\n"
+        "                ├── VariableReferenceAST(id)\n"
+        "                └── BinaryOperatorAST('+')\n"
+        "                    ├── VariableReferenceAST(id)\n"
+        "                    └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"nihil foo = λ(numerus id, numerus var): ;",
+        "└── BlockAST\n"
+        "    └── FunctionAST\n"
+        "        ├── FunctionPrototypeAST(nihil foo)\n"
+        "        │   ├── numerus id\n"
+        "        │   └── numerus var\n"
+        "        └── BlockAST\n"
+    ),
+    std::make_pair(
+        u8"nihil foo = λ(numerus id, numerus var, numerus i): ;",
+        "└── BlockAST\n"
+        "    └── FunctionAST\n"
+        "        ├── FunctionPrototypeAST(nihil foo)\n"
+        "        │   ├── numerus id\n"
+        "        │   ├── numerus var\n"
+        "        │   └── numerus i\n"
+        "        └── BlockAST\n"
+    ),
+
+    // Array declaration
+    std::make_pair(
+        u8"numerus[I] arr",
+        "└── BlockAST\n"
+        "    └── VariableDeclarationAST(numerus[1] arr)\n"
+    ),
+    std::make_pair(
+        u8"numerus[I] arr = [I]",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(numerus[1] arr)\n"
+        "        └── ArrayInitializationAST\n"
+        "            └── NumberAST(1)\n"
+    ),
+    std::make_pair(
+        u8"numerus[II] a = [I, II]",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(numerus[2] a)\n"
+        "        └── ArrayInitializationAST\n"
+        "            ├── NumberAST(1)\n"
+        "            └── NumberAST(2)\n"
+    ),
+    std::make_pair(
+        u8"asertio[] a = [veri, falso]",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(asertio[2] a)\n"
+        "        └── ArrayInitializationAST\n"
+        "            ├── BoolAST(true)\n"
+        "            └── BoolAST(false)\n"
+    ),
+    std::make_pair(
+        u8"litera[II] a = ['a', 'b']",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(litera[2] a)\n"
+        "        └── ArrayInitializationAST\n"
+        "            ├── CharAST('a')\n"
+        "            └── CharAST('b')\n"
     )
-    // std::make_pair(
-    //     u8"nihil foo = λ(numerus id): id = id + I ;",
-    //     "└── BlockAST\n"
-    //     "    └── FunctionAST\n"
-    //     "        ├── FunctionPrototypeAST(nihil foo)\n"
-    //     "        │   └── VariableDeclarationAST(numerus id)\n"
-    //     "        └── BlockAST\n"
-    //     "            └── BinaryOperatorAST('=')\n"
-    //     "                ├── VariableReferenceAST(id)\n"
-    //     "                └── BinaryOperatorAST('+')\n"
-    //     "                    ├── VariableReferenceAST(id)\n"
-    //     "                    └── NumberAST(1)\n"
-    // ),
-    // std::make_pair(
-    //     u8"nihil foo = λ(numerus id, numerus var): ;",
-    //     "└── BlockAST\n"
-    //     "    └── FunctionAST\n"
-    //     "        ├── FunctionPrototypeAST(nihil foo)\n"
-    //     "        │   ├── VariableDeclarationAST(numerus id)\n"
-    //     "        │   └── VariableDeclarationAST(numerus var)\n"
-    //     "        └── BlockAST\n"
-    // ),
-    // std::make_pair(
-    //     u8"nihil foo = λ(numerus id, numerus var, numerus i): ;",
-    //     "└── BlockAST\n"
-    //     "    └── FunctionAST\n"
-    //     "        ├── FunctionPrototypeAST(nihil foo)\n"
-    //     "        │   ├── VariableDeclarationAST(numerus id)\n"
-    //     "        │   ├── VariableDeclarationAST(numerus var)\n"
-    //     "        │   └── VariableDeclarationAST(numerus i)\n"
-    //     "        └── BlockAST\n"
-    // )
 ));
 
 
@@ -347,7 +390,35 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     u8"nihil foo = λ(numerus i, numerus j): i = i+ ;",
     u8"nihil foo = (λ(): ;)",
     u8"nihil foo = λ(): \n nihil func = λ(): ; \n;",
-    u8"nihil foo = λ(): nihil func = λ(): ; ;"
+    u8"nihil foo = λ(): nihil func = λ(): ; ;",
+
+    // Array declaration
+    u8"numerus[ foo = [I]",
+    u8"numerus] foo = [I]",
+    u8"numerus[] foo = []",
+    u8"nihil[I] foo = [I]",
+    u8"numerus[III] foo = [I, II, ]",
+    u8"numerus[III] foo = []",
+    u8"numerus[I] foo = [",
+    u8"numerus[I] foo = ]",
+    u8"numerus[I] foo = []",
+    u8"numerus foo = [I, II, III]",
+    u8"numerus[III] foo = [I, II, III",
+    u8"numerus[III] foo = I, II, III",
+    u8"numerus[III] foo = I",
+    u8"litera[II] foo = ['a', ]",
+    u8"litera[II] foo = 'a'",
+    u8"litera[II] foo = (['a', 'b'])",
+    u8"numerus[II] foo = ([I, II])",
+    u8"numerus[II] foo = [I]",
+    u8"numerus[II] foo = [I, II, III]",
+    u8"numerus[-I] foo = [I]",
+    u8"numerus[] foo = [I]",
+    u8"numerus[-I] arr = [I]",
+    u8"numerus[] arr = [I]",
+    u8"numerus[O] arr = []",
+    u8"numerus['a'] arr = []",
+    u8"numerus[] arr"
 ));
 
 // --- Assignment section ---

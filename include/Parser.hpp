@@ -52,10 +52,11 @@ private:
     // --- Instruction section ---
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();
+    std::unique_ptr<AST> parseInstructionDeclarationStruct();
+    std::unique_ptr<AST> parseInstructionDeclarationArray(PrimitiveType type);
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
-    std::unique_ptr<AST> parseStructDeclaration();
 
     std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
     std::unique_ptr<AST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
