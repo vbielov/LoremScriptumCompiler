@@ -19,8 +19,10 @@
 
  */
 std::unique_ptr<AST> Parser::parseStatement() {
-    if (isToken(TokenType::KEYWORD)) return parseStatementFlow();
-    return parseInstruction();
+    if (isToken(TokenType::KEYWORD)) 
+        return parseStatementFlow();
+    else
+        return parseInstruction();
 }
 
 /**
@@ -52,6 +54,8 @@ std::unique_ptr<AST> Parser::parseStatementFlow() {
         return parseStatementBranching();
     if (isToken(keywords::FOR_LOOP)) 
         return parseStatementLooping();
+    
+    buildString(currentLine, u8"Syntax Error: Invalid flow keyword!");
     return nullptr;
 }
 

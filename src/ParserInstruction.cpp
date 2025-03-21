@@ -45,6 +45,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
                 return parseInstructionShorthand(identifier);
         }
     }
+    buildString(currentLine, u8"Syntax Error: expected identifier!");
     return nullptr;
 }
 
@@ -64,8 +65,10 @@ std::unique_ptr<AST> Parser::parseInstruction() {
 std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& identifier) {
     getNextToken();
     auto expression = parseExpression();
-    if (expression == nullptr) 
+    if (expression == nullptr) {
+        buildString(currentLine, u8"Syntax Error: invalid assignment expression!");
         return nullptr;
+    }
     
     std::unique_ptr<AST> reference = std::make_unique<VariableReferenceAST>(identifier, currentLine);
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(reference), std::move(expression), currentLine);
@@ -94,8 +97,10 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
     getNextToken(); // eat '='
     
     std::unique_ptr<AST> expression = parseExpression();
-    if (expression == nullptr) 
+    if (expression == nullptr) {
+        buildString(currentLine, u8"Syntax Error: invalid array instruction expression!");
         return nullptr;
+    }
     
     std::unique_ptr<AST> arrReference = std::make_unique<AccessArrayElementAST>(identifier, std::move(index), currentLine);
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(arrReference), std::move(expression), currentLine);
@@ -114,13 +119,18 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  *           ^ we are always here
  */
 std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
-    if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) 
+    if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) {
+        buildString(currentLine, u8"Syntax Error: invalid shorthand operator - only plus, minus, multiply, divide and power is allowed!");
         return nullptr;
+    }
 
     auto op = operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
 
     getNextToken();
-    if (!isToken(TokenType::OPERATOR)) return nullptr;
+    if (!isToken(TokenType::OPERATOR)){
+        buildString(currentLine, u8"Syntax Error: expected operator!");
+        return nullptr;    
+    }
 
     std::unique_ptr<AST> expression;
     if (op->first == m_currentToken->value && (op->first == operators::PLUS || op->first == operators::MINUS)) {
@@ -128,13 +138,19 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         getNextToken();
         expression = std::make_unique<NumberAST>(1, currentLine);
 
-        if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) return nullptr;
+        if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) {
+            buildString(currentLine, u8"Syntax Error: shorthand operator cannot interact with other operators!");   
+            return nullptr;
+        }
     } else if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
 
         // var -= I
         getNextToken();
         expression = parseExpression();
-    } else return nullptr;
+    } else {
+        buildString(currentLine, u8"Syntax Error: invalid shorthand operator!");   
+        return nullptr;
+    } 
 
     std::unique_ptr<AST> rhs = std::make_unique<BinaryOperatorAST>(std::u8string(op->first), std::make_unique<VariableReferenceAST>(identifier, currentLine), std::move(expression), currentLine);
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::make_unique<VariableReferenceAST>(identifier, currentLine), std::move(rhs), currentLine);
@@ -152,13 +168,17 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
 std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
     getNextToken(); // eat rerum
 
-    if (!isToken(TokenType::IDENTIFIER)) 
+    if (!isToken(TokenType::IDENTIFIER)) {
+        buildString(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
+    }
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
-    if (!isToken(TokenType::OPERATOR, u8"=")) 
+    if (!isToken(TokenType::OPERATOR, u8"=")) {
+        buildString(currentLine, u8"Syntax Error: assign operator '=' expected!");
         return nullptr;
+    }
     getNextToken(); // eat '=' 
 
     auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
@@ -181,6 +201,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
  * Examples:
  *    - numerus var
  *    - numerus var = I
+ *    - numerus[I] var = [I]
  *    - numerus var = λ(...): [Block] ;
  *    - nihil   var = λ(...): [Block] ;
  *      ^ we are always here
@@ -206,6 +227,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         getNextToken(); // eat type
     
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+            // it is array declaration
             if (primitiveType == PrimitiveType::VOID) {
                 buildString(currentLine, u8"Syntax Error: array declaration cannot be of type nihil!");
                 return nullptr;
@@ -222,8 +244,10 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         }
     }
 
-    if (!isToken(TokenType::IDENTIFIER)) 
+    if (!isToken(TokenType::IDENTIFIER)) {
+        buildString(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
+    }
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
@@ -231,8 +255,10 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
     }
     
-    if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) 
+    if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
+        buildString(currentLine, u8"Syntax Error: initialization missing! Use assign operator '=' to assign a value!");
         return nullptr;
+    }
     getNextToken(); // eat '='
 
     std::unique_ptr<AST> expression;
@@ -241,13 +267,12 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         return parseInstructionFunction(identifier, std::move(dataType));
     } 
-    // Expression
-    else {
-        expression = parseExpression();
-    }
-    
-    if (expression == nullptr) 
+
+    expression = parseExpression();
+    if (expression == nullptr)  {
+        buildString(currentLine, u8"Syntax Error: invalid declaration expression!");
         return nullptr;
+    }
     
     std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
@@ -314,7 +339,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
 
 
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        buildString(currentLine, u8"Syntax Error: array initialization missing!");
+        buildString(currentLine, u8"Syntax Error: array initialization missing! Use assign operator '=' to initialize array!");
         return nullptr;
     }
 
@@ -440,8 +465,10 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
-            if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) || isToken(TokenType::EOF_TOKEN)) 
+            if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) || isToken(TokenType::EOF_TOKEN)) {
+                buildString(currentLine, u8"Syntax Error: missing expression after comma!");   
                 return nullptr;
+            }
 
             continue;
         }

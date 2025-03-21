@@ -418,7 +418,8 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     u8"numerus[] arr = [I]",
     u8"numerus[O] arr = []",
     u8"numerus['a'] arr = []",
-    u8"numerus[] arr"
+    u8"numerus[] arr",
+    u8"numerus fake_arr = [I, II]"
 ));
 
 // --- Assignment section ---

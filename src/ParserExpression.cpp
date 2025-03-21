@@ -54,7 +54,14 @@ std::unique_ptr<AST> Parser::parseExpression() {
         return std::make_unique<BinaryOperatorAST>(std::u8string(op.first), std::move(left), std::move(right), currentLine);
     }
 
-    if (!isToken(TokenType::OPERATOR) || isToken(TokenType::OPERATOR, operators::ASSIGN)) return nullptr;
+    if (!isToken(TokenType::OPERATOR)) {
+        buildString(currentLine, u8"Syntax Error: expected operator!");   
+        return nullptr;
+    }
+    if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
+        buildString(currentLine, u8"Syntax Error: assign operator is not allowed here!");   
+        return nullptr;
+    }
     auto nextOp = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
 
     getNextToken();
