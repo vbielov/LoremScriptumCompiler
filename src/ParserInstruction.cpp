@@ -328,7 +328,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
 
     if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
         // only declaration - no init
-        if (arrSize <= 0) {
+        if (arrSize < 0) {
             buildString(currentLine, u8"Syntax Error: array declaration without initialization must have size!");
             return nullptr;
         }
@@ -394,8 +394,8 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     }
 
     arrSize = elements.size();
-    if (arrSize <= 0) {
-        buildString(currentLine, u8"Syntax Error: array size must be greater than zero!");
+    if (arrSize < 0) {
+        buildString(currentLine, u8"Syntax Error: array size cannot be negative!");
         return nullptr;
     }
 
