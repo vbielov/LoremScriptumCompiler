@@ -4,7 +4,7 @@ Lexer::Lexer(const std::u8string& sourceCode)
     : m_souceCode(&sourceCode)
     , m_charIterator(0) {}
 
-void Lexer::tokenize(std::vector<Token>& outTokens) {
+void Lexer::tokenize(std::vector<Token>& outTokens, std::ostream &ostr) {
     Token token;
     while (true) {
         token = getNextToken();
@@ -14,11 +14,11 @@ void Lexer::tokenize(std::vector<Token>& outTokens) {
     }
 
     #if !defined(NDEBUG)
-    std::cout << "----------------------- Tokens: ----------------------- " << std::endl << std::endl;
+    ostr << "----------------------- Tokens: ----------------------- " << std::endl << std::endl;
     for(const auto& token : outTokens) {
-        std::cout << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
+        ostr << TOKEN_TYPE_LABELS[(int)token.type] << ": " << (const char*)(token.value.c_str()) << std::endl;
     }
-    std::cout << std::endl;
+    ostr << std::endl;
     #endif
 }
 

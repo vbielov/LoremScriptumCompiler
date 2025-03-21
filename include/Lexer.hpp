@@ -14,7 +14,7 @@ class Lexer {
 
    public:
     Lexer(const std::u8string& sourceCode);
-    void tokenize(std::vector<Token>& outTokens);
+    void tokenize(std::vector<Token>& outTokens, std::ostream &ostr);
     
 private:
     /// @return next token from code given in constructor

@@ -36,7 +36,6 @@ std::unique_ptr<AST> Parser::parseStatement() {
 std::unique_ptr<AST> Parser::parseStatementFlow() {
     if (isToken(keywords::BREAK)) {
         if (m_loopCount == 0) {
-            printError("finio can only be called inside loop");
             buildString(currentLine, u8"Syntax Error: finio can only be called inside of a loop");
             return nullptr;
         }
@@ -84,12 +83,14 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
         getNextToken();
     }
     if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) {
-        buildString(currentLine, u8"Syntax Error: opening bracket expected!");
+        buildString(currentLine, u8"Syntax Error: opening bracket ':' expected!");
         return nullptr;
     }
     auto ifBlock = parseBlock();
-    if (ifBlock == nullptr) 
+    if (ifBlock == nullptr) {
+        buildString(currentLine, u8"Syntax Error: failed to read branching statement!");
         return nullptr;
+    }
 
     std::unique_ptr<BlockAST> elseBlock;
 
@@ -102,7 +103,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
         auto pseudoIf = std::vector<std::unique_ptr<AST>>();
         auto elifBranch = parseStatementBranching();
         if (elifBranch == nullptr) {
-            buildString(currentLine, u8"Syntax Error: failure to read branching statement!");
+            buildString(currentLine, u8"Syntax Error: failed to read branching statement!");
             return nullptr;
         }
         pseudoIf.emplace_back(std::move(elifBranch));
@@ -114,10 +115,13 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
             currentLine++;
             getNextToken();
         }
-        if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) return nullptr;
+        if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)) {
+            buildString(currentLine, u8"Syntax Error: closing bracket ';' expected!");
+            return nullptr;
+        } 
         elseBlock = parseBlock();
         if (elseBlock == nullptr) {
-            buildString(currentLine, u8"Syntax Error: else Block is missing!");
+            buildString(currentLine, u8"Syntax Error: failed to read branching statement!");
             return nullptr;
         }
     } else {
@@ -148,7 +152,7 @@ std::unique_ptr<IfAST> Parser::parseStatementBranching() {
 std::unique_ptr<AST> Parser::parseStatementLooping() {
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
-        buildString(currentLine, u8"Syntax Error: opening bracket ( expected!");
+        buildString(currentLine, u8"Syntax Error: opening bracket '(' expected!");
         return nullptr;
     }
 
@@ -158,7 +162,7 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     if (isToken(TokenType::TYPE)) {
         declaration = parseInstructionDeclaration();
         if (declaration == nullptr) {
-                buildString(currentLine, u8"Syntax Error: Invalid or missing declaration!");
+                buildString(currentLine, u8"Syntax Error: Invalid loop declaration!");
                 return nullptr;
             }
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) getNextToken();
@@ -167,20 +171,19 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
         endExpression = parseExpression();
         if (endExpression == nullptr){ 
-        
-            buildString(currentLine, u8"Syntax Error: closing bracket ) is expected!");
+            buildString(currentLine, u8"Syntax Error: closing bracket ')' is expected!");
             return nullptr;
         }
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
             if (isToken(TokenType::TYPE)) {
-                buildString(currentLine, u8"Syntax Error: type declartion not expected here!");
+                buildString(currentLine, u8"Syntax Error: type declaration must be at first position of loop!");
                 return nullptr;
             }
             stepExpression = parseInstruction();
             if (stepExpression == nullptr) {
-                buildString(currentLine, u8"Syntax Error: step expression is missing!");
+                buildString(currentLine, u8"Syntax Error: invalid step expression!");
                 return nullptr;
             }
         }
@@ -197,7 +200,7 @@ std::unique_ptr<AST> Parser::parseStatementLooping() {
         getNextToken();
     }
     if (!isToken(TokenType::PUNCTUATION, punctuation::BLOCK_OPEN)){ 
-        buildString(currentLine, u8"Syntax Error: opening bracket not expected here ':' !");
+        buildString(currentLine, u8"Syntax Error: opening bracket ':' expected!");
         return nullptr;
     }
 

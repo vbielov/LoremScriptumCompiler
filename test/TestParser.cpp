@@ -4,11 +4,13 @@
 
 std::string runParser(std::u8string& input) {
     std::vector<Token> token;
-    Lexer(input).tokenize(token);
-    Parser parser(token, true);
+    std::ostringstream oss;
+    std::ostringstream oss_dump;
+
+    Lexer(input).tokenize(token, oss_dump);
+    Parser parser(token, true, oss);
     auto block = parser.parse();
 
-    std::ostringstream oss;
     if (block != nullptr) {
         block->printTree(oss, "", true);
     } else oss << "block is nullptr";
@@ -18,11 +20,13 @@ std::string runParser(std::u8string& input) {
 
 std::string runParserInvalid(std::u8string& input) {
     std::vector<Token> token;
-    Lexer(input).tokenize(token);
-    Parser parser(token, true);
+    std::ostringstream oss;
+    std::ostringstream oss_dump;
+
+    Lexer(input).tokenize(token, oss_dump);
+    Parser parser(token, true, oss);
     auto block = parser.parse();
 
-    std::ostringstream oss;
     if (block != nullptr) {
         block->printTree(oss, "", true);
     } else oss << "block is nullptr";

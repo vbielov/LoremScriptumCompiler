@@ -29,7 +29,7 @@ int main(int argc, const char** argv) {
     // Tokenize
     Lexer lexer = Lexer(sourceCode);
     std::vector<Token> tokens;
-    lexer.tokenize(tokens);
+    lexer.tokenize(tokens, std::cout);
 
     // Parse
     Parser parser = Parser(tokens);

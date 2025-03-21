@@ -8,6 +8,7 @@ class Parser {
 private:
     const std::vector<Token>& m_tokens;
     std::vector<Token>::const_iterator m_currentToken;
+    std::ostream &m_ostr;
     
     int m_loopCount;
     int m_blockCount;
@@ -18,7 +19,7 @@ private:
 
 public:
     Parser(const std::vector<Token>& tokens);
-    Parser(const std::vector<Token>& tokens, bool isTest);
+    Parser(const std::vector<Token>& tokens, bool isTest, std::ostream &m_ostr);
 
     bool isValid();
     std::unique_ptr<BlockAST> parse();
@@ -38,9 +39,6 @@ private:
     bool isToken(TokenType type, const std::u8string_view& value);
     bool isToken(const std::u8string_view& value);
     bool isUnaryOperator();
-
-    void printError(std::string error);
-    void printUnknownTokenError();
 
     // --- Block section ---
     std::unique_ptr<BlockAST> parseBlock();

@@ -3,7 +3,8 @@
 
 TEST(BasicTest, TestLexerWithBasicCode) {
     std::vector<Token> token;
-    Lexer(SOURCE_CODE_TO_TEST).tokenize(token);
+    std::stringstream oss;
+    Lexer(SOURCE_CODE_TO_TEST).tokenize(token, oss);
 
     for (std::vector<Token>::size_type i = 0; i < token.size() && i < EXPECTED_TOKENS.size(); i++)
     {
