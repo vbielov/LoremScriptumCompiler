@@ -3,21 +3,22 @@
 Parser::Parser(const std::vector<Token>& tokens) 
     : m_tokens(tokens)
     , m_currentToken(nullptr)
+    , m_ostr(std::cout)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
     , m_isTest(false)
     , m_structHashMap() {}
 
-Parser::Parser(const std::vector<Token>& tokens, bool isTest) 
+Parser::Parser(const std::vector<Token>& tokens, bool isTest, std::ostream &ostr) 
     : m_tokens(tokens)
     , m_currentToken(nullptr)
+    , m_ostr(ostr)
     , m_loopCount(0)
     , m_blockCount(-1)
     , m_isValid(true)
     , m_isTest(isTest)
     , m_structHashMap() {}
-
 
 std::unique_ptr<BlockAST> Parser::parse() {
     if (m_isTest) {
@@ -27,6 +28,7 @@ std::unique_ptr<BlockAST> Parser::parse() {
 
     auto block = parseBlock();
 
+    // Create main wrapper function
     std::unique_ptr<AST> pseudoReturnValue = std::make_unique<NumberAST>(0, currentLine);
     auto pseudoReturn = std::make_unique<ReturnAST>(std::move(pseudoReturnValue), currentLine);
 
@@ -50,14 +52,14 @@ std::unique_ptr<BlockAST> Parser::parse() {
     auto treeRoot = std::make_unique<BlockAST>(std::move(m_topLevelDeclarations), currentLine);
 
     #if !defined(NDEBUG)
-    std::cout << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl << std::endl;
+    m_ostr << "----------------------- Abstract Syntax Tree: ----------------------- " << std::endl << std::endl;
     if (treeRoot) {
-        treeRoot->printTree(std::cout, "", false);
+        treeRoot->printTree(m_ostr, "", false);
     }
-    std::cout << std::endl;
+    m_ostr << std::endl;
     #endif
 
-    return std::move(treeRoot);
+    return treeRoot;
 }
 
 
@@ -87,17 +89,6 @@ bool Parser::isToken(TokenType type, const std::u8string_view& value) {
 
 bool Parser::isUnaryOperator() {
     return isToken(TokenType::OPERATOR, operators::PLUS) || isToken(TokenType::OPERATOR, operators::MINUS) || isToken(TokenType::OPERATOR, operators::NOT);
-}
-
-void Parser::printUnknownTokenError() {
-    if (m_isTest) return;
-    std::cerr << RED << "Error: Unknown token: " << TOKEN_TYPE_LABELS[(int)(m_currentToken->type)]
-              << " " << (const char*)(m_currentToken->value.c_str()) << RESET << std::endl;
-}
-
-void Parser::printError(std::string error) {
-    if (m_isTest) return;
-    std::cerr << RED << error << RESET << std::endl;
 }
 
 const Token& Parser::getNextToken() {

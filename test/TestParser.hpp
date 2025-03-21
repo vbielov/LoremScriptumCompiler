@@ -37,11 +37,12 @@ TEST_P(TestParserDebugInvalid, TestParserDebugInvalid) {
 
 INSTANTIATE_TEST_SUITE_P(TestParserDebugValid, TestParserDebugValid, ::testing::Values(
     std::make_pair(
-        u8"nihil foo = λ(): ;",
+        u8"numerus[I] arr = [I]",
         "└── BlockAST\n"
-        "    └── FunctionAST\n"
-        "        ├── FunctionPrototypeAST(nihil foo)\n"
-        "        └── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(numerus[1] arr)\n"
+        "        └── ArrayInitializationAST\n"
+        "            └── NumberAST(1)\n"
     )
 ));
 

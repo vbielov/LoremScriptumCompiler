@@ -8,6 +8,7 @@ class Parser {
 private:
     const std::vector<Token>& m_tokens;
     std::vector<Token>::const_iterator m_currentToken;
+    std::ostream &m_ostr;
     
     int m_loopCount;
     int m_blockCount;
@@ -18,7 +19,7 @@ private:
 
 public:
     Parser(const std::vector<Token>& tokens);
-    Parser(const std::vector<Token>& tokens, bool isTest);
+    Parser(const std::vector<Token>& tokens, bool isTest, std::ostream &m_ostr);
 
     bool isValid();
     std::unique_ptr<BlockAST> parse();
@@ -39,9 +40,6 @@ private:
     bool isToken(const std::u8string_view& value);
     bool isUnaryOperator();
 
-    void printError(std::string error);
-    void printUnknownTokenError();
-
     // --- Block section ---
     std::unique_ptr<BlockAST> parseBlock();
 
@@ -54,10 +52,11 @@ private:
     // --- Instruction section ---
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();
+    std::unique_ptr<AST> parseInstructionDeclarationStruct();
+    std::unique_ptr<AST> parseInstructionDeclarationArray(PrimitiveType type);
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);
-    std::unique_ptr<AST> parseStructDeclaration();
 
     std::unique_ptr<FunctionPrototypeAST> parseInstructionPrototype(const std::u8string& identifier, std::unique_ptr<IDataType> type);
     std::unique_ptr<AST> parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type);
