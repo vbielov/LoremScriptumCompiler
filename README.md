@@ -281,3 +281,7 @@ The compiler will paste the content of the included file at the position of the 
 apere './std.lorem'
 apere './lib.a'
 ```
+
+<p align="center">
+    <img src="./resources/img/jeff.png" />
+</p>
