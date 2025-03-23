@@ -1,0 +1,5 @@
+numerus printf = λ(litera str)
+
+litera[] arr = 'hello world!'
+
+printf(arr)

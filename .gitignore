@@ -4,3 +4,8 @@ build/
 /*.o
 /*.asm
 /*.exe
+
+# Ignore example generated code
+/examples/**/*.o
+/examples/**/*.asm
+/examples/**/*.exe

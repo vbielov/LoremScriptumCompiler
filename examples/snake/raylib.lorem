@@ -1,0 +1,37 @@
+apere 'libs/libraylibdll.a'
+apere 'libs/raylibbindings.o'
+
+nihil initWindow = λ(numerus width, numerus height, litera title)
+
+nihil setTargetFPS = λ(numerus fps)
+
+asertio windowShouldClose = λ()
+
+nihil beginDrawing = λ()
+
+nihil clearBackground = λ(numerus r, numerus g, numerus b, numerus a)
+
+nihil drawText = λ(litera text, numerus posX, numerus posY, numerus fontSize, numerus colorR, numerus colorG, numerus colorB, numerus colorA)
+
+nihil endDrawing = λ()
+
+nihil closeWindow = λ()
+
+nihil drawRectangle = λ(numerus posX, numerus posY, numerus width, numerus height, numerus colorR, numerus colorG, numerus colorB, numerus colorA)
+
+asertio isKeyDown = λ(numerus key)
+
+numerus key_W = LXXXVII
+numerus key_A = LXV
+numerus key_S =	LXXXIII
+numerus key_D = LXVIII
+
+rerum color = (numerus r, numerus g, numerus b, numerus a)
+color white = [CCLV, CCLV, CCLV, CCLV]
+color black = [O, O, O, CCLV]
+color red = [CCLV, O, O, CCLV]
+color green = [O, CCLV, O, CCLV]
+color darkGreen = [O, CXXVIII, O, CCLV]
+
+rerum vector = (numerus x, numerus y)
+vector zero = [O, O]
