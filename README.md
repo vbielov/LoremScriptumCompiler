@@ -161,13 +161,16 @@ numerus result = add(II, III)
 
 ### How to: Arrays
 
-You can define an array using the following syntax: `type[size] identifier = [value1, value2, ...]`
+You can define an array using the following syntax: `type[size] identifier = [value1, value2, ...]`  
+It is also possible to define strings. In LoremScriptum a string is an array of chars `litera[]`.
 
 **Examples:**
 
 ```lorem
 numerus[IV] a = [O, I, II, III, IV]
 litera[VI] b = ['H', 'e', 'l', 'l', 'o', '!']
+
+litera[] str = 'Hello World!'
 
 a[II] += I
 
@@ -177,7 +180,7 @@ numerus[] c = [O, I, II, III, IV]
 > [!NOTE]
 > You can access an element of an array using the `[x]` operator, where `x` is the index of the element.  
 > You can also define an array without specifying the size. In this case the size will be calculated from the number of elements in the array.  
-> Be aware that you cannot change the size of an array after it has been declared.
+> If you define a string using the shorthand version `litera[] str = 'Hello World!'` the array will always end with `\0`. It is not possible to add two strings.
 
 > [!WARNING]
 > The compiler will not set default values for the elements of an array and without setting them manually their behaviour is undefined.
