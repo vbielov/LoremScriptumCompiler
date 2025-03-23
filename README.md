@@ -20,7 +20,7 @@ LoremScriptum is a new compiled programming language featuring Latin-inspired sy
 - CMake, Make
 - LLVM, LLD
 
-If you are on Windows, I recommend using MinGW from [winlibs.com](https://winlibs.com/) and extracting it to `C:\mingw64\`
+If you are on Windows, it is recommended to use MinGW from [winlibs.com](https://winlibs.com/) and add `mingw64\bin` to your _PATH_.
 
 ## Installation
 
@@ -74,13 +74,6 @@ You can also click on the line number to jump directly to the error in your code
 Here is a short overview of the capabilities of LoremScriptum
 
 ```lorem
-nihil printf = λ(litera[O] str)
-
-litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
-printf(helloWorld)
-```
-
-```lorem
 apere './std.lorem'
 
 numerus var = III
@@ -101,22 +94,34 @@ numerus[IV] array = [O, I, II, III]
 numerus foo = λ(numerus a, numerus b):
     retro a + b
 ;
+
+rerum vector_2d = (numerus x, numerus y)
+vector_2d point = [V, -VI]
+point[x] = VI
+```
+
+```lorem
+nihil printf = λ(litera[O] str)
+
+litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
+printf(helloWorld)
 ```
 
 ### How to: Types
 
 There are a total of **4** types in LoremScriptum:
 
-| LoremScriptum | Equivalent | Example     |
-| ------------- | ---------- | ----------- |
-| numerus       | int        | O, XLII     |
-| asertio       | boolean    | veri, falso |
-| litera        | char       | 'a', '\n'   |
-| nihil         | void       | /           |
+| LoremScriptum | Equivalent | Example                     |
+| ------------- | ---------- | --------------------------- |
+| numerus       | int        | O, XLII                     |
+| asertio       | boolean    | veri, falso                 |
+| litera        | char       | 'a', '\n'                   |
+| rerum         | struct     | [see this](#how-to-structs) |
+| nihil         | void       | /                           |
 
 > [!NOTE]  
 > _nihil_ can only be used in function declarations.  
-> numerus `O` is the equivalent to an arabic zero. The Roman number system does not atually include a symbol for zero.
+> numerus `O` is the equivalent to an Arabic zero. The Roman number system does not actually include a symbol for zero.
 
 You can also make an _array_ of any type by appending `[size]` to the type where `size` is a fixed numerus.
 
@@ -152,7 +157,46 @@ numerus result = add(II, III)
 
 > [!NOTE]
 > The `retro` keyword is used to return a value from a function.  
-> Code blocks can be opend with `:` and closed with `;`. This is the equivalent of `{` and `}` in other languages.
+> Code blocks can be opened with `:` and closed with `;`. This is the equivalent of `{` and `}` in other languages.
+
+### How to: Arrays
+
+You can define an array using the following syntax: `type[size] identifier = [value1, value2, ...]`
+
+**Examples:**
+
+```lorem
+numerus[IV] a = [O, I, II, III, IV]
+litera[VI] b = ['H', 'e', 'l', 'l', 'o', '!']
+
+a[II] += I
+
+numerus[] c = [O, I, II, III, IV]
+```
+
+> [!NOTE]
+> You can access an element of an array using the `[x]` operator, where `x` is the index of the element.  
+> You can also define an array without specifying the size. In this case the size will be calculated from the number of elements in the array.  
+> Be aware that you cannot change the size of an array after it has been declared.
+
+> [!WARNING]
+> The compiler will not set default values for the elements of an array and without setting them manually their behaviour is undefined.
+
+### How to: Structs
+
+You can define a struct using the following syntax: `rerum structName = (type member1, type member2, ...)`  
+After defining a struct you can create an instance of it using the following syntax: `structName instance = [value1, value2, ...]`
+
+**Examples:**
+
+```lorem
+rerum vector_2d = (numerus x, numerus y)
+vector_2d point = [V, -VI]
+point[x] = VI
+```
+
+> [!NOTE]
+> Creation of a struct type is done using `()` and instantiation is like an array with `[]`.
 
 ### How to: Flow Control
 
