@@ -382,6 +382,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     }
     
     // currentToken is always ]
+    getNextToken(); // eat ']'
 
     if (arrSize != actualSize && arrSize != -1) {
         std::string arrSizeStr = std::to_string(arrSize);
