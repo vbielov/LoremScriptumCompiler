@@ -14,35 +14,7 @@ LoremScriptum is a new compiled programming language featuring Latin-inspired sy
 > This is just a student project for fun and education.
 > Do not use it in production!
 
-## Requirements
-
-- GCC/Clang C++20 Compiler
-- CMake, Make
-- LLVM, LLD
-
-If you are on Windows, it is recommended to use MinGW from [winlibs.com](https://winlibs.com/) and add `mingw64\bin` to your _PATH_.
-
-## Installation
-
-To build and use the LoremScriptum compiler, follow these steps:
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/vbielov/LoremScriptumCompiler.git
-   cd LoremScriptumCompiler
-   ```
-
-2. **Build the compiler:**
-
-   ```bash
-   mkdir build
-   cd build
-   cmake ..
-   make
-   ```
-
-3. **Run the compiler:**
+**Compiler usage:**
 
    ```bash
    ./lsc <input_file.lorem>
@@ -51,6 +23,14 @@ To build and use the LoremScriptum compiler, follow these steps:
 > [!TIP]
 > For a better programming experience we **strongly** recommend using VS Code with the [LoremScriptum Extension](https://marketplace.visualstudio.com/items?itemName=BackBencher.loremscriptum)  
 > _For more information on how to use the extension, see [this](#how-to-special-keywords--operators) section below._
+
+## Installation
+
+You can find pre-built binaries for Windows/Linux in [Releases](https://github.com/vbielov/LoremScriptumCompiler/releases).
+
+But they still require LLVM libraries of right versions to be installed.
+
+Guide for building this project can be found in [INSTALL.md](./INSTALL.md)
 
 ## Our Compiler structure
 
@@ -80,7 +60,7 @@ numerus var = III
 
 var += II
 
-si var ⇔ V:
+si(var ⇔ V):
     scriborNum(var)
 ;
 
@@ -101,9 +81,9 @@ point[x] = VI
 ```
 
 ```lorem
-nihil printf = λ(litera[O] str)
+nihil printf = λ(litera str)
 
-litera[XIII] helloWorld = ['H','e','l','l','o',' ','W','o','r','l','d','!','\0']
+litera[] helloWorld = 'Hello World!'
 printf(helloWorld)
 ```
 
@@ -287,4 +267,6 @@ apere './lib.a'
 
 <p align="center">
     <img src="./resources/img/jeff.png" />
+    <br/>
+    say hi to Jeff
 </p>
