@@ -430,7 +430,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     // λ
     if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
         if (arrSize < 0) {
-            buildString(currentLine, u8"Syntax Error: Array size must be defined as positive number!");
+            logError(currentLine, u8"Syntax Error: Array size must be defined as positive number!");
             return nullptr;
         }
         auto dataType = std::make_unique<ArrayDataType>(type, arrSize);
@@ -443,13 +443,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
         getNextToken(); // eat funcCall identifier
 
         if(!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
-            buildString(currentLine, u8"Syntax Error: Expected '(' after identifier for function call!");
+            logError(currentLine, u8"Syntax Error: Expected '(' after identifier for function call!");
             return nullptr;
         }
         
         std::unique_ptr<AST> expression = parseExpressionFunctionCall(funcCallIdentifier);
         if (expression == nullptr)  {
-            buildString(currentLine, u8"Syntax Error: invalid declaration expression!");
+            logError(currentLine, u8"Syntax Error: invalid declaration expression!");
             return nullptr;
         }
 
