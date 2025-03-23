@@ -105,6 +105,10 @@ Now we have to tell cmake where those files are:
     cmake .. -DLLD_DIR="/path/to/llvm/lib/cmake/lld"
     ```
 
+
+arch should not be affected by this (23.3.2025).
+
+
 ## No llvm/lld header files
 
 ![lld/Common/Driver.h](./resources/img/lld_include.png)
