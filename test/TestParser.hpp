@@ -47,5 +47,5 @@ INSTANTIATE_TEST_SUITE_P(TestParserDebugValid, TestParserDebugValid, ::testing::
 ));
 
 INSTANTIATE_TEST_SUITE_P(TestParserDebugInvalid, TestParserDebugInvalid, ::testing::Values(
-    u8"var = var++"
+    u8"rerum vector = ("
 ));

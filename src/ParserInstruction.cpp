@@ -13,11 +13,15 @@
  *      - var++
  *      - var--
  */
-std::unique_ptr<AST> Parser::parseInstruction() { 
-    if (isToken(TokenType::TYPE) || m_structHashMap.find(m_currentToken->value) != m_structHashMap.end()) {
+std::unique_ptr<AST> Parser::parseInstruction() {
+    bool isStructType = m_structHashMap.find(m_currentToken->value) != m_structHashMap.end();
+
+    if (isToken(TokenType::TYPE) || isStructType) {
+        std::unique_ptr<AST> declaration = parseInstructionDeclaration();
+
         if (m_blockCount == 0 && !m_isTest) {
             // is Top level declaration
-            auto declaration = parseInstructionDeclaration();
+            
             if (declaration == nullptr) {
                 buildString(currentLine, u8"Syntax Error: Invalid declaration!");
                 return nullptr;
@@ -27,7 +31,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
             auto pseudoEmptyInstr = std::vector<std::unique_ptr<AST>>();
             return std::make_unique<BlockAST>(std::move(pseudoEmptyInstr), currentLine);
         } else {
-            return parseInstructionDeclaration();
+            return declaration;
         }
     }
     if (isToken(TokenType::IDENTIFIER)) {
@@ -182,6 +186,11 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
     getNextToken(); // eat '=' 
 
     auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
+    if (hackyPrototype == nullptr) {
+        buildString(currentLine, u8"Syntax Error: invalid struct declaration! Try: rerum vector = (numerus x, numerus y)");
+        return nullptr;
+    }
+
     std::vector<TypeIdentifierPair> attributes;
     attributes.reserve(hackyPrototype->getArgs().size());
     for (const auto& arg : hackyPrototype->getArgs()) {
@@ -213,35 +222,33 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         return parseInstructionDeclarationStruct();
     }
 
-    auto structIter = m_structHashMap.find(typeStr);
-    if (structIter != m_structHashMap.end()) {
-        dataType = std::make_unique<StructDataType>(structIter->first);
-        getNextToken(); // eat struct identifier
-    } else {
-        auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
-        if (typeIter == STR_TO_PRIMITIVE_MAP.end()) {
-            buildString(currentLine, u8"Unknown or invalid type!");
+    if (m_structHashMap.find(m_currentToken->value) != m_structHashMap.end()) {
+        return parseInstructionDeclarationStructType();
+    }
+
+    auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
+    if (typeIter == STR_TO_PRIMITIVE_MAP.end()) {
+        buildString(currentLine, u8"Unknown or invalid type!");
+        return nullptr;
+    }
+    PrimitiveType primitiveType = typeIter->second;
+    getNextToken(); // eat type
+
+    if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+        // it is array declaration
+        if (primitiveType == PrimitiveType::VOID) {
+            buildString(currentLine, u8"Syntax Error: array declaration cannot be of type nihil!");
             return nullptr;
         }
-        PrimitiveType primitiveType = typeIter->second;
-        getNextToken(); // eat type
-    
-        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
-            // it is array declaration
-            if (primitiveType == PrimitiveType::VOID) {
-                buildString(currentLine, u8"Syntax Error: array declaration cannot be of type nihil!");
-                return nullptr;
-            }
 
-            auto array = parseInstructionDeclarationArray(primitiveType);
-            if (array == nullptr) {
-                buildString(currentLine, u8"Syntax Error: invalid array declaration!");
-                return nullptr;
-            }
-            return array;
-        } else {
-            dataType = std::make_unique<PrimitiveDataType>(primitiveType);
+        auto array = parseInstructionDeclarationArray(primitiveType);
+        if (array == nullptr) {
+            buildString(currentLine, u8"Syntax Error: invalid array declaration!");
+            return nullptr;
         }
+        return array;
+    } else {
+        dataType = std::make_unique<PrimitiveDataType>(primitiveType);
     }
 
     if (!isToken(TokenType::IDENTIFIER)) {
@@ -278,6 +285,81 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
 }
 
+/**
+ * create instance of self defined struct type
+ * 
+ * Examples:
+ *      - vector point  = [V, VI]
+ *      - test_struct t = ['a', 'b', III, veri]
+ *        ^ we are always here
+ * 
+ */
+std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
+    auto structIter = m_structHashMap.find(m_currentToken->value);
+    std::unique_ptr<IDataType> dataType = std::make_unique<StructDataType>(structIter->first);
+
+    getNextToken();
+    if (!isToken(TokenType::IDENTIFIER)) {
+        buildString(currentLine, u8"Syntax Error: identifier expected!");
+        return nullptr;
+    }
+
+    std::u8string identifier = m_currentToken->value;
+
+    getNextToken();
+    if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
+        // declaration without init
+        return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
+    }
+
+    if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
+        buildString(currentLine, u8"Syntax Error: rerum initialization missing! Use assign operator '=' to initialize rerum!");
+        return nullptr;
+    }
+
+    getNextToken();
+
+    if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+        buildString(currentLine, u8"Syntax Error: opening rerum bracket for initialization '[' expected!");
+        return nullptr;
+    }
+
+    getNextToken();
+    std::vector<std::unique_ptr<AST>> elements;
+
+    // get expression from each index
+    while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
+        if (isToken(TokenType::EOF_TOKEN)) {
+            buildString(currentLine, u8"Syntax Error: closing bracket for rerum initialization ']' expected!");
+            return nullptr;
+        }
+
+        std::unique_ptr<AST> element = parseExpression();
+        if (element == nullptr) {
+            buildString(currentLine, u8"Syntax Error: invalid expression during rerum initialization!");
+            return nullptr;
+        }
+
+        elements.push_back(std::move(element));
+
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
+            getNextToken(); // eat ','
+            continue;
+        }
+        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
+            break;
+        }
+        buildString(currentLine, u8"Syntax Error: expected ',' or ']' during rerum initialization!");
+        return nullptr;
+    }
+
+    // currentToken is always ]
+    getNextToken(); // eat ']'
+
+    std::unique_ptr<AST> expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements), currentLine);
+    std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
+    return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
+}
 
 /**
  * An array consists of multiple values from type primitive inside bracket

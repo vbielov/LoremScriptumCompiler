@@ -308,6 +308,18 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "    └── VariableDeclarationAST(numerus[1] arr)\n"
     ),
     std::make_pair(
+        u8"numerus[O] arr",
+        "└── BlockAST\n"
+        "    └── VariableDeclarationAST(numerus[0] arr)\n"
+    ),
+    std::make_pair(
+        u8"numerus[O] arr = []",
+        "└── BlockAST\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(numerus[0] arr)\n"
+        "        └── ArrayInitializationAST\n"
+    ),
+    std::make_pair(
         u8"numerus[I] arr = [I]",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
@@ -341,6 +353,68 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "        └── ArrayInitializationAST\n"
         "            ├── CharAST('a')\n"
         "            └── CharAST('b')\n"
+    ),
+
+    // Struct declaration
+    std::make_pair(
+        u8"rerum vector = ()",
+        "└── BlockAST\n"
+        "    └── StructAST(vector)\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = (numerus x)",
+        "└── BlockAST\n"
+        "    └── StructAST(vector)\n"
+        "        └── numerus x\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = (numerus x, numerus y)",
+        "└── BlockAST\n"
+        "    └── StructAST(vector)\n"
+        "        ├── numerus x\n"
+        "        └── numerus y\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = () \n vector point = []",
+        "└── BlockAST\n"
+        "    ├── StructAST(vector)\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(vector {} point)\n"
+        "        └── ArrayInitializationAST\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = (numerus x) \n vector point = [V]",
+        "└── BlockAST\n"
+        "    ├── StructAST(vector)\n"
+        "    │   └── numerus x\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(vector {} point)\n"
+        "        └── ArrayInitializationAST\n"
+        "            └── NumberAST(5)\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = (numerus x, numerus y) \n vector point = [V, VI]",
+        "└── BlockAST\n"
+        "    ├── StructAST(vector)\n"
+        "    │   ├── numerus x\n"
+        "    │   └── numerus y\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(vector {} point)\n"
+        "        └── ArrayInitializationAST\n"
+        "            ├── NumberAST(5)\n"
+        "            └── NumberAST(6)\n"
+    ),
+    std::make_pair(
+        u8"rerum vector = (asertio x, litera y) \n vector point = [veri, 'a']",
+        "└── BlockAST\n"
+        "    ├── StructAST(vector)\n"
+        "    │   ├── asertio x\n"
+        "    │   └── litera y\n"
+        "    └── BinaryOperatorAST('=')\n"
+        "        ├── VariableDeclarationAST(vector {} point)\n"
+        "        └── ArrayInitializationAST\n"
+        "            ├── BoolAST(true)\n"
+        "            └── CharAST('a')\n"
     )
 ));
 
@@ -395,7 +469,6 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     // Array declaration
     u8"numerus[ foo = [I]",
     u8"numerus] foo = [I]",
-    u8"numerus[] foo = []",
     u8"nihil[I] foo = [I]",
     u8"numerus[III] foo = [I, II, ]",
     u8"numerus[III] foo = []",
@@ -413,14 +486,23 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     u8"numerus[II] foo = [I]",
     u8"numerus[II] foo = [I, II, III]",
     u8"numerus[-I] foo = [I]",
-    u8"numerus[] foo = [I]",
     u8"numerus[-I] arr = [I]",
-    u8"numerus[] arr = [I]",
-    u8"numerus[O] arr = []",
     u8"numerus['a'] arr = []",
     u8"numerus[] arr",
     u8"numerus fake_arr = [I, II]",
-    u8"numerus[II] arr = [[I, II], [I, II]]"
+    u8"numerus[II] arr = [[I, II], [I, II]]",
+
+    // struct declaration
+    u8"rerum vector",
+    u8"rerum vector = (",
+    u8"rerum vector = )",
+    u8"rerum vector ()",
+    u8"rerum vector (numerus x)",
+    u8"rerum vector = (())",
+    u8"rerum vector = ((numerus x))",
+    u8"rerum vector = (numerus x, (numerus y))",
+    u8"vector point = []",
+    u8"vector point = [I, II]"
 ));
 
 // --- Assignment section ---

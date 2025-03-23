@@ -53,6 +53,7 @@ private:
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();
     std::unique_ptr<AST> parseInstructionDeclarationStruct();
+    std::unique_ptr<AST> parseInstructionDeclarationStructType();
     std::unique_ptr<AST> parseInstructionDeclarationArray(PrimitiveType type);
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
