@@ -1,6 +1,7 @@
 #include "ErrorHandler.hpp"
 
-static std::u8string output = u8"----------------------- Error while compiling  "; // stores log
+static std::u8string output = u8"----------------------- Error/s or Warning/s while compiling  "; // stores log
+static std::u8string warningLogs = u8"";
 
 static std::vector<std::u8string> sourceArray; // vector containing lines
 static std::vector<fileRange> fileRanges;
@@ -9,6 +10,8 @@ static std::vector<std::u8string> depth;
 std::u8string file; // filename that gets compiled
 
 static bool anyErrors = false;
+bool anyWarnings = false;
+
 
 // ---------- helper methods/procedures ---------- 
 
@@ -156,8 +159,12 @@ bool error(){
     return anyErrors;
 }
 
+bool warn(){
+    return anyWarnings;
+}
 
-void buildString(size_t line, std::u8string reason){ 
+
+void logError(size_t line, std::u8string reason){ 
     anyErrors = true;
     std::u8string build = u8"\n \033[1;41mError\033[0m encountered in Line ";
     
@@ -196,7 +203,49 @@ void buildString(size_t line, std::u8string reason){
 
 }
 
+void logWarning(size_t line, std::u8string reason){
+    anyWarnings = true;
+    std::u8string build = u8"\n \033[1;48;5;214mWarning\033[0m for Line ";
+    
+
+    rangeResult data = getFileName(line);
+
+    std::filesystem::path relativePath = (const char*)file.c_str();
+    
+    std::u8string stringAbsPath = data.fileName;
+
+    std::u8string uLine = toRomanConverter(data.displayline);
+
+    std::string sLine = std::to_string(data.displayline);
+    std::u8string uLine2(sLine.begin(), sLine.end());
+
+
+    build.append( u8"\x1b]8;;vscode://file/"+ stringAbsPath + u8":" + uLine2 + u8"\x1b\\"+ uLine + u8"\x1b]8;;\x1b\\" + u8" in File: "+ stringAbsPath);
+
+    //build += uLine;
+    build.append(u8"\n        \033[38;5;214m");
+
+    // append line from
+    if(sourceArray.size() > line-1){
+        build.append(sourceArray[line-1]);
+    } else {
+        build.append(u8"failure to obtain line");
+    }
+
+    build.append(u8"\033[0m \n Warning: ");
+    build.append(reason);
+    // append token
+
+
+    build.append(u8"\n");
+    warningLogs.append(build);
+}
+
+
+
 void dumpErrorLog(){
+    //insert warnings to end
+    output.append(warningLogs);
     std::cout << (const char*) output.c_str() << std::endl;
 }
 

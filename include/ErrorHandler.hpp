@@ -31,6 +31,9 @@ struct rangeResult {
 // returns bool based on if any errors happened before hand
 bool error();
 
+// returns bool based on detected warnings
+bool warn();
+
 // splits source into individual lines
 void grabSource(std::u8string sourceCode, std::string fileLocation);
 
@@ -38,7 +41,10 @@ void grabSource(std::u8string sourceCode, std::string fileLocation);
 // build string with reason as error message
 // get line from source file to print aswell
 // printed via dumpErrorLog
-void buildString(size_t line, std::u8string reason);
+void logError(size_t line, std::u8string reason);
+
+// works like logError but doesnt stop program flow
+void logWarning(size_t line, std::u8string reason);
 
 
 // dumps all ErrorLogs into terminal
