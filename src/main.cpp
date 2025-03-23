@@ -63,6 +63,16 @@ int main(int argc, const char** argv) {
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
 
+
+    logWarning(1, u8"abracadabra!");
+
+
+
+    if (warn()) { // check if any errors occured
+        dumpErrorLog();
+        return 1;
+    }
+
     // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
     //       Mingw doesn't support staticlly linking LLVM/LLD, for some reason => it will not allow exiting program without lld::exitLld(0), 
     //       Maybe it's somehow related to this bug: https://reviews.llvm.org/D102684
