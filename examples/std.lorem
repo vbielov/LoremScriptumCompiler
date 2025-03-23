@@ -1,3 +1,5 @@
+// This file includes standard helper functions
+
 numerus printf = λ(litera str)
 
 nihil scriborNewLine = λ():
@@ -25,7 +27,7 @@ nihil __scriborNum = λ(numerus num):
     count++
 
     ∑(numerus i = count - I, i ≥ O, i--):
-        litera[II] char = [digits[i], '\0']F
+        litera[II] char = [digits[i], '\0']
         printf(char)
     ;
 ;

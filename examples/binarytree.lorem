@@ -1,3 +1,6 @@
+// Binary Tree implemented  with arrays. This was written before array and struct was added to LoremScriptum
+// !!! This file should only be used for instructional purposes !!!
+
 apere './std.lorem'
 
 // Binary tree is represented as array. defaultValue is null value and cannot be added to tree
