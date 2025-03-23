@@ -368,9 +368,9 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
  *      - numerus[I]  arr = [I]
  *      - numerus[II] arr = [I, II]
  *      - numerus[II] arr = [I, II, III]
- *      - numerus[I]  arr = [foo() + IV]
- *      -  litera[II] arr = ['a', 'b']
- *      - numerus[]   arr = [foo() + IV]
+ *      - numerus[I] arr = [foo() + IV]
+ *      - litera[II] arr = ['a', 'b']
+ *      - numerus[] arr = [foo() + IV]
  *               ^ we are always here
  * 
  * note: numerus[] will automatically get the size of the array by counting the commas in initialization
@@ -425,7 +425,39 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
         return nullptr;
     }
 
-    getNextToken();
+    getNextToken(); // eat '='
+
+    // λ
+    if (isToken(TokenType::KEYWORD, keywords::FUNCTION)) { 
+        if (arrSize < 0) {
+            logError(currentLine, u8"Syntax Error: Array size must be defined as positive number!");
+            return nullptr;
+        }
+        auto dataType = std::make_unique<ArrayDataType>(type, arrSize);
+        return parseInstructionFunction(identifier, std::move(dataType));
+    }
+
+    // Function call
+    if(isToken(TokenType::IDENTIFIER)) {
+        std::u8string funcCallIdentifier = m_currentToken->value;
+        getNextToken(); // eat funcCall identifier
+
+        if(!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
+            logError(currentLine, u8"Syntax Error: Expected '(' after identifier for function call!");
+            return nullptr;
+        }
+        
+        std::unique_ptr<AST> expression = parseExpressionFunctionCall(funcCallIdentifier);
+        if (expression == nullptr)  {
+            logError(currentLine, u8"Syntax Error: invalid declaration expression!");
+            return nullptr;
+        }
+
+        auto dataType = std::make_unique<ArrayDataType>(type, arrSize);
+        std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
+        return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
+    }
+
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
         logError(currentLine, u8"Syntax Error: opening array bracket for initialization '[' expected!");
         return nullptr;

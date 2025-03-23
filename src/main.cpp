@@ -63,11 +63,6 @@ int main(int argc, const char** argv) {
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
 
-
-    logWarning(1, u8"abracadabra!");
-
-
-
     if (warn()) { // check if any errors occured
         dumpErrorLog();
         return 1;
