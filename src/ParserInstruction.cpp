@@ -23,7 +23,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
             // is Top level declaration
             
             if (declaration == nullptr) {
-                buildString(currentLine, u8"Syntax Error: Invalid declaration!");
+                logError(currentLine, u8"Syntax Error: Invalid declaration!");
                 return nullptr;
             }
             m_topLevelDeclarations.push_back(std::move(declaration));
@@ -49,7 +49,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
                 return parseInstructionShorthand(identifier);
         }
     }
-    buildString(currentLine, u8"Syntax Error: expected identifier!");
+    logError(currentLine, u8"Syntax Error: expected identifier!");
     return nullptr;
 }
 
@@ -70,7 +70,7 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
     getNextToken();
     auto expression = parseExpression();
     if (expression == nullptr) {
-        buildString(currentLine, u8"Syntax Error: invalid assignment expression!");
+        logError(currentLine, u8"Syntax Error: invalid assignment expression!");
         return nullptr;
     }
     
@@ -84,25 +84,25 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
     
     std::unique_ptr<AST> index = parseExpression();
     if (!index) {
-        buildString(currentLine, u8"Syntax Error: expected index for indexing array!");
+        logError(currentLine, u8"Syntax Error: expected index for indexing array!");
         return nullptr;
     }
 
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-        buildString(currentLine, u8"Syntax Error: expected ']' after array indexing!");
+        logError(currentLine, u8"Syntax Error: expected ']' after array indexing!");
         return nullptr;
     }
     getNextToken(); // eat ']'
 
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        buildString(currentLine, u8"Syntax Error: assign operator '=' expected!");
+        logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
         return nullptr;
     }
     getNextToken(); // eat '='
     
     std::unique_ptr<AST> expression = parseExpression();
     if (expression == nullptr) {
-        buildString(currentLine, u8"Syntax Error: invalid array instruction expression!");
+        logError(currentLine, u8"Syntax Error: invalid array instruction expression!");
         return nullptr;
     }
     
@@ -124,7 +124,7 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  */
 std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
     if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) {
-        buildString(currentLine, u8"Syntax Error: invalid shorthand operator - only plus, minus, multiply, divide and power is allowed!");
+        logError(currentLine, u8"Syntax Error: invalid shorthand operator - only plus, minus, multiply, divide and power is allowed!");
         return nullptr;
     }
 
@@ -132,7 +132,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
 
     getNextToken();
     if (!isToken(TokenType::OPERATOR)){
-        buildString(currentLine, u8"Syntax Error: expected operator!");
+        logError(currentLine, u8"Syntax Error: expected operator!");
         return nullptr;    
     }
 
@@ -143,7 +143,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         expression = std::make_unique<NumberAST>(1, currentLine);
 
         if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) {
-            buildString(currentLine, u8"Syntax Error: shorthand operator cannot interact with other operators!");   
+            logError(currentLine, u8"Syntax Error: shorthand operator cannot interact with other operators!");   
             return nullptr;
         }
     } else if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
@@ -152,7 +152,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         getNextToken();
         expression = parseExpression();
     } else {
-        buildString(currentLine, u8"Syntax Error: invalid shorthand operator!");   
+        logError(currentLine, u8"Syntax Error: invalid shorthand operator!");   
         return nullptr;
     } 
 
@@ -173,21 +173,21 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
     getNextToken(); // eat rerum
 
     if (!isToken(TokenType::IDENTIFIER)) {
-        buildString(currentLine, u8"Syntax Error: identifier expected!");
+        logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
     if (!isToken(TokenType::OPERATOR, u8"=")) {
-        buildString(currentLine, u8"Syntax Error: assign operator '=' expected!");
+        logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
         return nullptr;
     }
     getNextToken(); // eat '=' 
 
     auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
     if (hackyPrototype == nullptr) {
-        buildString(currentLine, u8"Syntax Error: invalid struct declaration! Try: rerum vector = (numerus x, numerus y)");
+        logError(currentLine, u8"Syntax Error: invalid struct declaration! Try: rerum vector = (numerus x, numerus y)");
         return nullptr;
     }
 
@@ -228,7 +228,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     auto typeIter = STR_TO_PRIMITIVE_MAP.find(typeStr);
     if (typeIter == STR_TO_PRIMITIVE_MAP.end()) {
-        buildString(currentLine, u8"Unknown or invalid type!");
+        logError(currentLine, u8"Unknown or invalid type!");
         return nullptr;
     }
     PrimitiveType primitiveType = typeIter->second;
@@ -237,13 +237,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
         // it is array declaration
         if (primitiveType == PrimitiveType::VOID) {
-            buildString(currentLine, u8"Syntax Error: array declaration cannot be of type nihil!");
+            logError(currentLine, u8"Syntax Error: array declaration cannot be of type nihil!");
             return nullptr;
         }
 
         auto array = parseInstructionDeclarationArray(primitiveType);
         if (array == nullptr) {
-            buildString(currentLine, u8"Syntax Error: invalid array declaration!");
+            logError(currentLine, u8"Syntax Error: invalid array declaration!");
             return nullptr;
         }
         return array;
@@ -252,7 +252,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     }
 
     if (!isToken(TokenType::IDENTIFIER)) {
-        buildString(currentLine, u8"Syntax Error: identifier expected!");
+        logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
     std::u8string identifier = m_currentToken->value;
@@ -263,7 +263,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     }
     
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        buildString(currentLine, u8"Syntax Error: initialization missing! Use assign operator '=' to assign a value!");
+        logError(currentLine, u8"Syntax Error: initialization missing! Use assign operator '=' to assign a value!");
         return nullptr;
     }
     getNextToken(); // eat '='
@@ -277,7 +277,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     expression = parseExpression();
     if (expression == nullptr)  {
-        buildString(currentLine, u8"Syntax Error: invalid declaration expression!");
+        logError(currentLine, u8"Syntax Error: invalid declaration expression!");
         return nullptr;
     }
     
@@ -300,7 +300,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
 
     getNextToken();
     if (!isToken(TokenType::IDENTIFIER)) {
-        buildString(currentLine, u8"Syntax Error: identifier expected!");
+        logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
 
@@ -313,14 +313,14 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
     }
 
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        buildString(currentLine, u8"Syntax Error: rerum initialization missing! Use assign operator '=' to initialize rerum!");
+        logError(currentLine, u8"Syntax Error: rerum initialization missing! Use assign operator '=' to initialize rerum!");
         return nullptr;
     }
 
     getNextToken();
 
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
-        buildString(currentLine, u8"Syntax Error: opening rerum bracket for initialization '[' expected!");
+        logError(currentLine, u8"Syntax Error: opening rerum bracket for initialization '[' expected!");
         return nullptr;
     }
 
@@ -330,13 +330,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
     // get expression from each index
     while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
         if (isToken(TokenType::EOF_TOKEN)) {
-            buildString(currentLine, u8"Syntax Error: closing bracket for rerum initialization ']' expected!");
+            logError(currentLine, u8"Syntax Error: closing bracket for rerum initialization ']' expected!");
             return nullptr;
         }
 
         std::unique_ptr<AST> element = parseExpression();
         if (element == nullptr) {
-            buildString(currentLine, u8"Syntax Error: invalid expression during rerum initialization!");
+            logError(currentLine, u8"Syntax Error: invalid expression during rerum initialization!");
             return nullptr;
         }
 
@@ -349,7 +349,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStructType() {
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
             break;
         }
-        buildString(currentLine, u8"Syntax Error: expected ',' or ']' during rerum initialization!");
+        logError(currentLine, u8"Syntax Error: expected ',' or ']' during rerum initialization!");
         return nullptr;
     }
 
@@ -379,7 +379,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     getNextToken();
 
     if (!isToken(TokenType::NUMBER) && !isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-        buildString(currentLine, u8"Syntax Error: expected static number or closing bracket ']' after '[' in array declaration! Example: numerus[III] = [I, II, III]");
+        logError(currentLine, u8"Syntax Error: expected static number or closing bracket ']' after '[' in array declaration! Example: numerus[III] = [I, II, III]");
         return nullptr;
     }
 
@@ -387,20 +387,20 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     if (isToken(TokenType::NUMBER)) {
         bool success = toArabicConverter(m_currentToken->value, &arrSize);
         if (!success) {
-            buildString(currentLine, u8"Syntax Error: invalid roman number!");
+            logError(currentLine, u8"Syntax Error: invalid roman number!");
             return nullptr;
         }
         getNextToken();
     }
     
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-        buildString(currentLine, u8"Syntax Error: closing array bracket ']' expected!");
+        logError(currentLine, u8"Syntax Error: closing array bracket ']' expected!");
         return nullptr;
     }
 
     getNextToken();
     if (!isToken(TokenType::IDENTIFIER)) {
-        buildString(currentLine, u8"Syntax Error: identifier expected!");
+        logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
 
@@ -411,7 +411,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
         // only declaration - no init
         if (arrSize < 0) {
-            buildString(currentLine, u8"Syntax Error: array declaration without initialization must have size!");
+            logError(currentLine, u8"Syntax Error: array declaration without initialization must have size!");
             return nullptr;
         }
 
@@ -421,13 +421,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
 
 
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        buildString(currentLine, u8"Syntax Error: array initialization missing! Use assign operator '=' to initialize array!");
+        logError(currentLine, u8"Syntax Error: array initialization missing! Use assign operator '=' to initialize array!");
         return nullptr;
     }
 
     getNextToken();
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
-        buildString(currentLine, u8"Syntax Error: opening array bracket for initialization '[' expected!");
+        logError(currentLine, u8"Syntax Error: opening array bracket for initialization '[' expected!");
         return nullptr;
     }
 
@@ -439,13 +439,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
     // get expression from each index
     while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
         if (isToken(TokenType::EOF_TOKEN)) {
-            buildString(currentLine, u8"Syntax Error: closing bracket for array initialization ']' expected!");
+            logError(currentLine, u8"Syntax Error: closing bracket for array initialization ']' expected!");
             return nullptr;
         }
 
         std::unique_ptr<AST> element = parseExpression();
         if (element == nullptr) {
-            buildString(currentLine, u8"Syntax Error: invalid expression during array initialization!");
+            logError(currentLine, u8"Syntax Error: invalid expression during array initialization!");
             return nullptr;
         }
 
@@ -459,7 +459,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
             break;
         }
-        buildString(currentLine, u8"Syntax Error: expected ',' or ']' during array initialization!");
+        logError(currentLine, u8"Syntax Error: expected ',' or ']' during array initialization!");
         return nullptr;
     }
     
@@ -472,13 +472,13 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
         std::u8string arrSizeStrU8(arrSizeStr.begin(), arrSizeStr.end());
         std::u8string actualSizeStrU8(actualSizeStr.begin(), actualSizeStr.end());
 
-        buildString(currentLine, u8"Syntax Error: array size mismatch! Array is declared with size " + arrSizeStrU8 + u8" but initialized with size " + actualSizeStrU8 + u8"!");
+        logError(currentLine, u8"Syntax Error: array size mismatch! Array is declared with size " + arrSizeStrU8 + u8" but initialized with size " + actualSizeStrU8 + u8"!");
         return nullptr;
     }
 
     arrSize = elements.size();
     if (arrSize < 0) {
-        buildString(currentLine, u8"Syntax Error: array size cannot be negative!");
+        logError(currentLine, u8"Syntax Error: array size cannot be negative!");
         return nullptr;
     }
 
@@ -503,7 +503,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     std::vector<std::unique_ptr<TypeIdentifierPair>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) {
-            buildString(currentLine, u8"Syntax Error: type expected!");
+            logError(currentLine, u8"Syntax Error: type expected!");
             return nullptr;
         }
 
@@ -518,12 +518,12 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
             getNextToken(); // eat '['
             if (!isToken(TokenType::NUMBER) || !toArabicConverter(m_currentToken->value, &arrSize)) {
-                buildString(currentLine, u8"Syntax Error: Expected number after '[', when dealing with array func-argument!");
+                logError(currentLine, u8"Syntax Error: Expected number after '[', when dealing with array func-argument!");
                 return nullptr;
             }
             getNextToken(); // eat number
             if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-                buildString(currentLine, u8"Expected ']', when dealing with array func-argument!");
+                logError(currentLine, u8"Expected ']', when dealing with array func-argument!");
                 return nullptr;
             }
             getNextToken(); // eat ']'
@@ -531,7 +531,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         }
 
         if (!isToken(TokenType::IDENTIFIER)) {
-            buildString(currentLine, u8"Syntax Error: identifier expected!");
+            logError(currentLine, u8"Syntax Error: identifier expected!");
             return nullptr;
         }
 
@@ -549,7 +549,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
             if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) || isToken(TokenType::EOF_TOKEN)) {
-                buildString(currentLine, u8"Syntax Error: missing expression after comma!");   
+                logError(currentLine, u8"Syntax Error: missing expression after comma!");   
                 return nullptr;
             }
 
@@ -560,12 +560,12 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         }
 
 
-        buildString(currentLine, u8"Syntax Error: expected ')' in function declaration!");
+        logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
         return nullptr;
     }
 
     if(!isToken(TokenType::PUNCTUATION, u8")")) {
-        buildString(currentLine, u8"Syntax Error: expected ')' in function declaration!");
+        logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
         return nullptr;
     }
     getNextToken(); // eat ')'
@@ -593,19 +593,19 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
  */
 std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     if (m_blockCount != 0) {
-        buildString(currentLine, u8"Syntax Error: Function Declaration is only allowed at top-level!");
+        logError(currentLine, u8"Syntax Error: Function Declaration is only allowed at top-level!");
         return nullptr;
     }
 
     getNextToken(); // eat λ
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
-        buildString(currentLine, u8"Syntax Error: opening bracket '(' expected!");
+        logError(currentLine, u8"Syntax Error: opening bracket '(' expected!");
         return nullptr;
     }
 
     auto prototype = parseInstructionPrototype(identifier, std::move(type));
     if (prototype == nullptr) {
-            buildString(currentLine, u8"Syntax Error: invalid function header!");
+            logError(currentLine, u8"Syntax Error: invalid function header!");
             return nullptr;
         }
 
@@ -614,7 +614,7 @@ std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& ident
 
     auto funcBlock = parseBlock();
     if (funcBlock == nullptr){
-        buildString(currentLine, u8"Syntax Error: invalid function block!");
+        logError(currentLine, u8"Syntax Error: invalid function block!");
         return nullptr;
     }
 

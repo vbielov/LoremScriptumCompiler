@@ -157,7 +157,7 @@ bool error(){
 }
 
 
-void buildString(size_t line, std::u8string reason){ 
+void logError(size_t line, std::u8string reason){ 
     anyErrors = true;
     std::u8string build = u8"\n \033[1;41mError\033[0m encountered in Line ";
     

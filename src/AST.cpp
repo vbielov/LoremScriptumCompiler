@@ -168,7 +168,7 @@ const std::u8string& AccessArrayElementAST::getName() const {
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
     if (!entry) {
-        buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+        logError(m_line, u8"Syntax Error: not valid name to access attribute of struct");
         return nullptr;
     }
 
@@ -182,7 +182,7 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
                 if (attr.identifier == ref->getName())
                     return attr.type.get();
             }
-            buildString(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
+            logError(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
             return nullptr;
         } 
         NumberAST* number = dynamic_cast<NumberAST*>(m_index.get());
@@ -190,12 +190,12 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
             int index = number->getValue();
             if (index >= (int)structType->attributes.size() || index < 0) {
                 std::string indexStr = std::to_string(index);
-                buildString(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
+                logError(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
                 return nullptr;
             }
             return structType->attributes[index].type.get();
         }
-        buildString(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+        logError(m_line, u8"Syntax Error: not valid name to access attribute of struct");
         return nullptr;
     }
  

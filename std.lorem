@@ -25,7 +25,7 @@ nihil __scriborNum = λ(numerus num):
     count++
 
     ∑(numerus i = count - I, i ≥ O, i--):
-        litera[II] char = [digits[i], '\0']
+        litera[II] char = [digits[i], '\0']F
         printf(char)
     ;
 ;

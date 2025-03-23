@@ -38,7 +38,7 @@ void grabSource(std::u8string sourceCode, std::string fileLocation);
 // build string with reason as error message
 // get line from source file to print aswell
 // printed via dumpErrorLog
-void buildString(size_t line, std::u8string reason);
+void logError(size_t line, std::u8string reason);
 
 
 // dumps all ErrorLogs into terminal

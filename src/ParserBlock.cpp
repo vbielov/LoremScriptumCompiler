@@ -31,7 +31,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
             statements.emplace_back(std::move(statement));
         } else {
             m_isValid = false;
-            buildString(currentLine, u8"Syntax Error: invalid block statement!");
+            logError(currentLine, u8"Syntax Error: invalid block statement!");
             // Error on this line detected. Go to next line and try to do business as usual
             while (!isFinishedBlock() && !isToken(TokenType::NEW_LINE)) {
                 getNextToken();
@@ -48,7 +48,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
         if (m_blockCount < 0) {
             // Closing block that was never opened
             m_isValid = false;
-            buildString(currentLine, u8"Syntax Error: invalid closing block that was never opened!");
+            logError(currentLine, u8"Syntax Error: invalid closing block that was never opened!");
         }
     }
 
@@ -56,7 +56,7 @@ std::unique_ptr<BlockAST> Parser::parseBlock() {
     if (m_blockCount < 0 || (isToken(TokenType::EOF_TOKEN) && m_blockCount != 0)) {
         if(m_blockCount != 0 && lastOpenBlock.size() > 1){
 
-            buildString(lastOpenBlock.back(), u8"ControlFlow Error: opened bracket must be closed!");
+            logError(lastOpenBlock.back(), u8"ControlFlow Error: opened bracket must be closed!");
             lastOpenBlock.erase(lastOpenBlock.end());
         }
         m_isValid = false;
