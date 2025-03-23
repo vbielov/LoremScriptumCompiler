@@ -136,11 +136,9 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         value = std::make_unique<NumberAST>(intValue, currentLine);
         getNextToken();
     } else if (isToken(TokenType::LITERAL)) {
-
         if (m_currentToken->value.length() > 1) {
             if (m_currentToken->value[0] != '\\' || m_currentToken->value.length() != 2) {
-                buildString(currentLine, u8"Syntax Error: Char can't be longer then a single character!");
-                return nullptr;
+                logWarning(currentLine, u8"Syntax Error: Char can't be longer then a single character!");
             }
         }
 
