@@ -458,6 +458,40 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
         return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
     }
 
+    std::vector<std::unique_ptr<AST>> elements;
+
+    // Literal wrapper
+    if (isToken(TokenType::LITERAL) && type == PrimitiveType::CHAR) {
+        // 'a' -> ['a', '\0']
+        // litera[] = 'abc'
+        int actualSize = 0;
+        for (char8_t ch : m_currentToken->value) {
+            std::unique_ptr<AST> element = std::make_unique<CharAST>(ch, currentLine);
+            elements.push_back(std::move(element));
+            actualSize++;
+        }
+
+        std::unique_ptr<AST> element = std::make_unique<CharAST>(u8'\0', currentLine);
+        elements.push_back(std::move(element));
+
+        getNextToken();
+
+        if (arrSize != actualSize && arrSize != -1) {
+            std::string arrSizeStr = std::to_string(arrSize);
+            std::string actualSizeStr = std::to_string(actualSize);
+            std::u8string arrSizeStrU8(arrSizeStr.begin(), arrSizeStr.end());
+            std::u8string actualSizeStrU8(actualSizeStr.begin(), actualSizeStr.end());
+    
+            logError(currentLine, u8"Syntax Error: array size mismatch! Array is declared with size " + arrSizeStrU8 + u8" but initialized with size " + actualSizeStrU8 + u8"!");
+            return nullptr;
+        }
+
+        auto dataType = std::make_unique<ArrayDataType>(type, elements.size());
+        std::unique_ptr<AST> expression = std::make_unique<ArrayInitializationAST>(identifier, std::move(elements), currentLine);
+        std::unique_ptr<AST> declaration = std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
+        return std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(declaration), std::move(expression), currentLine);
+    }
+
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
         logError(currentLine, u8"Syntax Error: opening array bracket for initialization '[' expected!");
         return nullptr;
@@ -465,7 +499,6 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationArray(PrimitiveType type
 
     getNextToken();
     
-    std::vector<std::unique_ptr<AST>> elements;
     int actualSize = 0;
 
     // get expression from each index

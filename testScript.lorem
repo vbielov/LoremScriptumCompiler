@@ -1,7 +1,6 @@
-apere './std.lorem'
+numerus printf = λ(litera str)
 
-rerum vector = (numerus x, numerus y)
+litera[] arr = 'hello world!'
 
-vector point = [V, VI]
-scriborNum(point[x])
-scriborNum(point[y])
+
+printf(arr)
