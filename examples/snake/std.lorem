@@ -1,0 +1,47 @@
+nihil printf = λ(litera[O] str)
+
+numerus rand = λ()
+
+nihil srand = λ(numerus seed)
+
+numerus time = λ(numerus timer)
+
+numerus modulo = λ(numerus a, numerus b):
+    numerus result = a % b
+    si(result ≥ O):
+        retro result
+    ;
+    retro result + b
+;
+
+litera[X] toString = λ(numerus num):
+    litera[X] output
+    ∑(numerus j = O, j < X, j++):
+        output[j] = '\0'
+    ;
+    numerus counter = O
+
+    numerus copyNum = num
+    si (copyNum < O):
+        output[counter] = '-'
+        counter++
+        copyNum ×= -I
+    ;
+
+    numerus[XX] digits
+    numerus count = O
+
+    ∑(copyNum ≥ X):
+        digits[count] = (copyNum % X) + XLVIII
+        count++
+        copyNum ÷= X
+    ;
+    digits[count] = copyNum + XLVIII
+    count++
+
+    ∑(numerus i = count - I, i ≥ O, i--):
+        output[counter] = digits[i]
+        counter++
+    ;
+    retro output
+;
