@@ -66,8 +66,9 @@ sudo apt-get install -y g++ libc++-dev libc++abi-dev cmake clang llvm-dev libllv
 On Arch:
 
 ```bash
-sudo pacman -S gcc libc++ cmake ...
+sudo pacman -S gcc libc++ cmake llvm lld lldb libclc polly clang
 ```
+for more info about the LLVM toolchain on arch: https://wiki.archlinux.org/title/LLVM
 
 # Compiling
 
@@ -103,6 +104,10 @@ Now we have to tell cmake where those files are:
     ```bash
     cmake .. -DLLD_DIR="/path/to/llvm/lib/cmake/lld"
     ```
+
+
+arch should not be affected by this (23.3.2025).
+
 
 ## No llvm/lld header files
 
