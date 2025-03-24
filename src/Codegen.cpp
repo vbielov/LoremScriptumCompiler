@@ -3,9 +3,11 @@
 #include "ErrorHandler.hpp"
 
 llvm::Value* BlockAST::codegen(IRContext& context) {
+    context.symbolTable.enterScope();
     for (auto& node : m_instructions) {
         node->codegen(context);
     }
+    context.symbolTable.exitScope();
     return nullptr;
 }
 
@@ -48,18 +50,17 @@ llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
         llvm::ConstantPointerNull::get(llvm::PointerType::get(type, 0)),
         cStr(m_name)
     );
-    context.symbolTable.addVariable(m_name, m_type.get(), globalVariable);
+    context.symbolTable.addGlobal(m_name, m_type.get(), globalVariable);
     return globalVariable;
 }
 
 llvm::Value* VariableReferenceAST::codegen(IRContext& context) {
     auto entry = context.symbolTable.lookupVariable(m_name);
-    
-    if (!entry){
-        logError(m_line, u8"Syntax Error: variable '" + m_name + u8"' not defined!");
-        return nullptr;
-    }
-    return entry->value;
+    if (entry)
+        return entry->value;
+
+    logError(m_line, u8"Syntax Error: variable '" + m_name + u8"' not defined!");
+    return nullptr;
 }
 
 llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
@@ -249,7 +250,7 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
     llvm::BasicBlock* entryBlock = llvm::BasicBlock::Create(*context.context, "entry", function);
     context.builder->SetInsertPoint(entryBlock);
 
-    context.symbolTable.enterScope();
+    context.symbolTable.clearScopes();
 
     // Record function arguments in the syntax table
     const auto& arguments = m_prototype->getArgs();
@@ -258,7 +259,7 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
     }
     m_body->codegen(context);
 
-    context.symbolTable.exitScope();
+    context.symbolTable.clearScopes(); 
 
     // Automatically add return for void functions
     if (!context.builder->GetInsertBlock()->getTerminator())

@@ -26,21 +26,23 @@ struct ScopeEntry {
 
 struct Scope {
     std::vector<ScopeEntry> variables;
-    std::vector<ScopeEntry> functions;
-
     Scope();
 };
 
 class SymbolTable {
 private:
-    std::vector<Scope> m_scopes; 
+    std::vector<Scope> m_scopes; // stack allocated variables
+    std::vector<ScopeEntry> m_globals; // global allocated variables
+    std::vector<ScopeEntry> m_functions;
     std::unordered_map<std::u8string, const StructDataType*> m_structsTypeMap;
 
 public:
     SymbolTable();
     void enterScope();
     void exitScope();
+    void clearScopes();
     void addVariable(const std::u8string& name, const IDataType* type, llvm::Value* value);
+    void addGlobal(const std::u8string& name, const IDataType* type, llvm::GlobalVariable* value);
     void addFunction(const std::u8string& name, const IDataType* type, llvm::Value* value);
     void addStruct(const std::u8string& name, const StructDataType* type);
     const ScopeEntry* lookupVariable(const std::u8string& name) const;
