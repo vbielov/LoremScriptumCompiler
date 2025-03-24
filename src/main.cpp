@@ -5,24 +5,30 @@
 #include "Assembler.hpp"
 
 int main(int argc, const char** argv) {
-    if (argc < 2) {
+    if (argc < 2 || strcmp(argv[1], "--help") == 0) {
         std::cerr << "Usage: lsc <input_file.lorem>" << std::endl;
         return 1;
     }
 
+    if (strcmp(argv[1], "--version") == 0) {
+        std::cout << "LSC 1.0.0 (built by Backbenchers)";
+        return 0;
+    }
+
     // Read File
     const char* inputFilePath = argv[1];
-    std::filesystem::path mainFilePath = std::filesystem::canonical(inputFilePath);
+    std::filesystem::path mainFilePath;
+    try {
+        mainFilePath = std::filesystem::canonical(inputFilePath);
+    } catch(std::exception e) {
+        std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
+        return 1;
+    }
 
     // Preprocess
     Preprocessor preprocessor = Preprocessor();
     std::u8string sourceCode = preprocessor.process(mainFilePath); 
     
-    if (sourceCode.empty()) {
-        std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
-        return 1;
-    }
-
     buildRanges(sourceCode);
     grabSource(sourceCode, inputFilePath); //TODO: start thread maybe and lock ErrorHandler in meantime
     
@@ -55,7 +61,7 @@ int main(int argc, const char** argv) {
     objFilePath += ".o";
     std::filesystem::path exeFilePath = outputDir / mainFilePath.stem();
     #ifdef _WIN32
-    exeFilePath += ".exe";
+        exeFilePath += ".exe";
     #endif
     
     Assembler assembler;
