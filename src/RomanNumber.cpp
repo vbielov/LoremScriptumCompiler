@@ -14,7 +14,7 @@ std::u8string toRomanConverter(int number){
     }
 
     if (number > 3999){
-        roman.append(u8"inf"); //TODO: change to unicode thingy
+        roman.append(u8"∞"); //TODO: test if functional
         return roman;
     };
 

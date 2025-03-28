@@ -75,9 +75,8 @@ int main(int argc, const char** argv) {
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
 
-    if (warn()) { // check if any errors occured
+    if (warn()) { // check if any warnings occured
         dumpErrorLog();
-        return 1;
     }
 
     // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
