@@ -3,16 +3,22 @@
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
+#include "ErrorHandler.hpp"
 
 int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
-        std::cerr << "Usage: lsc <input_file.lorem>" << std::endl;
+        std::cerr << "Usage: lsc <input_file.lorem> \n       -l dumps logs upon detection of error or warning" << std::endl;
         return 1;
     }
 
     if (strcmp(argv[1], "--version") == 0) {
         std::cout << "LSC 1.0.0 (built by Backbenchers)";
         return 0;
+    }
+
+    if (argc == 3 && strcmp(argv[2], "-l") == 0) {
+        std::cout << "logs dumped on creation\n";
+        setInstantDump();
     }
 
     // Read File
