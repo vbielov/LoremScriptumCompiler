@@ -7,7 +7,7 @@
 
 int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
-        std::cerr << "Usage: lsc <input_file.lorem> \n       -l dumps logs upon detection of error or warning" << std::endl;
+        std::cerr << "Usage: \n       lsc <input_file.lorem>           compiles file to executable\n       lsc <input_file.lorem> -l        dumps logs upon detection of error or warning" << std::endl;
         return 1;
     }
 
