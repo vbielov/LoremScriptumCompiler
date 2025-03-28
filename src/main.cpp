@@ -7,8 +7,11 @@
 
 int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
-        std::cerr << "Usage: \n       lsc <input_file.lorem>           compiles file to executable\n       lsc <input_file.lorem> -l        dumps logs upon detection of error or warning" << std::endl;
-        return 1;
+        std::cout << "Usage: \n"
+            <<"\t"<<"lsc <input_file.lorem>"<<"           "<<"compiles file to executable\n"
+            <<"\t"<<"lsc <input_file.lorem> -l"<<"        "<<"dumps logs upon detection of error or warning" 
+            << std::endl;
+        return 0;
     }
 
     if (strcmp(argv[1], "--version") == 0) {
@@ -26,7 +29,7 @@ int main(int argc, const char** argv) {
     std::filesystem::path mainFilePath;
     try {
         mainFilePath = std::filesystem::canonical(inputFilePath);
-    } catch(std::exception e) {
+    } catch(std::exception &e) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }
