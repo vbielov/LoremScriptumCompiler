@@ -1,1 +1,5 @@
-numerus[O] num
+nihil printf = λ(litera[] str)
+
+litera[] helloWorld = "Hello, World!"
+
+printf(helloWorld)
