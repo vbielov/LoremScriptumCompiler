@@ -95,6 +95,7 @@ bool Parser::isUnaryOperator() {
 * Examples:
 *    - numerus
 *    - numerus[I]
+*    - numerus[]
 *    - nihil
 *    - struct[I]
 *    - struct

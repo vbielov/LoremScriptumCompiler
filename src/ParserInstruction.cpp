@@ -198,8 +198,11 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
     }
     std::unique_ptr<StructDataType> type = std::make_unique<StructDataType>(identifier, std::move(attributes));
     m_structHashMap[identifier] = type.get();
-
+    
     return std::make_unique<StructAST>(std::move(type), currentLine);
+
+    // NOTE(Vlad): Automatically generating constructor for struct is impossible.
+    //             Because there can be only one owner for memory of attributes.
 }
 
 /**

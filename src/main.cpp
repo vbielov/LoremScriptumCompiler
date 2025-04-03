@@ -20,7 +20,7 @@ int main(int argc, const char** argv) {
     std::filesystem::path mainFilePath;
     try {
         mainFilePath = std::filesystem::canonical(inputFilePath);
-    } catch(std::exception e) {
+    } catch([[maybe_unused]] std::filesystem::filesystem_error e) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }

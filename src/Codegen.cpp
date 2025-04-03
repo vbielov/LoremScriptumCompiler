@@ -120,6 +120,20 @@ llvm::Value* VariableReferenceAST::codegen(IRContext& context) {
 }
 
 llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
+    // Exception for automatically sizing array type, works only for primitive types
+    {
+        auto leftArrType = dynamic_cast<const ArrayDataType*>(m_LHS->getType(context));
+        auto leftElemType = leftArrType ? dynamic_cast<const PrimitiveDataType*>(leftArrType->elementType.get()) : nullptr;
+        auto rightArrType = dynamic_cast<const ArrayDataType*>(m_RHS->getType(context));
+        if(m_op == operators::ASSIGN && leftArrType && leftElemType && rightArrType && leftArrType->size == 0) {
+            // fix left array type
+            auto leftType = std::make_unique<ArrayDataType>(
+                std::make_unique<PrimitiveDataType>(leftElemType->type), rightArrType->size
+            );
+            m_LHS = std::make_unique<VariableDeclarationAST>(m_LHS->getName(), std::move(leftType), m_line);
+        }
+    }
+
     llvm::Value* left = m_LHS->codegen(context);
     llvm::Value* right = m_RHS->codegen(context);
     if (!left || !right)
@@ -157,14 +171,12 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             // Cast values if they are both integers 
             if (leftType != rightType) {
                 // TODO(Vlad): Error
-                if (!leftType->isIntegerTy() || !rightType->isIntegerTy())
-                {
-                    m_RHS->printTree(std::cout, "", false);
+                if (leftType->isIntegerTy() && rightType->isIntegerTy()) {
+                    right = context.builder->CreateIntCast(right, leftType, true, "conv");
+                } else {
                     logError(m_line, u8"Syntax Error: Type does not match!");
                     return nullptr;
                 }
-
-                right = context.builder->CreateIntCast(right, leftType, true, "conv");
             }
 
             context.builder->CreateStore(right, left);
@@ -255,6 +267,10 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         // functions arguments are always pointers, not value. => Create local variables if needed
         if (!argValue->getType()->isPointerTy()) {
             llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
+            if (!currentBlock) {
+                logError(m_line, u8"Syntax Error: function call in global scope is not allowed!");
+                return nullptr;
+            }
             llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
             llvm::Type* argType = arg->getType(context)->getLLVMType(*context.context);
             llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, "argTmp");

@@ -41,6 +41,36 @@ Token Lexer::getNextToken() {
         return {TokenType::NEW_LINE, u8""};
     }
 
+    // if literal
+    if (getCharAt(m_charIterator) == punctuation::APOSTROPHE[0]) {
+        std::u8string literraSymbol = u8"";
+        m_charIterator++; // skip '
+        // NOTE(Vlad):  it's allowed here to input multiple symbols to literal, 
+        //              parser should not let literal with multiple symbols inside
+        while (getCharAt(m_charIterator) != punctuation::APOSTROPHE[0] && getCharAt(m_charIterator) != u8'\0') {
+            literraSymbol += getCharAt(m_charIterator);
+            m_charIterator++;
+        }
+        if (getCharAt(m_charIterator) == punctuation::APOSTROPHE[0]) {
+            m_charIterator++; // skip '
+        }
+        return {TokenType::LITERAL, std::move(literraSymbol)};
+    }
+
+    // if string
+    if (getCharAt(m_charIterator) == punctuation::QUOTE[0]) {
+        std::u8string string = u8"";
+        m_charIterator++; // skip "
+        while (getCharAt(m_charIterator) != punctuation::QUOTE[0] && getCharAt(m_charIterator) != u8'\0') {
+            string += getCharAt(m_charIterator);
+            m_charIterator++;
+        }
+        if (getCharAt(m_charIterator) == punctuation::QUOTE[0]) {
+            m_charIterator++; // skip "
+        }
+        return {TokenType::STRING, std::move(string)};
+    }
+
     // is punctuation
     for (size_t i = 0; i < punctuation::VALUES_SIZE; i++) {
         if (getCharAt(m_charIterator) == punctuation::VALUES[i][0]) {
@@ -85,20 +115,6 @@ Token Lexer::getNextToken() {
     if (operatorIndex != -1) {
         m_charIterator += operators::VALUES[operatorIndex].length();
         return {TokenType::OPERATOR, std::u8string(operators::VALUES[operatorIndex])};
-    }
-
-    // if literal
-    if (getCharAt(m_charIterator) == u8'\'') {
-        std::u8string literraSymbol = u8"";
-        m_charIterator++; // skip '
-        // NOTE(Vlad):  it's allowed here to input multiple symbols to literal, 
-        //              parser should not let literal with multiple symbols inside
-        while (getCharAt(m_charIterator) != u8'\'') {
-            literraSymbol += getCharAt(m_charIterator);
-            m_charIterator++;
-        }
-        m_charIterator++; // skip '
-        return {TokenType::LITERAL, std::move(literraSymbol)};
     }
 
     // if number

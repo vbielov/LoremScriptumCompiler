@@ -223,6 +223,14 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     if(structType)
         structType = context.symbolTable.lookupStruct(structType->name);
     if (structType) {
+        const NumberAST* index = dynamic_cast<const NumberAST*>(m_index.get());
+        if (index) {
+            if (index->getValue() < 0 || index->getValue() >= (int)structType->attributes.size()) {
+                logError(m_line, u8"Syntax Error: Index out of bounds for '" + m_name + u8"' struct!");
+                return nullptr;
+            }
+            return structType->attributes[index->getValue()].type.get();
+        }
         for (const auto& attribute : structType->attributes) {
             if (attribute.identifier == m_index->getName()) {
                 return attribute.type.get();

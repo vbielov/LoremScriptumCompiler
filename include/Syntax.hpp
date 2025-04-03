@@ -11,10 +11,12 @@ namespace punctuation {
     inline constexpr std::u8string_view COMMA = u8",";
     inline constexpr std::u8string_view SQR_BRACKET_OPEN = u8"[";
     inline constexpr std::u8string_view SQR_BRACKET_CLOSE = u8"]";
+    inline constexpr std::u8string_view APOSTROPHE = u8"'";
+    inline constexpr std::u8string_view QUOTE = u8"\"";
 
     inline constexpr std::u8string_view VALUES[] = {
         PAREN_OPEN, PAREN_CLOSE, BLOCK_OPEN, BLOCK_CLOSE,
-        COMMA, SQR_BRACKET_OPEN, SQR_BRACKET_CLOSE
+        COMMA, SQR_BRACKET_OPEN, SQR_BRACKET_CLOSE, APOSTROPHE, QUOTE
     };
     inline constexpr size_t VALUES_SIZE = sizeof(VALUES) / sizeof(VALUES[0]); 
 }

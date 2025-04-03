@@ -1,10 +1,11 @@
+nihil printf = λ(litera[] x)
 
 
-rerum vector = (numerus x, numerus y)
+nihil func = λ():
+    litera[] helloWorld = "Hello, World!"
+    litera a = 'a'
 
-vector[III] points
-vector point = [O, O]
-points[O] = point
-points[I] = point 
-points[II] = point
+    printf(helloWorld)
+;
 
+func()
