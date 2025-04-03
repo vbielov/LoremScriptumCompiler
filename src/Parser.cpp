@@ -130,7 +130,6 @@ std::unique_ptr<IDataType> Parser::parseType() {
     // it is array declaration
     getNextToken(); // eat '['
 
-    // TODO(Vlad): Test arrays with no given size
     int arrSize = 0;
     if (isToken(TokenType::NUMBER)) {
         bool success = toArabicConverter(m_currentToken->value, &arrSize);

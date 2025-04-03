@@ -170,11 +170,10 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             
             // Cast values if they are both integers 
             if (leftType != rightType) {
-                // TODO(Vlad): Error
                 if (leftType->isIntegerTy() && rightType->isIntegerTy()) {
                     right = context.builder->CreateIntCast(right, leftType, true, "conv");
                 } else {
-                    logError(m_line, u8"Syntax Error: Type does not match!");
+                    logError(m_line, u8"Syntax Error: Type " + m_LHS->getType(context)->toString() +  u8" does not match " + m_RHS->getType(context)->toString() + u8"!");
                     return nullptr;
                 }
             }
@@ -184,9 +183,8 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         } else if (auto globalVar = llvm::dyn_cast<llvm::GlobalVariable>(left)) {
             // Global initialization
             auto constant = llvm::dyn_cast<llvm::Constant>(right);
-            // TODO(Vlad): Error
             if (!constant) {
-                    logError(m_line, u8"Syntax Error: right side isnt a constant!");
+                    logError(m_line, u8"Syntax Error: Right side must be a constant!");
                     return nullptr;
                 }
             globalVar->setInitializer(constant);
@@ -230,8 +228,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         return context.builder->CreateXor(left, llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(*context.context), true), "negtmp");
     }
 
-    // TODO(Vlad): Error
-    logError(m_line, u8"Syntax Error: wrong operator!");
+    logError(m_line, u8"Syntax Error: " + m_op + u8" is illegal operator!");
 
     return nullptr;
 }
@@ -239,9 +236,10 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
 llvm::Value* FuncCallAST::codegen(IRContext& context) {
     llvm::Function* function = context.theModule->getFunction(cStr(m_calleeIdentifier));
     const ScopeEntry* entry = context.symbolTable.lookupFunction(m_calleeIdentifier);
-    // TODO(Vlad): Error
-    if (!function)
+    if (!function || !entry) {
+        logError(m_line, u8"Syntax Error: function '" + m_calleeIdentifier + u8"' not defined!");
         return nullptr; 
+    }
 
     llvm::Type* type = entry->type->getLLVMType(*context.context);
     bool hasReturn = !type->isVoidTy();
@@ -285,11 +283,6 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         return context.builder->CreateCall(function, arguments);
     }
 
-    // TODO(Vlad): Error
-    if (!entry){
-        logError(m_line, u8"Syntax Error: wrong operator!");
-        return nullptr;
-    }
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
     llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
@@ -330,9 +323,8 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
 
 llvm::Value* FunctionAST::codegen(IRContext& context) {
     llvm::Function* function = dyn_cast<llvm::Function>(m_prototype->codegen(context));
-    // TODO: Error
     if (!function->empty()){ // it's a redifinition
-        logError(m_line, u8"Syntax Error: redefinition is not allowed!");
+        logError(m_line, u8"Syntax Error: Function " + m_prototype->getName() +  u8" is already defined!");
         return nullptr;
     }
     
@@ -354,8 +346,8 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
     if (!context.builder->GetInsertBlock()->getTerminator())
         context.builder->CreateRetVoid(); 
 
-    // TODO: Error
     if (llvm::verifyFunction(*function, &(llvm::errs()))) {
+        logError(m_line, u8"Syntax Error: Content of function " + m_prototype->getName() +  u8" is not valid!");
         function->eraseFromParent();
         return nullptr;
     }
@@ -377,9 +369,8 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
         value = context.builder->CreateLoad(m_expr->getType(context)->getLLVMType(*context.context), value, "loadtmp");
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
-    // TODO(Vlad): Error
     if (!currentBlock){    
-        logError(m_line, u8"Syntax Error: return in global scope is not allowed!");
+        logError(m_line, u8"Syntax Error: Return(retro) is not allowed in global scope!");
         return nullptr;
     }
 
@@ -395,9 +386,8 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 
 llvm::Value* BreakAST::codegen(IRContext& context) {
     llvm::BasicBlock* returnBlock = context.afterLoop.top();
-    // TODO(Vlad): Error
     if (!returnBlock){
-        logError(m_line, u8"Syntax Error: break outside of loop is not allowed!");
+        logError(m_line, u8"Syntax Error: break(finio) outside of loop is not allowed!");
         return nullptr;
     }
 
