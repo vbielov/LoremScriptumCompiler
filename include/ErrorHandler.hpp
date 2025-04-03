@@ -26,6 +26,7 @@ struct rangeResult {
     size_t displayline;
 };
 
+void setInstantDump();
 
 
 // returns bool based on if any errors happened before hand

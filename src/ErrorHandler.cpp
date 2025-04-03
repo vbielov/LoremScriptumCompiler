@@ -11,6 +11,7 @@ std::u8string file; // filename that gets compiled
 
 static bool anyErrors = false;
 bool anyWarnings = false;
+bool instantDump = false;
 
 
 // ---------- helper methods/procedures ---------- 
@@ -153,6 +154,10 @@ void grabSource(std::u8string sourceCode, std::string fileLocation){
     output.append(u8" -----------------------");
 
     output.append(u8"\n bracket errors can be very inconsistant with more errors mixed in, for ease of use consider using our vscode extention for highlighting\n\n");
+
+    if(instantDump){
+        std::cout << (const char*) output.c_str() << std::endl;
+    }
 }
 
 bool error(){
@@ -199,8 +204,12 @@ void logError(size_t line, std::u8string reason){
 
 
     build.append(u8"\n");
-    output.append(build);
 
+    if(instantDump){
+        std::cout << (const char*) build.c_str() << std::endl;
+    }else{
+        output.append(build);
+    }
 }
 
 void logWarning(size_t line, std::u8string reason){
@@ -238,15 +247,24 @@ void logWarning(size_t line, std::u8string reason){
 
 
     build.append(u8"\n");
-    warningLogs.append(build);
+
+    if(instantDump){
+        std::cout << (const char*) build.c_str() << std::endl;
+    }else{
+        warningLogs.append(build);
+    }
 }
 
 
 
 void dumpErrorLog(){
     //insert warnings to end
-    output.append(warningLogs);
-    std::cout << (const char*) output.c_str() << std::endl;
+
+    if(!instantDump){
+        output.append(warningLogs);
+        std::cout << (const char*) output.c_str() << std::endl;
+    }
+   
 }
 
 
@@ -268,4 +286,9 @@ void queueUndefinedError(std::u8string text){
     output.append(u8"\n \033[1;41mError\033[0m ");
     output.append(text);
     output.append(u8"\n\n\n");
+}
+
+
+void setInstantDump(){
+    instantDump = true;
 }

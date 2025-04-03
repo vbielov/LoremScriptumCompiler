@@ -16,8 +16,8 @@ TEST(BasicTest, MethodVsMethod){
 
 
 TEST(BasicTest, outOfBounds){
-    EXPECT_EQ(toRomanConverter(4000), u8"inf");
-    EXPECT_EQ(toRomanConverter(-4000), u8"-inf");
+    EXPECT_EQ(toRomanConverter(4000), u8"∞");
+    EXPECT_EQ(toRomanConverter(-4000), u8"-∞");
 }
 
 TEST(BasicTest, failure){

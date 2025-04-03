@@ -3,11 +3,15 @@
 #include "Parser.hpp"
 #include "IRGenerator.hpp"
 #include "Assembler.hpp"
+#include "ErrorHandler.hpp"
 
 int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
-        std::cerr << "Usage: lsc <input_file.lorem>" << std::endl;
-        return 1;
+        std::cout << "Usage: \n"
+            <<"\t"<<"lsc <input_file.lorem>"<<"           "<<"compiles file to executable\n"
+            <<"\t"<<"lsc <input_file.lorem> -l"<<"        "<<"dumps logs upon detection of error or warning" 
+            << std::endl;
+        return 0;
     }
 
     if (strcmp(argv[1], "--version") == 0) {
@@ -15,12 +19,17 @@ int main(int argc, const char** argv) {
         return 0;
     }
 
+    if (argc == 3 && strcmp(argv[2], "-l") == 0) {
+        std::cout << "logs dumped on creation\n";
+        setInstantDump();
+    }
+
     // Read File
     const char* inputFilePath = argv[1];
     std::filesystem::path mainFilePath;
     try {
         mainFilePath = std::filesystem::canonical(inputFilePath);
-    } catch([[maybe_unused]] std::filesystem::filesystem_error e) {
+    } catch([[maybe_unused]] std::filesystem::filesystem_error& e) {
         std::cerr << "Error: Couldn't read the file " << inputFilePath << std::endl;
         return 1;
     }
@@ -69,9 +78,8 @@ int main(int argc, const char** argv) {
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
 
-    if (warn()) { // check if any errors occured
+    if (warn()) { // check if any warnings occured
         dumpErrorLog();
-        return 1;
     }
 
     // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
