@@ -41,7 +41,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDebugValid, TestParserDebugValid, ::testing::
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(numerus[1] arr)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[1]\n"
         "            └── NumberAST(1)\n"
     )
 ));

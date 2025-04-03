@@ -116,7 +116,7 @@ std::unique_ptr<IDataType> Parser::parseType() {
     getNextToken(); // eat basic type
 
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
-        return basicType; // TODO(Vlad): Isn't this dangerous?
+        return basicType;
     }
 
     // That's array!

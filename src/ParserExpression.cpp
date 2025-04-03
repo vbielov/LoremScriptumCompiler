@@ -225,7 +225,6 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
  */
 std::unique_ptr<ArrayAST> Parser::parseArray() {
     getNextToken(); // eat '['
-    int actualSize = 0;
     std::vector<std::unique_ptr<AST>> elements;
     // get expression from each index
     while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
@@ -240,7 +239,6 @@ std::unique_ptr<ArrayAST> Parser::parseArray() {
             return nullptr;
         }
 
-        actualSize++;
         elements.push_back(std::move(element));
 
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {

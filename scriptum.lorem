@@ -1,11 +1,1 @@
-nihil printf = λ(litera[] x)
-
-
-nihil func = λ():
-    litera[] helloWorld = "Hello, World!"
-    litera a = 'a'
-
-    printf(helloWorld)
-;
-
-func()
+numerus[O] num

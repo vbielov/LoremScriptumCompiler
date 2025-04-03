@@ -224,6 +224,8 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     }
     
     std::unique_ptr<IDataType> dataType = parseType();
+    if(!dataType)
+        return nullptr;
 
     if (!isToken(TokenType::IDENTIFIER)) {
         logError(currentLine, u8"Syntax Error: identifier expected!");
@@ -232,7 +234,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
-    if (isToken(TokenType::NEW_LINE)) {
+    if (isToken(TokenType::NEW_LINE) || isToken(TokenType::EOF_TOKEN)) {
         return std::make_unique<VariableDeclarationAST>(identifier, std::move(dataType), currentLine);
     }
     

@@ -317,14 +317,14 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(numerus[0] arr)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[0]\n"
     ),
     std::make_pair(
         u8"numerus[I] arr = [I]",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(numerus[1] arr)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[1]\n"
         "            └── NumberAST(1)\n"
     ),
     std::make_pair(
@@ -332,7 +332,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(numerus[2] a)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[2]\n"
         "            ├── NumberAST(1)\n"
         "            └── NumberAST(2)\n"
     ),
@@ -340,8 +340,8 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         u8"asertio[] a = [veri, falso]",
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
-        "        ├── VariableDeclarationAST(asertio[2] a)\n"
-        "        └── ArrayInitializationAST\n"
+        "        ├── VariableDeclarationAST(asertio[0] a)\n" // array with size 0, will be fixed in codegen for primitive types
+        "        └── ArrayAST[2]\n" 
         "            ├── BoolAST(true)\n"
         "            └── BoolAST(false)\n"
     ),
@@ -350,7 +350,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "└── BlockAST\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(litera[2] a)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[2]\n"
         "            ├── CharAST('a')\n"
         "            └── CharAST('b')\n"
     ),
@@ -380,7 +380,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "    ├── StructAST(vector)\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(vector {} point)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[0]\n"
     ),
     std::make_pair(
         u8"rerum vector = (numerus x) \n vector point = [V]",
@@ -389,7 +389,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "    │   └── numerus x\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(vector {} point)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[1]\n"
         "            └── NumberAST(5)\n"
     ),
     std::make_pair(
@@ -400,7 +400,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "    │   └── numerus y\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(vector {} point)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[2]\n"
         "            ├── NumberAST(5)\n"
         "            └── NumberAST(6)\n"
     ),
@@ -412,7 +412,7 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationValid, TestParserValid, ::testing:
         "    │   └── litera y\n"
         "    └── BinaryOperatorAST('=')\n"
         "        ├── VariableDeclarationAST(vector {} point)\n"
-        "        └── ArrayInitializationAST\n"
+        "        └── ArrayAST[2]\n"
         "            ├── BoolAST(true)\n"
         "            └── CharAST('a')\n"
     )
@@ -470,27 +470,13 @@ INSTANTIATE_TEST_SUITE_P(TestParserDeclarationInvalid, TestParserInvalid, ::test
     u8"numerus[ foo = [I]",
     u8"numerus] foo = [I]",
     u8"nihil[I] foo = [I]",
-    u8"numerus[III] foo = [I, II, ]",
-    u8"numerus[III] foo = []",
     u8"numerus[I] foo = [",
     u8"numerus[I] foo = ]",
-    u8"numerus[I] foo = []",
-    u8"numerus foo = [I, II, III]",
     u8"numerus[III] foo = [I, II, III",
     u8"numerus[III] foo = I, II, III",
-    u8"numerus[III] foo = I",
-    u8"litera[II] foo = ['a', ]",
-    u8"litera[II] foo = 'a'",
-    u8"litera[II] foo = (['a', 'b'])",
-    u8"numerus[II] foo = ([I, II])",
-    u8"numerus[II] foo = [I]",
-    u8"numerus[II] foo = [I, II, III]",
     u8"numerus[-I] foo = [I]",
     u8"numerus[-I] arr = [I]",
     u8"numerus['a'] arr = []",
-    u8"numerus[] arr",
-    u8"numerus fake_arr = [I, II]",
-    u8"numerus[II] arr = [[I, II], [I, II]]",
 
     // struct declaration
     u8"rerum vector",

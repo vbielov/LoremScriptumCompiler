@@ -311,6 +311,10 @@ void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isL
 void VariableDeclarationAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
 {
     printIndent(ostr, indent, isLast);
+    if(!m_type) {
+        ostr << "VariableDeclarationAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+        return;
+    }
     ostr << "VariableDeclarationAST(" << (const char*)m_type->toString().c_str() << " "
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
