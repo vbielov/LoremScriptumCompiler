@@ -1,5 +1,5 @@
 numerus printf = λ(litera str)
 
-litera[] arr = 'hello world!'
+litera[XV] arr = ['H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\n', '\0']
 
 printf(arr)

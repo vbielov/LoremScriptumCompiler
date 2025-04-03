@@ -92,6 +92,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
  *    - -var
  *    - ¬bool
  *    - (I + II *IV)
+ *    - [I, II, ...]
  *
  * Trick of sign number -I -> 0 - I
  *
@@ -188,12 +189,60 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
                 return nullptr;
             }
         getNextToken();
+    } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+        value = parseArray();
     } else {
         logError(currentLine, u8"Syntax Error: Token not recognised...!");
         return nullptr;
     }
 
     return value;
+}
+
+/**
+ * TODO: Write what is this... 
+ * 
+ * Examples:
+ *      - [I]
+ *      - [I, II]
+ *      - [I, II, III]
+ *      - [foo() + IV]
+ *      - ['a', 'b']
+ *      - [foo() + IV]
+ *        ^ we are always here
+ */
+std::unique_ptr<ArrayAST> Parser::parseArray() {
+    getNextToken(); // eat '['
+    int actualSize = 0;
+    std::vector<std::unique_ptr<AST>> elements;
+    // get expression from each index
+    while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
+        if (isToken(TokenType::EOF_TOKEN)) {
+            logError(currentLine, u8"Syntax Error: closing bracket for array initialization ']' expected!");
+            return nullptr;
+        }
+
+        std::unique_ptr<AST> element = parseExpression();
+        if (element == nullptr) {
+            logError(currentLine, u8"Syntax Error: invalid expression during array initialization!");
+            return nullptr;
+        }
+
+        actualSize++;
+        elements.push_back(std::move(element));
+
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
+            getNextToken(); // eat ','
+            continue;
+        }
+        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
+            break;
+        }
+        logError(currentLine, u8"Syntax Error: expected ',' or ']' during array initialization!");
+        return nullptr;
+    }
+    getNextToken(); // eat ']'
+    return std::make_unique<ArrayAST>(std::move(elements), currentLine);
 }
 
 /**

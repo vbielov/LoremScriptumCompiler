@@ -91,6 +91,63 @@ bool Parser::isUnaryOperator() {
     return isToken(TokenType::OPERATOR, operators::PLUS) || isToken(TokenType::OPERATOR, operators::MINUS) || isToken(TokenType::OPERATOR, operators::NOT);
 }
 
+/**
+* Examples:
+*    - numerus
+*    - numerus[I]
+*    - nihil
+*    - struct[I]
+*    - struct
+*/
+std::unique_ptr<IDataType> Parser::parseType() {
+    std::unique_ptr<IDataType> basicType; // first part of the type without array part
+    std::unordered_map<std::u8string, StructDataType*>::iterator iter;
+    if ((iter = m_structHashMap.find(m_currentToken->value)) != m_structHashMap.end()) {
+        basicType = std::make_unique<StructDataType>(iter->first);
+    } else {
+        auto typeIter = STR_TO_PRIMITIVE_MAP.find(m_currentToken->value);
+        if (typeIter == STR_TO_PRIMITIVE_MAP.end()) {
+            logError(currentLine, u8"Unknown or invalid type!");
+            return nullptr;
+        }
+        basicType = std::make_unique<PrimitiveDataType>(typeIter->second);
+    }
+    getNextToken(); // eat basic type
+
+    if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+        return basicType; // TODO(Vlad): Isn't this dangerous?
+    }
+
+    // That's array!
+    // TODO(Vlad): 2D Arrays?
+    PrimitiveDataType* primitiveType = dynamic_cast<PrimitiveDataType*>(basicType.get());
+    if (primitiveType && primitiveType->type == PrimitiveType::VOID) {
+        logError(currentLine, u8"Void type cannot be an array!");
+        return nullptr;
+    }
+
+    // it is array declaration
+    getNextToken(); // eat '['
+
+    // TODO(Vlad): Test arrays with no given size
+    int arrSize = 0;
+    if (isToken(TokenType::NUMBER)) {
+        bool success = toArabicConverter(m_currentToken->value, &arrSize);
+        if (!success) {
+            logError(currentLine, u8"Syntax Error: invalid roman number!");
+            return nullptr;
+        }
+        getNextToken(); // eat number
+    }
+
+    if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
+        logError(currentLine, u8"Syntax Error: closing array bracket ']' expected!");
+        return nullptr;
+    }
+    getNextToken(); // eat ']'
+    return std::make_unique<ArrayDataType>(std::move(basicType), arrSize);
+}
+
 const Token& Parser::getNextToken() {
     // Get first token
     if (m_currentToken.base() == nullptr) {

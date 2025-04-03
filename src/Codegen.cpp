@@ -30,6 +30,10 @@ llvm::Value* BoolAST::codegen(IRContext& context) {
     return llvm::ConstantInt::get(*context.context, llvm::APInt(1, m_bool, false));
 }
 
+llvm::Value* ArrayAST::codegen(IRContext &context) {
+    return nullptr;
+}
+
 llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
     llvm::BasicBlock* insertBlock = context.builder->GetInsertBlock();
     llvm::Type* type = m_type->getLLVMType(*context.context);
@@ -373,50 +377,7 @@ llvm::Value* LoopAST::codegen(IRContext& context) {
     return nullptr;
 }
 
-llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
-    llvm::BasicBlock* block = context.builder->GetInsertBlock();
-    if (block) {
-        for (size_t i = 0; i < m_elements.size(); i++) {
-            std::unique_ptr<AST> array = std::make_unique<AccessArrayElementAST>(m_name, std::make_unique<NumberAST>((int)i, m_line), m_line);
-            auto& value = m_elements[i];
-            auto assigment = std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(array), std::move(value), m_line);
-            assigment->codegen(context);
-        }
-    } else {
-        std::vector<llvm::Constant*> constants;
-        constants.reserve(m_elements.size());
-        for(auto& element : m_elements) {
-            llvm::Constant* constant = dyn_cast<llvm::ConstantInt>(element->codegen(context));
-            if (!constant){
-                logError(m_line, u8"Syntax Error: only const values are allowed in array init in global space!");
-                return nullptr;
-            }
-            constants.push_back(constant);
-        }
-        llvm::GlobalVariable* globalVar = context.theModule->getGlobalVariable(cStr(m_name));
-        if (!globalVar){
-            logError(m_line, u8"Syntax Error: unknown declaratin for array/struct '" + m_name + u8"' !");
-            return nullptr;
-        }
-        llvm::ArrayType* arrType = llvm::dyn_cast<llvm::ArrayType>(globalVar->getValueType());
-        if (arrType){
-            llvm::Constant* initArray = llvm::ConstantArray::get(arrType, constants);
-            globalVar->setInitializer(initArray);
-            return nullptr;
-        }
-        llvm::StructType* structType = llvm::dyn_cast<llvm::StructType>(globalVar->getValueType());
-        if (structType) {
-            llvm::Constant* initStruct = llvm::ConstantStruct::get(structType, constants);
-            globalVar->setInitializer(initStruct);
-            return nullptr;
-        }
-        logError(m_line, u8"Syntax Error: Only arrays are allowed to have initialization with [...]!");
-        return nullptr;
-    }
-    return nullptr;
-}
-
-llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
+llvm::Value* AccessArrayElementAST::codegen(IRContext &context) {
     const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
     if (!arrVar){
         logError(m_line, u8"Syntax Error: Array '" + m_name + u8"' not found!");
