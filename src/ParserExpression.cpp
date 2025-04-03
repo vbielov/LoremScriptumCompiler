@@ -92,14 +92,14 @@ std::unique_ptr<AST> Parser::parseExpression() {
  *    - -var
  *    - ¬bool
  *    - (I + II *IV)
+ *    - [I, II, ...]
  *
  * Trick of sign number -I -> 0 - I
  *
  */
 std::unique_ptr<AST> Parser::parseExpressionSingle() {
-    std::unique_ptr<AST> value;
-
     if (isUnaryOperator()) {
+        std::unique_ptr<AST> value;
         std::u8string sign = m_currentToken->value;
 
         getNextToken();
@@ -133,35 +133,51 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             return nullptr;
         }
 
-        value = std::make_unique<NumberAST>(intValue, currentLine);
+        auto value = std::make_unique<NumberAST>(intValue, currentLine);
         getNextToken();
-    } else if (isToken(TokenType::LITERAL)) {
+        return value;
+    }
+
+    if (isToken(TokenType::LITERAL)) {
         if (m_currentToken->value.length() > 1) {
             if (m_currentToken->value[0] != '\\' || m_currentToken->value.length() != 2) {
                 logWarning(currentLine, u8"Syntax Error: Char can't be longer then a single character!");
             }
         }
 
-        char letter = m_currentToken->value[0];
+        char8_t letter = m_currentToken->value[0];
 
         if(m_currentToken->value == u8"\\0") letter = '\0';
         if(m_currentToken->value == u8"\\n") letter = '\n';
         if(m_currentToken->value == u8"\\t") letter = '\t';
         if(m_currentToken->value == u8"\\r") letter = '\r';
         
-        value = std::make_unique<CharAST>(letter, currentLine);
+        auto value = std::make_unique<CharAST>(letter, currentLine);
         getNextToken();
+        return value;
+    }
 
-    } else if (isToken(TokenType::BOOL)) {
+    if (isToken(TokenType::STRING)) {
+        std::vector<std::unique_ptr<AST>> letters;
+        for (size_t i = 0; i < m_currentToken->value.length(); i++) {
+            letters.push_back(std::make_unique<CharAST>(m_currentToken->value[i], currentLine));
+        }
+        letters.push_back(std::make_unique<CharAST>(u8'\0', currentLine)); // null terminator
+        auto strArr = std::make_unique<ArrayAST>(std::move(letters), currentLine);
+        getNextToken(); // eat string
+        return strArr;
+    }
+
+    if (isToken(TokenType::BOOL)) {
         bool state = m_currentToken->value == boolean_types::TRUE;
         getNextToken(); // eat bool
         return std::make_unique<BoolAST>(state, currentLine);
-
-    } else if (isToken(TokenType::IDENTIFIER)) {
+    } 
+    if (isToken(TokenType::IDENTIFIER)) {
         auto identifier = m_currentToken->value;
         getNextToken(); // eat identifier
         if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
-            value = parseExpressionFunctionCall(identifier);
+            return parseExpressionFunctionCall(identifier);
         } else if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
             getNextToken(); // eat [
 
@@ -178,22 +194,65 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             getNextToken(); // eat ]
             return std::make_unique<AccessArrayElementAST>(identifier, std::move(index), currentLine);
         } else {
-            value = std::make_unique<VariableReferenceAST>(identifier, currentLine);
+            return std::make_unique<VariableReferenceAST>(identifier, currentLine);
         }
-    } else if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
+    }
+    if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
         getNextToken();
-        value = parseExpression();
+        auto value = parseExpression();
         if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
                 logError(currentLine, u8"Syntax Error: closing array bracket ')' expected!");
                 return nullptr;
             }
         getNextToken();
-    } else {
-        logError(currentLine, u8"Syntax Error: Token not recognised...!");
-        return nullptr;
+        return value;
+    } 
+    if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_OPEN)) {
+        return parseArray();
     }
 
-    return value;
+    logError(currentLine, u8"Syntax Error: Token not recognised...!");
+    return nullptr;
+}
+
+/**
+ * Array Initialization
+ * 
+ * Examples:
+ *      - [I]
+ *      - [I, II]
+ *        ^ we are always here
+ */
+std::unique_ptr<ArrayAST> Parser::parseArray() {
+    getNextToken(); // eat '['
+    std::vector<std::unique_ptr<AST>> elements;
+    // get expression from each index
+    while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
+        if (isToken(TokenType::EOF_TOKEN)) {
+            logError(currentLine, u8"Syntax Error: closing bracket for array initialization ']' expected!");
+            return nullptr;
+        }
+
+        std::unique_ptr<AST> element = parseExpression();
+        if (element == nullptr) {
+            logError(currentLine, u8"Syntax Error: invalid expression during array initialization!");
+            return nullptr;
+        }
+
+        elements.push_back(std::move(element));
+
+        if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
+            getNextToken(); // eat ','
+            continue;
+        }
+        if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
+            break;
+        }
+        logError(currentLine, u8"Syntax Error: expected ',' or ']' during array initialization!");
+        return nullptr;
+    }
+    getNextToken(); // eat ']'
+    return std::make_unique<ArrayAST>(std::move(elements), currentLine);
 }
 
 /**

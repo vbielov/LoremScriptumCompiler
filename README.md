@@ -83,7 +83,7 @@ point[x] = VI
 ```lorem
 nihil printf = λ(litera str)
 
-litera[] helloWorld = 'Hello World!'
+litera[] helloWorld = "Hello World!"
 printf(helloWorld)
 ```
 
@@ -108,8 +108,8 @@ You can also make an _array_ of any type by appending `[size]` to the type where
 **Examples:**
 
 ```lorem
-numerus[V] = [O, I, II, III, IV]
-litera[V] = ['H', 'e', 'l', 'l', 'o']
+numerus[V] arr = [O, I, II, III, IV]
+litera[V] word = ['H', 'e', 'l', 'l', 'o']
 ```
 
 ### How to: Declarations
@@ -150,7 +150,7 @@ It is also possible to define strings. In LoremScriptum a string is an array of 
 numerus[IV] a = [O, I, II, III, IV]
 litera[VI] b = ['H', 'e', 'l', 'l', 'o', '!']
 
-litera[] str = 'Hello World!'
+litera[] str = "Hello World!"
 
 a[II] += I
 
@@ -174,7 +174,7 @@ After defining a struct you can create an instance of it using the following syn
 
 ```lorem
 rerum vector_2d = (numerus x, numerus y)
-vector_2d point = [V, -VI]
+vector_2d point
 point[x] = VI
 ```
 

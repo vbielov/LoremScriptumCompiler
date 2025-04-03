@@ -35,9 +35,10 @@ public:
 
 class ArrayDataType : public IDataType {
 public:
-    PrimitiveType type;
+    std::unique_ptr<IDataType> elementType;
     size_t size;
-    ArrayDataType(PrimitiveType type, size_t size);
+
+    ArrayDataType(std::unique_ptr<IDataType> elementType, size_t size);
     llvm::Type* getLLVMType(llvm::LLVMContext& context) const override; 
     std::u8string toString() const override;
 };

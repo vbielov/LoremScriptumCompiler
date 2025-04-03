@@ -95,6 +95,21 @@ public:
 };
 
 
+class ArrayAST : public AST {
+private:
+    std::vector<std::unique_ptr<AST>> m_elements;
+    std::unique_ptr<IDataType> m_type; // it's cached and evaluated when getType() is called
+    size_t m_line;
+
+public:
+    ArrayAST(std::vector<std::unique_ptr<AST>> elements, size_t line);
+    const IDataType* getType(const IRContext& context) override;
+    llvm::Value* codegen(IRContext& context) override;
+    void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override;
+    size_t getLine() const override;
+};
+
+
 class VariableDeclarationAST : public AST {
 private:
     std::u8string m_name;
@@ -248,25 +263,10 @@ public:
     size_t getLine() const override;
 };
 
-// Maybe just replace it already in parser with blockAST of assigments?
-class ArrayInitializationAST : public AST {
-private:
-    std::u8string m_name;
-    std::vector<std::unique_ptr<AST>> m_elements;
-    size_t m_line;
-
-public:
-    ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements, size_t line);
-    llvm::Value* codegen(IRContext& context) override;
-    void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
-    size_t getLine() const override;
-};
-
 class AccessArrayElementAST : public AST {
 private:
     std::u8string m_name;
     std::unique_ptr<AST> m_index; 
-    std::unique_ptr<IDataType> m_type; // this is cached type and will be defined after getType() is called
     size_t m_line;
 
 public:

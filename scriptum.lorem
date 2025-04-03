@@ -1,5 +1,5 @@
-numerus printf = λ(litera str)
+nihil printf = λ(litera[] str)
 
-litera[] arr = 'hello world!'
+litera[] helloWorld = "Hello, World!"
 
-printf(arr)
+printf(helloWorld)

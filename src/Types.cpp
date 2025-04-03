@@ -28,35 +28,19 @@ std::u8string PrimitiveDataType::toString() const {
     return std::u8string(it->first);
 }
 
-ArrayDataType::ArrayDataType(PrimitiveType type, size_t size) 
-    : type(type)
+ArrayDataType::ArrayDataType(std::unique_ptr<IDataType> elementType, size_t size)
+    : elementType(std::move(elementType))
     , size(size) {}
 
 llvm::Type* ArrayDataType::getLLVMType(llvm::LLVMContext& context) const {
-    switch(type) {
-        case PrimitiveType::INT:
-            return llvm::ArrayType::get(llvm::Type::getInt32Ty(context), size);
-        case PrimitiveType::BOOL:
-            return llvm::ArrayType::get(llvm::Type::getInt1Ty(context), size);
-        case PrimitiveType::CHAR:
-            return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), size);
-        case PrimitiveType::VOID:
-            assert(false && "Array of type void is not allowed my friend.");
-            return llvm::ArrayType::get(llvm::Type::getVoidTy(context), size);
-        default:
-            assert(false && "Unknown type");
-            return nullptr;
-    }
+    llvm::Type* type = elementType->getLLVMType(context);
+    return llvm::ArrayType::get(type, size);
 }
 
 std::u8string ArrayDataType::toString() const {
-    PrimitiveType cpType = type;
-    auto it = std::find_if(STR_TO_PRIMITIVE_MAP.begin(), STR_TO_PRIMITIVE_MAP.end(), [&cpType](const auto& pt) {
-        return pt.second == cpType;
-    });
-    assert(it != STR_TO_PRIMITIVE_MAP.end());
+    std::u8string type = elementType->toString();
     std::string sizeStr = std::to_string(size);
-    return (std::u8string(it->first) + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
+    return (type + u8"[" + std::u8string(sizeStr.begin(), sizeStr.end()) + u8"]");
 }
 
 TypeIdentifierPair::TypeIdentifierPair(std::unique_ptr<IDataType> type, const std::u8string& identifier)

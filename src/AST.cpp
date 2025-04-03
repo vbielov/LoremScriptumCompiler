@@ -38,6 +38,10 @@ const IDataType* CharAST::getType([[maybe_unused]] const IRContext& context) {
     return TYPE.get();
 }
 
+size_t CharAST::getLine() const {
+    return m_line;
+}
+
 BoolAST::BoolAST(bool boolean, size_t line)
     : m_bool(boolean)
     , m_line(line) {}
@@ -45,6 +49,51 @@ BoolAST::BoolAST(bool boolean, size_t line)
 const IDataType* BoolAST::getType([[maybe_unused]] const IRContext& context) {
     static const std::unique_ptr<IDataType> TYPE = std::make_unique<PrimitiveDataType>(PrimitiveType::BOOL);
     return TYPE.get();
+}
+
+ArrayAST::ArrayAST(std::vector<std::unique_ptr<AST>> elements, size_t line)
+    : m_elements(std::move(elements))
+    , m_type(nullptr)
+    , m_line(line) {}
+
+const IDataType* ArrayAST::getType(const IRContext& context) {
+    if (m_type) {
+        return m_type.get();
+    }
+
+    if (m_elements.empty()) {
+        logError(m_line, u8"Syntax Error: Empty array initialization is not allowed!");
+        return nullptr;
+    }
+    
+    // Make sure all elements of ArrayAST have the same type
+    const IDataType* firstType = m_elements[0]->getType(context);
+    for (const auto& element : m_elements) {
+        if (element->getType(context)->getLLVMType(*context.context) != firstType->getLLVMType(*context.context)) {
+            logWarning(m_line, u8"Syntax Error: All elements of array must be of the same type!");
+            break;
+        }
+    }
+
+    std::unique_ptr<IDataType> cloneType;
+    auto primitiveType = dynamic_cast<const PrimitiveDataType*>(firstType);
+    if (primitiveType) {
+        cloneType = std::make_unique<PrimitiveDataType>(primitiveType->type);
+    } else {
+        auto structType = dynamic_cast<const StructDataType*>(firstType);
+        if (structType) {
+            cloneType = std::make_unique<StructDataType>(structType->name);
+        } else {
+            logError(m_line, u8"Syntax Error: Array can only be of primitive or struct type!");
+            return nullptr;
+        }
+    }
+    m_type = std::make_unique<ArrayDataType>(std::move(cloneType), m_elements.size());
+    return m_type.get();
+}
+
+size_t ArrayAST::getLine() const {
+    return m_line;
 }
 
 VariableDeclarationAST::VariableDeclarationAST(const std::u8string& name, std::unique_ptr<IDataType> type, size_t line)
@@ -149,16 +198,9 @@ LoopAST::LoopAST(std::unique_ptr<BlockAST> body, size_t line)
     : m_body(std::move(body))
     , m_line(line) {}
     
-
-ArrayInitializationAST::ArrayInitializationAST(const std::u8string& name, std::vector<std::unique_ptr<AST>> elements, size_t line)
-    : m_name(name)
-    , m_elements(std::move(elements))
-    , m_line(line) {}
-
 AccessArrayElementAST::AccessArrayElementAST(const std::u8string& name, std::unique_ptr<AST> index, size_t line)
     : m_name(name)
     , m_index(std::move(index))
-    , m_type(nullptr)
     , m_line(line) {}
 
 const std::u8string& AccessArrayElementAST::getName() const {
@@ -166,45 +208,40 @@ const std::u8string& AccessArrayElementAST::getName() const {
 }
 
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
-    const ScopeEntry* entry = context.symbolTable.lookupVariable(m_name);
-    if (!entry) {
-        logError(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+    const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
+    if (!arrVar) {
+        logError(m_line, u8"Syntax Error: Array or Struct '" + m_name + u8"' not found!");
         return nullptr;
     }
 
-    const StructDataType* structType = dynamic_cast<const StructDataType*>(entry->type); // this is struct type without attributes
-    if (structType)
-        structType = context.symbolTable.lookupStruct(structType->name); // this one is with attributes
+    const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(arrVar->type);
+    if (arrType) {
+        return arrType->elementType.get();
+    }
+
+    const StructDataType* structType = dynamic_cast<const StructDataType*>(arrVar->type);
+    if(structType)
+        structType = context.symbolTable.lookupStruct(structType->name);
     if (structType) {
-        VariableReferenceAST* ref = dynamic_cast<VariableReferenceAST*>(m_index.get());
-        if (ref) {
-            for (const auto& attr : structType->attributes) {
-                if (attr.identifier == ref->getName())
-                    return attr.type.get();
-            }
-            logError(m_line, u8"Syntax Error: no attribute " + ref->getName() + u8" in struct " + m_name);
-            return nullptr;
-        } 
-        NumberAST* number = dynamic_cast<NumberAST*>(m_index.get());
-        if (number) {
-            int index = number->getValue();
-            if (index >= (int)structType->attributes.size() || index < 0) {
-                std::string indexStr = std::to_string(index);
-                logError(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
+        const NumberAST* index = dynamic_cast<const NumberAST*>(m_index.get());
+        if (index) {
+            if (index->getValue() < 0 || index->getValue() >= (int)structType->attributes.size()) {
+                logError(m_line, u8"Syntax Error: Index out of bounds for '" + m_name + u8"' struct!");
                 return nullptr;
             }
-            return structType->attributes[index].type.get();
+            return structType->attributes[index->getValue()].type.get();
         }
-        logError(m_line, u8"Syntax Error: not valid name to access attribute of struct");
+        for (const auto& attribute : structType->attributes) {
+            if (attribute.identifier == m_index->getName()) {
+                return attribute.type.get();
+            }
+        }
+        logError(m_line, u8"Syntax Error: Can't find '" + m_index->getName() + u8"' attribute in '" + m_name + u8"' struct!");
         return nullptr;
     }
- 
-    if (!m_type) {
-        const ArrayDataType* arrType = dynamic_cast<const ArrayDataType*>(entry->type);
-        m_type = std::make_unique<PrimitiveDataType>(arrType->type);
-    }
 
-    return m_type.get();
+    logError(m_line, u8"Syntax Error: '" + m_name + u8"' is not an array or struct!");
+    return nullptr;
 }
 
 StructAST::StructAST(std::unique_ptr<StructDataType> type, size_t line)
@@ -262,13 +299,22 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     ostr << "CharAST('" << (char)m_char << "')" << std::endl;
 }
 
-size_t CharAST::getLine() const {
-    return m_line;
+void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
+    printIndent(ostr, indent, isLast);
+    ostr << "ArrayAST[" << m_elements.size() << "]" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    for (size_t i = 0; i < m_elements.size(); i++) {
+        m_elements[i]->printTree(ostr, newIndent, i == m_elements.size() - 1);
+    }
 }
 
 void VariableDeclarationAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
 {
     printIndent(ostr, indent, isLast);
+    if(!m_type) {
+        ostr << "VariableDeclarationAST(" << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
+        return;
+    }
     ostr << "VariableDeclarationAST(" << (const char*)m_type->toString().c_str() << " "
          << std::string(m_name.begin(), m_name.end()) << ")" << std::endl;
 }
@@ -392,19 +438,6 @@ void AccessArrayElementAST::printTree(std::ostream& ostr, const std::string& ind
 }
 
 size_t AccessArrayElementAST::getLine() const {
-    return m_line;
-}
-
-void ArrayInitializationAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
-    printIndent(ostr, indent, isLast);
-    ostr << "ArrayInitializationAST" << std::endl;
-    std::string newIndent = indent + (isLast ? "    " : "│   ");
-    for (const auto& element : m_elements) {
-        element->printTree(ostr, newIndent, element == m_elements.back());
-    }
-}
-
-size_t ArrayInitializationAST::getLine() const {
     return m_line;
 }
 

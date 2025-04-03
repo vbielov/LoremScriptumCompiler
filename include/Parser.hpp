@@ -39,6 +39,8 @@ private:
     bool isToken(TokenType type, const std::u8string_view& value);
     bool isToken(const std::u8string_view& value);
     bool isUnaryOperator();
+    std::unique_ptr<IDataType> parseType();
+
 
     // --- Block section ---
     std::unique_ptr<BlockAST> parseBlock();
@@ -53,8 +55,7 @@ private:
     std::unique_ptr<AST> parseInstruction();
     std::unique_ptr<AST> parseInstructionDeclaration();
     std::unique_ptr<AST> parseInstructionDeclarationStruct();
-    std::unique_ptr<AST> parseInstructionDeclarationStructType();
-    std::unique_ptr<AST> parseInstructionDeclarationArray(PrimitiveType type);
+    std::unique_ptr<ArrayAST> parseArray();
     std::unique_ptr<AST> parseInstructionAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionArrayAssignment(const std::u8string& identifier);
     std::unique_ptr<AST> parseInstructionShorthand(const std::u8string& identifier);

@@ -30,6 +30,62 @@ llvm::Value* BoolAST::codegen(IRContext& context) {
     return llvm::ConstantInt::get(*context.context, llvm::APInt(1, m_bool, false));
 }
 
+llvm::Value* ArrayAST::codegen(IRContext& context) {
+    if (!m_type) {
+        getType(context);
+    }
+    llvm::Type* type = m_type ? m_type->getLLVMType(*context.context) : nullptr;
+    llvm::ArrayType* arrayType = type ? llvm::dyn_cast<llvm::ArrayType>(type) : nullptr;
+    if (!arrayType) {
+        logError(m_line, u8"Syntax Error: Array type is not valid!");
+        return nullptr;
+    }
+
+    std::vector<llvm::Value*> values;
+    for (const auto& element : m_elements) {
+        llvm::Value* val = element->codegen(context);
+        if (!val)
+            return nullptr;
+        values.push_back(val);
+    }
+
+    bool isConstantArr = true;
+    std::vector<llvm::Constant*> constValues;
+    for (const auto& val : values) {
+        llvm::Constant* constElemVal = llvm::dyn_cast<llvm::Constant>(val);
+        if (!constElemVal) {
+            isConstantArr = false;
+            break;
+        }
+        constValues.push_back(constElemVal);
+    }
+
+    if (isConstantArr) {
+        llvm::Constant* initializer = llvm::ConstantArray::get(arrayType, constValues);
+        return initializer;   
+    }
+    logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
+    return nullptr;
+    
+    // TODO(Vlad): Dynamic array initialization
+    // if (!context.builder->GetInsertBlock()) {
+    //     logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
+    //     return nullptr;
+    // }
+
+    // llvm::IRBuilder<> tmpBuilder(context.builder->GetInsertBlock(), context.builder->GetInsertBlock()->begin());
+    // llvm::AllocaInst* arrayVariable = tmpBuilder.CreateAlloca(arrayType, nullptr, "tmpArr");
+    // int i = 0;
+    // for (const auto& val : values) {
+    //     static llvm::Value* zero = llvm::ConstantInt::get(*context.context, llvm::APInt(32, 0, true));
+    //     llvm::Value* index = llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true));
+    //     llvm::Value* gep = context.builder->CreateInBoundsGEP(type, arrayVariable, {zero, index}, "arrIdx");
+    //     context.builder->CreateStore(val, gep);
+    //     i++;
+    // }
+    // return arrayVariable;
+}
+
 llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
     llvm::BasicBlock* insertBlock = context.builder->GetInsertBlock();
     llvm::Type* type = m_type->getLLVMType(*context.context);
@@ -64,6 +120,20 @@ llvm::Value* VariableReferenceAST::codegen(IRContext& context) {
 }
 
 llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
+    // Exception for automatically sizing array type, works only for primitive types
+    {
+        auto leftArrType = dynamic_cast<const ArrayDataType*>(m_LHS->getType(context));
+        auto leftElemType = leftArrType ? dynamic_cast<const PrimitiveDataType*>(leftArrType->elementType.get()) : nullptr;
+        auto rightArrType = dynamic_cast<const ArrayDataType*>(m_RHS->getType(context));
+        if(m_op == operators::ASSIGN && leftArrType && leftElemType && rightArrType && leftArrType->size == 0) {
+            // fix left array type
+            auto leftType = std::make_unique<ArrayDataType>(
+                std::make_unique<PrimitiveDataType>(leftElemType->type), rightArrType->size
+            );
+            m_LHS = std::make_unique<VariableDeclarationAST>(m_LHS->getName(), std::move(leftType), m_line);
+        }
+    }
+
     llvm::Value* left = m_LHS->codegen(context);
     llvm::Value* right = m_RHS->codegen(context);
     if (!left || !right)
@@ -78,20 +148,34 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             llvm::Type* leftType = m_LHS->getType(context)->getLLVMType(*context.context);
             llvm::Type* rightType = m_RHS->getType(context)->getLLVMType(*context.context);
             
+            // TODO(Vlad): Array copy elements one by one
+            //              have problems with loading, because for some reason gep is not a pointer.....
+            // if (right->getType()->isArrayTy()) {
+            //     for(int i = 0; i < rightType->getArrayNumElements(); i++) {
+            //         auto index0 = std::make_unique<NumberAST>(i, m_line);
+            //         auto arrAccess = std::make_unique<AccessArrayElementAST>(m_LHS->getName(), std::move(index0), m_line);
+            //         auto element = context.builder->CreateInBoundsGEP(
+            //             rightType, right, llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true)), "arrIdx"
+            //         );
+            //         auto load = context.builder->CreateLoad(rightType->getArrayElementType(), element, "loadtmp");
+            //         auto dest = arrAccess->codegen(context);
+            //         context.builder->CreateStore(load, dest);
+            //     }
+            //     return nullptr;
+            // }
+
+            // If thats a pointer, load value from it
             if (right->getType()->isPointerTy())
                 right = context.builder->CreateLoad(rightType, right, "loadtmp");
             
             // Cast values if they are both integers 
             if (leftType != rightType) {
-                // TODO(Vlad): Error
-                if (!leftType->isIntegerTy() || !rightType->isIntegerTy())
-                {
-                    m_RHS->printTree(std::cout, "", false);
-                    logError(m_line, u8"Syntax Error: Type does not match!");
+                if (leftType->isIntegerTy() && rightType->isIntegerTy()) {
+                    right = context.builder->CreateIntCast(right, leftType, true, "conv");
+                } else {
+                    logError(m_line, u8"Syntax Error: Type " + m_LHS->getType(context)->toString() +  u8" does not match " + m_RHS->getType(context)->toString() + u8"!");
                     return nullptr;
                 }
-
-                right = context.builder->CreateIntCast(right, leftType, true, "conv");
             }
 
             context.builder->CreateStore(right, left);
@@ -99,9 +183,8 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         } else if (auto globalVar = llvm::dyn_cast<llvm::GlobalVariable>(left)) {
             // Global initialization
             auto constant = llvm::dyn_cast<llvm::Constant>(right);
-            // TODO(Vlad): Error
             if (!constant) {
-                    logError(m_line, u8"Syntax Error: right side isnt a constant!");
+                    logError(m_line, u8"Syntax Error: Right side must be a constant!");
                     return nullptr;
                 }
             globalVar->setInitializer(constant);
@@ -145,8 +228,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         return context.builder->CreateXor(left, llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(*context.context), true), "negtmp");
     }
 
-    // TODO(Vlad): Error
-    logError(m_line, u8"Syntax Error: wrong operator!");
+    logError(m_line, u8"Syntax Error: " + m_op + u8" is illegal operator!");
 
     return nullptr;
 }
@@ -154,9 +236,10 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
 llvm::Value* FuncCallAST::codegen(IRContext& context) {
     llvm::Function* function = context.theModule->getFunction(cStr(m_calleeIdentifier));
     const ScopeEntry* entry = context.symbolTable.lookupFunction(m_calleeIdentifier);
-    // TODO(Vlad): Error
-    if (!function)
+    if (!function || !entry) {
+        logError(m_line, u8"Syntax Error: function '" + m_calleeIdentifier + u8"' not defined!");
         return nullptr; 
+    }
 
     llvm::Type* type = entry->type->getLLVMType(*context.context);
     bool hasReturn = !type->isVoidTy();
@@ -182,6 +265,10 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         // functions arguments are always pointers, not value. => Create local variables if needed
         if (!argValue->getType()->isPointerTy()) {
             llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
+            if (!currentBlock) {
+                logError(m_line, u8"Syntax Error: function call in global scope is not allowed!");
+                return nullptr;
+            }
             llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
             llvm::Type* argType = arg->getType(context)->getLLVMType(*context.context);
             llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, "argTmp");
@@ -196,11 +283,6 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         return context.builder->CreateCall(function, arguments);
     }
 
-    // TODO(Vlad): Error
-    if (!entry){
-        logError(m_line, u8"Syntax Error: wrong operator!");
-        return nullptr;
-    }
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
     llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
@@ -241,9 +323,8 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
 
 llvm::Value* FunctionAST::codegen(IRContext& context) {
     llvm::Function* function = dyn_cast<llvm::Function>(m_prototype->codegen(context));
-    // TODO: Error
     if (!function->empty()){ // it's a redifinition
-        logError(m_line, u8"Syntax Error: redefinition is not allowed!");
+        logError(m_line, u8"Syntax Error: Function " + m_prototype->getName() +  u8" is already defined!");
         return nullptr;
     }
     
@@ -265,8 +346,8 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
     if (!context.builder->GetInsertBlock()->getTerminator())
         context.builder->CreateRetVoid(); 
 
-    // TODO: Error
     if (llvm::verifyFunction(*function, &(llvm::errs()))) {
+        logError(m_line, u8"Syntax Error: Content of function " + m_prototype->getName() +  u8" is not valid!");
         function->eraseFromParent();
         return nullptr;
     }
@@ -288,9 +369,8 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
         value = context.builder->CreateLoad(m_expr->getType(context)->getLLVMType(*context.context), value, "loadtmp");
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
-    // TODO(Vlad): Error
     if (!currentBlock){    
-        logError(m_line, u8"Syntax Error: return in global scope is not allowed!");
+        logError(m_line, u8"Syntax Error: Return(retro) is not allowed in global scope!");
         return nullptr;
     }
 
@@ -306,9 +386,8 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 
 llvm::Value* BreakAST::codegen(IRContext& context) {
     llvm::BasicBlock* returnBlock = context.afterLoop.top();
-    // TODO(Vlad): Error
     if (!returnBlock){
-        logError(m_line, u8"Syntax Error: break outside of loop is not allowed!");
+        logError(m_line, u8"Syntax Error: break(finio) outside of loop is not allowed!");
         return nullptr;
     }
 
@@ -373,50 +452,7 @@ llvm::Value* LoopAST::codegen(IRContext& context) {
     return nullptr;
 }
 
-llvm::Value* ArrayInitializationAST::codegen(IRContext& context) {
-    llvm::BasicBlock* block = context.builder->GetInsertBlock();
-    if (block) {
-        for (size_t i = 0; i < m_elements.size(); i++) {
-            std::unique_ptr<AST> array = std::make_unique<AccessArrayElementAST>(m_name, std::make_unique<NumberAST>((int)i, m_line), m_line);
-            auto& value = m_elements[i];
-            auto assigment = std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(array), std::move(value), m_line);
-            assigment->codegen(context);
-        }
-    } else {
-        std::vector<llvm::Constant*> constants;
-        constants.reserve(m_elements.size());
-        for(auto& element : m_elements) {
-            llvm::Constant* constant = dyn_cast<llvm::ConstantInt>(element->codegen(context));
-            if (!constant){
-                logError(m_line, u8"Syntax Error: only const values are allowed in array init in global space!");
-                return nullptr;
-            }
-            constants.push_back(constant);
-        }
-        llvm::GlobalVariable* globalVar = context.theModule->getGlobalVariable(cStr(m_name));
-        if (!globalVar){
-            logError(m_line, u8"Syntax Error: unknown declaratin for array/struct '" + m_name + u8"' !");
-            return nullptr;
-        }
-        llvm::ArrayType* arrType = llvm::dyn_cast<llvm::ArrayType>(globalVar->getValueType());
-        if (arrType){
-            llvm::Constant* initArray = llvm::ConstantArray::get(arrType, constants);
-            globalVar->setInitializer(initArray);
-            return nullptr;
-        }
-        llvm::StructType* structType = llvm::dyn_cast<llvm::StructType>(globalVar->getValueType());
-        if (structType) {
-            llvm::Constant* initStruct = llvm::ConstantStruct::get(structType, constants);
-            globalVar->setInitializer(initStruct);
-            return nullptr;
-        }
-        logError(m_line, u8"Syntax Error: Only arrays are allowed to have initialization with [...]!");
-        return nullptr;
-    }
-    return nullptr;
-}
-
-llvm::Value* AccessArrayElementAST::codegen(IRContext& context) {
+llvm::Value* AccessArrayElementAST::codegen(IRContext &context) {
     const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
     if (!arrVar){
         logError(m_line, u8"Syntax Error: Array '" + m_name + u8"' not found!");
