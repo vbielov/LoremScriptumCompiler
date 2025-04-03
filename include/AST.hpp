@@ -98,6 +98,7 @@ public:
 class ArrayAST : public AST {
 private:
     std::vector<std::unique_ptr<AST>> m_elements;
+    std::unique_ptr<IDataType> m_type; // it's cached and evaluated when getType() is called
     size_t m_line;
 
 public:

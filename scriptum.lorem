@@ -1,5 +1,10 @@
-numerus printf = λ(litera str)
 
-litera[XV] arr = ['H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\n', '\0']
 
-printf(arr)
+rerum vector = (numerus x, numerus y)
+
+vector[III] points
+vector point = [O, O]
+points[O] = point
+points[I] = point 
+points[II] = point
+

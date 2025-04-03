@@ -30,8 +30,60 @@ llvm::Value* BoolAST::codegen(IRContext& context) {
     return llvm::ConstantInt::get(*context.context, llvm::APInt(1, m_bool, false));
 }
 
-llvm::Value* ArrayAST::codegen(IRContext &context) {
+llvm::Value* ArrayAST::codegen(IRContext& context) {
+    if (!m_type) {
+        getType(context);
+    }
+    llvm::Type* type = m_type ? m_type->getLLVMType(*context.context) : nullptr;
+    llvm::ArrayType* arrayType = type ? llvm::dyn_cast<llvm::ArrayType>(type) : nullptr;
+    if (!arrayType) {
+        logError(m_line, u8"Syntax Error: Array type is not valid!");
+        return nullptr;
+    }
+
+    std::vector<llvm::Value*> values;
+    for (const auto& element : m_elements) {
+        llvm::Value* val = element->codegen(context);
+        if (!val)
+            return nullptr;
+        values.push_back(val);
+    }
+
+    bool isConstantArr = true;
+    std::vector<llvm::Constant*> constValues;
+    for (const auto& val : values) {
+        llvm::Constant* constElemVal = llvm::dyn_cast<llvm::Constant>(val);
+        if (!constElemVal) {
+            isConstantArr = false;
+            break;
+        }
+        constValues.push_back(constElemVal);
+    }
+
+    if (isConstantArr) {
+        llvm::Constant* initializer = llvm::ConstantArray::get(arrayType, constValues);
+        return initializer;   
+    }
+    logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
     return nullptr;
+    
+    // TODO(Vlad): Dynamic array initialization
+    // if (!context.builder->GetInsertBlock()) {
+    //     logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
+    //     return nullptr;
+    // }
+
+    // llvm::IRBuilder<> tmpBuilder(context.builder->GetInsertBlock(), context.builder->GetInsertBlock()->begin());
+    // llvm::AllocaInst* arrayVariable = tmpBuilder.CreateAlloca(arrayType, nullptr, "tmpArr");
+    // int i = 0;
+    // for (const auto& val : values) {
+    //     static llvm::Value* zero = llvm::ConstantInt::get(*context.context, llvm::APInt(32, 0, true));
+    //     llvm::Value* index = llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true));
+    //     llvm::Value* gep = context.builder->CreateInBoundsGEP(type, arrayVariable, {zero, index}, "arrIdx");
+    //     context.builder->CreateStore(val, gep);
+    //     i++;
+    // }
+    // return arrayVariable;
 }
 
 llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
@@ -82,6 +134,23 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             llvm::Type* leftType = m_LHS->getType(context)->getLLVMType(*context.context);
             llvm::Type* rightType = m_RHS->getType(context)->getLLVMType(*context.context);
             
+            // TODO(Vlad): Array copy elements one by one
+            //              have problems with loading, because for some reason gep is not a pointer.....
+            // if (right->getType()->isArrayTy()) {
+            //     for(int i = 0; i < rightType->getArrayNumElements(); i++) {
+            //         auto index0 = std::make_unique<NumberAST>(i, m_line);
+            //         auto arrAccess = std::make_unique<AccessArrayElementAST>(m_LHS->getName(), std::move(index0), m_line);
+            //         auto element = context.builder->CreateInBoundsGEP(
+            //             rightType, right, llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true)), "arrIdx"
+            //         );
+            //         auto load = context.builder->CreateLoad(rightType->getArrayElementType(), element, "loadtmp");
+            //         auto dest = arrAccess->codegen(context);
+            //         context.builder->CreateStore(load, dest);
+            //     }
+            //     return nullptr;
+            // }
+
+            // If thats a pointer, load value from it
             if (right->getType()->isPointerTy())
                 right = context.builder->CreateLoad(rightType, right, "loadtmp");
             

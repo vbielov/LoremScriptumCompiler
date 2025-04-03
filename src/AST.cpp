@@ -53,11 +53,43 @@ const IDataType* BoolAST::getType([[maybe_unused]] const IRContext& context) {
 
 ArrayAST::ArrayAST(std::vector<std::unique_ptr<AST>> elements, size_t line)
     : m_elements(std::move(elements))
+    , m_type(nullptr)
     , m_line(line) {}
 
-const IDataType* ArrayAST::getType([[maybe_unused]] const IRContext& context) {
-    // TODO: find type at runtime analyse elements
-    return nullptr;
+const IDataType* ArrayAST::getType(const IRContext& context) {
+    if (m_type) {
+        return m_type.get();
+    }
+
+    if (m_elements.empty()) {
+        logError(m_line, u8"Syntax Error: Empty array initialization is not allowed!");
+        return nullptr;
+    }
+    
+    // Make sure all elements of ArrayAST have the same type
+    const IDataType* firstType = m_elements[0]->getType(context);
+    for (const auto& element : m_elements) {
+        if (element->getType(context)->getLLVMType(*context.context) != firstType->getLLVMType(*context.context)) {
+            logWarning(m_line, u8"Syntax Error: All elements of array must be of the same type!");
+            break;
+        }
+    }
+
+    std::unique_ptr<IDataType> cloneType;
+    auto primitiveType = dynamic_cast<const PrimitiveDataType*>(firstType);
+    if (primitiveType) {
+        cloneType = std::make_unique<PrimitiveDataType>(primitiveType->type);
+    } else {
+        auto structType = dynamic_cast<const StructDataType*>(firstType);
+        if (structType) {
+            cloneType = std::make_unique<StructDataType>(structType->name);
+        } else {
+            logError(m_line, u8"Syntax Error: Array can only be of primitive or struct type!");
+            return nullptr;
+        }
+    }
+    m_type = std::make_unique<ArrayDataType>(std::move(cloneType), m_elements.size());
+    return m_type.get();
 }
 
 size_t ArrayAST::getLine() const {
@@ -188,6 +220,8 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     }
 
     const StructDataType* structType = dynamic_cast<const StructDataType*>(arrVar->type);
+    if(structType)
+        structType = context.symbolTable.lookupStruct(structType->name);
     if (structType) {
         for (const auto& attribute : structType->attributes) {
             if (attribute.identifier == m_index->getName()) {
@@ -257,10 +291,13 @@ void CharAST::printTree(std::ostream& ostr, const std::string& indent, bool isLa
     ostr << "CharAST('" << (char)m_char << "')" << std::endl;
 }
 
-
-
 void ArrayAST::printTree(std::ostream& ostr, const std::string& indent, bool isLast) const {
-    // TODO
+    printIndent(ostr, indent, isLast);
+    ostr << "ArrayAST[" << m_elements.size() << "]" << std::endl;
+    std::string newIndent = indent + (isLast ? "    " : "│   ");
+    for (size_t i = 0; i < m_elements.size(); i++) {
+        m_elements[i]->printTree(ostr, newIndent, i == m_elements.size() - 1);
+    }
 }
 
 void VariableDeclarationAST::printTree(std::ostream &ostr, const std::string &indent, bool isLast) const
