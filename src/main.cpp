@@ -37,10 +37,16 @@ int main(int argc, const char** argv) {
     // Preprocess
     Preprocessor preprocessor = Preprocessor();
     std::u8string sourceCode = preprocessor.process(mainFilePath); 
-    
+
     buildRanges(sourceCode);
     grabSource(sourceCode, inputFilePath); //TODO: start thread maybe and lock ErrorHandler in meantime
+
     
+    #if !defined(NDEBUG)
+    std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
+    std::cout << (const char*)(sourceCode.c_str()) << std::endl << std::endl;
+    #endif
+
     // Tokenize
     Lexer lexer = Lexer(sourceCode);
     std::vector<Token> tokens;

@@ -10,10 +10,7 @@ std::u8string Preprocessor::process(std::filesystem::path& mainFilePath) {
     std::u8string sourceCode;
     std::vector<std::filesystem::path> stack;
     processRecursively(mainFilePath, sourceCode, stack);
-    #if !defined(NDEBUG)
-    std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
-    std::cout << (const char*)(sourceCode.c_str()) << std::endl << std::endl;
-    #endif
+
     return sourceCode;
 }
 
