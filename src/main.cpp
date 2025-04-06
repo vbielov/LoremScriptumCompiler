@@ -5,6 +5,13 @@
 #include "Assembler.hpp"
 #include "ErrorHandler.hpp"
 
+/*
+TODO:
+- Output object/assembler option
+- main(int argc, char** argv) arguments
+- refactor error handler
+*/
+
 int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
         std::cout << "Usage: \n"
@@ -15,7 +22,7 @@ int main(int argc, const char** argv) {
     }
 
     if (strcmp(argv[1], "--version") == 0) {
-        std::cout << "LSC 1.0.0 (built by Backbenchers)";
+        std::cout << "LSC 0.1 (built by Backbenchers)";
         return 0;
     }
 

@@ -12,7 +12,7 @@
 
 class Preprocessor {
 private:
-    std::vector<std::filesystem::path> m_includedFiles;
+    std::vector<FileRange> m_includedFiles;
     std::vector<std::filesystem::path> m_linkLibraries;
     size_t m_depthVal;
 
@@ -20,6 +20,7 @@ public:
     Preprocessor();
     std::u8string process(std::filesystem::path& mainFilePath);
     const std::vector<std::filesystem::path>& getLinkLibs() const;
+    const std::vector<FileRange>& getIncludedFiles() const;
 
 private:
     void processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack);

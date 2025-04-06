@@ -18,11 +18,15 @@ const std::vector<std::filesystem::path>& Preprocessor::getLinkLibs() const {
     return m_linkLibraries;
 }
 
-void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack) {
-    m_includedFiles.push_back(mainFilePath);
-    includingStack.push_back(mainFilePath);
+const std::vector<FileRange>& Preprocessor::getIncludedFiles() const {
+    return m_includedFiles;
+}
 
+void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack) {
+    includingStack.push_back(mainFilePath);
+    
     outStr = readFileToU8String(mainFilePath);
+    m_includedFiles.emplace_back(mainFilePath, -1, outStr.length());
 
     //ErrorHandler, markers
     std::string depthVals = std::to_string(m_depthVal);
@@ -106,6 +110,7 @@ void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::
             if (extension == ".lorem") {
                 std::u8string includedCode;
                 processRecursively(includedPath, includedCode, includingStack); 
+                
                 outStr.insert(pos, includedCode);
                 index += includedCode.length();
             } else if (extension == ".a" || extension == ".lib" || extension == ".o") {
