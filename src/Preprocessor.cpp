@@ -1,139 +1,166 @@
 #include "Preprocessor.hpp"
 
-Preprocessor::Preprocessor()
-    : m_includedFiles()
-    , m_linkLibraries()
-    , m_depthVal(0) {}
-    
-std::u8string Preprocessor::process(std::filesystem::path& mainFilePath) {
-    m_includedFiles.clear();
-    std::u8string sourceCode;
+Preprocessor::Preprocessor(std::filesystem::path& mainFilePath)
+    : m_rootFile(nullptr)
+    , m_includedFiles()
+    , m_linkLibraries() 
+{    
     std::vector<std::filesystem::path> stack;
-    processRecursively(mainFilePath, sourceCode, stack);
+    m_rootFile = createFileTree(mainFilePath, stack);
+}
 
-    return sourceCode;
+std::u8string Preprocessor::getMergedSourceCode() const {
+    return mergeSourceCode(*m_rootFile);
 }
 
 const std::vector<std::filesystem::path>& Preprocessor::getLinkLibs() const {
     return m_linkLibraries;
 }
 
-const std::vector<FileRange>& Preprocessor::getIncludedFiles() const {
-    return m_includedFiles;
+const LoremSourceFile* Preprocessor::findFileFromLineInMergedCode(size_t line) const {
+    return findFile(line, *m_rootFile);
 }
 
-void Preprocessor::processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack) {
-    includingStack.push_back(mainFilePath);
-    
-    outStr = readFileToU8String(mainFilePath);
-    m_includedFiles.emplace_back(mainFilePath, -1, outStr.length());
+const LoremSourceFile* Preprocessor::findFile(size_t line, const LoremSourceFile& file) const {
+    for(const auto& includedFile : file.includedLorem) {
+        size_t pos = includedFile.first;
+        const auto& file = includedFile.second;
 
-    //ErrorHandler, markers
-    std::string depthVals = std::to_string(m_depthVal);
-    std::u8string depthCount(depthVals.begin(), depthVals.end());
-    std::u8string depth = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH" + depthCount;
-    std::u8string depthEnd = u8".-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-. DEPTH end" + depthCount;
-    depthMapping(mainFilePath.generic_u8string());
-
-    bool setEnd = false;
-    for (size_t i = 0; i < outStr.length(); i++){
-        if(outStr.at(i) == '\n'){
-            outStr.insert(i, depth);
-            setEnd=true;
-            break;
+        if (line >= pos && line < pos + file->sourceCode.length()) {
+            return findFile(line - pos, *file.get());
         }
     }
+    return &file;
+}
 
-    if(!setEnd){
-        outStr.append(depth);
-    }
+std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::path filePath, std::vector<std::filesystem::path>& includingStack) {
+    std::unique_ptr<LoremSourceFile> currentFile = std::make_unique<LoremSourceFile>();
+    currentFile->filePath = filePath;
+    currentFile->sourceCode = readFileToU8String(filePath);
+    std::u8string& sourceCode = currentFile->sourceCode;
 
-    outStr = outStr + depthEnd;
-    m_depthVal++;
+    includingStack.push_back(filePath);
+    m_includedFiles.emplace_back(filePath);
 
-    const std::u8string INCLUDE = u8"apere";
-    size_t pos = outStr.find(INCLUDE, 0);
-    
-    while (pos != std::u8string::npos) {
-        int indexBack = pos - 1;
-        bool valid = true;
-        while (outStr[indexBack] != u8'\n' && indexBack > 0) {
-            if (outStr[indexBack] != u8' ' && outStr[indexBack] != u8'\t') {
-                valid = false;
-                break;
+    static const std::u8string_view INCLUDE_STR = u8"apere";
+    size_t includePos = 0;
+    while ((includePos = sourceCode.find(INCLUDE_STR, includePos)) != std::u8string::npos) {
+        // This checks if the line with 'apere' has only whitespace before it
+        {
+            int indexBack = includePos - 1;
+            bool onlyApereInLine = true;
+            while (sourceCode[indexBack] != u8'\n' && indexBack > 0) {
+                if (sourceCode[indexBack] != u8' ' && sourceCode[indexBack] != u8'\t') {
+                    onlyApereInLine = false;
+                    break;
+                }
+                indexBack--;
             }
-            indexBack--;
+            if (!onlyApereInLine) {
+                // TODO(Vlad): Error
+                includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
+                continue;
+            }
         }
-        if (!valid) {
-            pos = outStr.find(INCLUDE, pos + INCLUDE.length());
+
+        size_t index = includePos + INCLUDE_STR.length();
+
+        // Skip whitespace after 'apere'
+        while (sourceCode[index] == u8' ' || sourceCode[index] == u8'\t')
+        index++;
+        
+        // Read the file name from " until the next "
+        std::string includeFileName = "";
+        {
+            if (sourceCode[index] != '"') {
+                // TODO(Vlad): Error
+                includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
+                continue;
+            }
+    
+            index++; // eat "
+    
+            while (sourceCode[index] != '"' && index < sourceCode.length() && sourceCode[index] != '\n') {
+                includeFileName += sourceCode[index];
+                index++;
+            }
+    
+            if (sourceCode[index] != '"') {
+                // TODO(Vlad): Error
+                includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
+                continue;
+            }
+            index++; // eat "
+        }
+        
+        sourceCode.erase(includePos, index - includePos); // remove apere "fileName"
+        index = includePos; // set index to the start of the line
+
+        std::filesystem::path includePath = std::filesystem::path(filePath.parent_path()) / std::filesystem::path(includeFileName);
+        
+        // Check if there is a circle in inclusion
+        if (std::find(includingStack.begin(), includingStack.end(), includePath) != includingStack.end()) {
+            // TODO(Vlad): Error
+            includePos = sourceCode.find(INCLUDE_STR, index);
             continue;
         }
 
-        size_t index = pos + INCLUDE.length();
-        // skip all spaces, tabs
-        while (outStr[index] == ' ' || outStr[index] == '\t')
-            index++;
-
-        if(outStr[index] != '\''){
-            dumpAndBuildError(u8"Expected ' after apere");
-        }
-        
-        assert(outStr[index] == '\'' && "Expected ' after apere");
-        index++; // eat '
-        std::string includeFileName = "";
-        while (outStr[index] != '\'' && index < outStr.length()) {
-            includeFileName += outStr[index];
-            index++;
+        // Check if the file is already included
+        if (std::find(m_includedFiles.begin(), m_includedFiles.end(), includePath) != m_includedFiles.end()) {
+            includePos = sourceCode.find(INCLUDE_STR, index);
+            continue;
         }
 
-        if(outStr[index] != '\''){dumpAndBuildError(u8"Found no closing ' in apere");}
-        assert(outStr[index] == '\'' && "Found no closing ' in apere");
-        index++; // eat '
-
-        outStr.erase(pos, index - pos); // remove appere
-
-        index = pos;
-
-        // insert file if it's not included yet
-        std::filesystem::path includedPath = mainFilePath.parent_path() / std::filesystem::path(includeFileName);
-
-        // Check if there is a circle in inclusion
-        if (std::find(includingStack.begin(), includingStack.end(), includedPath) != includingStack.end()) {
-            
-            dumpAndBuildError(u8"Recursive including found");
-            assert(false && "Recursive including found");
+        // It's a library, add it to the list of libraries, to be linked later
+        auto extension = includePath.extension();
+        if (extension == ".a" || extension == ".so" || extension == ".dll") {
+            m_linkLibraries.push_back(includePath);
+            m_includedFiles.push_back(includePath);
         }
-        
-        // Don't include files that are already included
-        if (std::find(m_includedFiles.begin(), m_includedFiles.end(), includedPath) == m_includedFiles.end()) {
-            auto extension = includedPath.extension();
-            if (extension == ".lorem") {
-                std::u8string includedCode;
-                processRecursively(includedPath, includedCode, includingStack); 
-                
-                outStr.insert(pos, includedCode);
-                index += includedCode.length();
-            } else if (extension == ".a" || extension == ".lib" || extension == ".o") {
-                m_linkLibraries.push_back(includedPath);
-                m_includedFiles.push_back(includedPath);
-            }
-        } 
+        // It's a file, process it recursively
+        else if (extension == ".lorem") {
+            auto includeFile = createFileTree(includePath, includingStack);
+            currentFile->includedLorem.emplace_back(index, std::move(includeFile));
 
-        pos = outStr.find(INCLUDE, index);
+            sourceCode.insert(index, includeFile->sourceCode);
+            index += includeFile->sourceCode.length(); // Move the index to the end of the inserted code
+        }
+        else {
+            // TODO(Vlad): Error
+        }
+
+        includePos = sourceCode.find(INCLUDE_STR, index);
     }
-    
-    if(includingStack.back() != mainFilePath){
-        dumpAndBuildError(u8"Import failure: includingStack.back() != mainFilePath");
+
+    if (includingStack.back() != filePath) {
+        // TODO(Vlad): Error
     }
-    assert(includingStack.back() == mainFilePath);
     includingStack.pop_back();
+    return currentFile;
+}
+
+std::u8string Preprocessor::mergeSourceCode(LoremSourceFile& file) const {
+    // std::u8string mergedCode = m_rootFile->sourceCode;
+    
+    // for (const auto& includedFile : m_rootFile->includedLorem) {
+    //     size_t pos = includedFile.first;
+    //     const auto& file = includedFile.second;
+
+    //     // Recursively merge the source code of the included file
+    //     std::u8string fileCode = mergeSourceCode(*file.get());
+    //     mergedCode.insert(pos, fileCode);
+    // }
+
+    // return mergedCode;
+    return file.sourceCode;
 }
 
 std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) {
     std::ifstream file = std::ifstream(filePath, std::ios::binary);  // Open file in binary mode
     if (!file) {
         std::string pathStr = filePath.string();
-        dumpAndBuildError(u8"File " + std::u8string(pathStr.begin(), pathStr.end()) + u8" isn't found");
+        // TODO(Vlad): Error
+        //dumpAndBuildError(u8"File " + std::u8string(pathStr.begin(), pathStr.end()) + u8" isn't found");
         assert(false);
     }
 

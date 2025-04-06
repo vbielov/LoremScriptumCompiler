@@ -7,12 +7,7 @@
 #include <iostream>
 #include "RomanNumber.hpp"
 #include <mutex>
-
-struct FileRange{
-    std::filesystem::path fileName;
-    size_t startPos;
-    size_t size;
-};
+#include "LoremSourceFile.hpp"
 
 class ErrorHandler {
 private:

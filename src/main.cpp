@@ -10,6 +10,7 @@ TODO:
 - Output object/assembler option
 - main(int argc, char** argv) arguments
 - refactor error handler
+- fix some parsePrototype() to support struct types
 */
 
 int main(int argc, const char** argv) {

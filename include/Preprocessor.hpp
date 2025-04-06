@@ -12,18 +12,20 @@
 
 class Preprocessor {
 private:
-    std::vector<FileRange> m_includedFiles;
+    std::unique_ptr<LoremSourceFile> m_rootFile;
+    std::vector<std::filesystem::path> m_includedFiles;
     std::vector<std::filesystem::path> m_linkLibraries;
-    size_t m_depthVal;
 
 public:
-    Preprocessor();
-    std::u8string process(std::filesystem::path& mainFilePath);
+    Preprocessor(std::filesystem::path& mainFilePath);
+    std::u8string getMergedSourceCode() const;
     const std::vector<std::filesystem::path>& getLinkLibs() const;
-    const std::vector<FileRange>& getIncludedFiles() const;
+    const LoremSourceFile* findFileFromLineInMergedCode(size_t line) const;
 
 private:
-    void processRecursively(std::filesystem::path& mainFilePath, std::u8string& outStr, std::vector<std::filesystem::path>& includingStack);
+    const LoremSourceFile* findFile(size_t line, const LoremSourceFile& file) const;
+    std::unique_ptr<LoremSourceFile> createFileTree(std::filesystem::path filePath, std::vector<std::filesystem::path>& includingStack);
+    std::u8string mergeSourceCode(LoremSourceFile& file) const;
     static std::u8string readFileToU8String(std::filesystem::path& filePath);
 
 };
