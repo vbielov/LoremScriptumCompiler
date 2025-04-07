@@ -1,11 +1,11 @@
 #include "Assembler.hpp"
 
 void Assembler::compileToObjectFile(const std::filesystem::path& objectFilePath, Module* module, CodeGenFileType fileType) {
-	InitializeAllTargetInfos();
-	InitializeAllTargets();
-	InitializeAllTargetMCs();
-	InitializeAllAsmParsers();
-	InitializeAllAsmPrinters();
+	LLVMInitializeX86TargetInfo();
+    LLVMInitializeX86Target();
+    LLVMInitializeX86TargetMC();
+    LLVMInitializeX86AsmParser();
+    LLVMInitializeX86AsmPrinter();
 
 	std::string targetTriple;
 
