@@ -87,9 +87,6 @@ size_t getLineCountTilPos(std::u8string text, size_t pos){
 // ---------- end of helper methods ---------- 
 
 void buildRanges(std::u8string& sourceCode){
-
-    static std::vector<fileRange> temp;
-
     for(size_t i = 0; i < depth.size(); i++){
         std::string depthVals = std::to_string(i);
         std::u8string depthCount(depthVals.begin(), depthVals.end());
@@ -102,7 +99,7 @@ void buildRanges(std::u8string& sourceCode){
 
         if (pos != std::u8string::npos && pos != std::u8string::npos) {
             fileRange range(depth[i], getLineCountTilPos(sourceCode, pos), getLineCountTilPos(sourceCode, pos2));
-            temp.push_back(range);
+            fileRanges.push_back(range);
 
 
             sourceCode.erase(pos2, depthEnd.length());  
@@ -111,11 +108,9 @@ void buildRanges(std::u8string& sourceCode){
 
     }
 
-    std::sort(temp.begin(), temp.end(), [](const fileRange& a, const fileRange& b) { // sort required so that file origin algorithm works
+    std::sort(fileRanges.begin(), fileRanges.end(), [](const fileRange& a, const fileRange& b) { // sort required so that file origin algorithm works
         return a.start < b.start;
     });
-    
-    fileRanges = temp;
 }
 
 
