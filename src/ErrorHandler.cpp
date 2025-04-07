@@ -36,8 +36,6 @@ size_t calcDistance(size_t line, size_t start){ // iterates over file ranges to 
 
 rangeResult getFileName(size_t line){
 
-    static std::vector<fileRange> temp;
-
     rangeResult closestMatch;
     std::unordered_set<std::u8string> stringSet;
 
@@ -116,7 +114,7 @@ void buildRanges(std::u8string& sourceCode){
     std::sort(temp.begin(), temp.end(), [](const fileRange& a, const fileRange& b) { // sort required so that file origin algorithm works
         return a.start < b.start;
     });
-
+    
     fileRanges = temp;
 }
 
