@@ -29,7 +29,7 @@ int main(int argc, const char** argv) {
 
     if (argc == 3 && strcmp(argv[2], "-l") == 0) {
         std::cout << "logs dumped on creation\n";
-        setInstantDump();
+        // setInstantDump();
     }
 
     // Read File
@@ -43,11 +43,12 @@ int main(int argc, const char** argv) {
     }
 
     // Preprocess
-    Preprocessor preprocessor = Preprocessor();
-    std::u8string sourceCode = preprocessor.process(mainFilePath); 
+    Preprocessor preprocessor = Preprocessor(mainFilePath);
+    // std::u8string sourceCode = preprocessor.process(mainFilePath);
+    std::u8string sourceCode = preprocessor.getMergedSourceCode();
 
-    buildRanges(sourceCode);
-    grabSource(sourceCode, inputFilePath); //TODO: start thread maybe and lock ErrorHandler in meantime
+    // buildRanges(sourceCode);
+    // grabSource(sourceCode, inputFilePath); //TODO: start thread maybe and lock ErrorHandler in meantime
 
     
     #if !defined(NDEBUG)
@@ -64,8 +65,8 @@ int main(int argc, const char** argv) {
     Parser parser = Parser(tokens);
     std::unique_ptr<AST> tree = parser.parse();
     
-    if (error()) { // check if any errors occured
-        dumpErrorLog();
+    if (ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorLog();
         return 1;
     }
 
@@ -73,8 +74,8 @@ int main(int argc, const char** argv) {
     IRGenerator codeGenerator = IRGenerator(mainFilePath.stem().string().c_str(), tree);
     codeGenerator.generateIRCode();
 
-    if (error()) { // check if any errors occured
-        dumpErrorLog();
+    if (ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorLog();
         return 1;
     }
 
@@ -92,8 +93,8 @@ int main(int argc, const char** argv) {
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
 
-    if (warn()) { // check if any warnings occured
-        dumpErrorLog();
+    if (ErrorHandler::hasWarning()) { // check if any warnings occured
+        ErrorHandler::dumpErrorLog();
     }
 
     // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()

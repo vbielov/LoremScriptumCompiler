@@ -37,7 +37,7 @@ llvm::Value* ArrayAST::codegen(IRContext& context) {
     llvm::Type* type = m_type ? m_type->getLLVMType(*context.context) : nullptr;
     llvm::ArrayType* arrayType = type ? llvm::dyn_cast<llvm::ArrayType>(type) : nullptr;
     if (!arrayType) {
-        logError(m_line, u8"Syntax Error: Array type is not valid!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: Array type is not valid!");
         return nullptr;
     }
 
@@ -64,12 +64,12 @@ llvm::Value* ArrayAST::codegen(IRContext& context) {
         llvm::Constant* initializer = llvm::ConstantArray::get(arrayType, constValues);
         return initializer;   
     }
-    logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
+    ErrorHandler::logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
     return nullptr;
     
     // TODO(Vlad): Dynamic array initialization
     // if (!context.builder->GetInsertBlock()) {
-    //     logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
+    //     ErrorHandler::logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
     //     return nullptr;
     // }
 
@@ -115,7 +115,7 @@ llvm::Value* VariableReferenceAST::codegen(IRContext& context) {
     if (entry)
         return entry->value;
 
-    logError(m_line, u8"Syntax Error: variable '" + m_name + u8"' not defined!");
+    ErrorHandler::logError(m_line, u8"Syntax Error: variable '" + m_name + u8"' not defined!");
     return nullptr;
 }
 
@@ -173,7 +173,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
                 if (leftType->isIntegerTy() && rightType->isIntegerTy()) {
                     right = context.builder->CreateIntCast(right, leftType, true, "conv");
                 } else {
-                    logError(m_line, u8"Syntax Error: Type " + m_LHS->getType(context)->toString() +  u8" does not match " + m_RHS->getType(context)->toString() + u8"!");
+                    ErrorHandler::logError(m_line, u8"Syntax Error: Type " + m_LHS->getType(context)->toString() +  u8" does not match " + m_RHS->getType(context)->toString() + u8"!");
                     return nullptr;
                 }
             }
@@ -184,7 +184,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
             // Global initialization
             auto constant = llvm::dyn_cast<llvm::Constant>(right);
             if (!constant) {
-                    logError(m_line, u8"Syntax Error: Right side must be a constant!");
+                    ErrorHandler::logError(m_line, u8"Syntax Error: Right side must be a constant!");
                     return nullptr;
                 }
             globalVar->setInitializer(constant);
@@ -228,7 +228,7 @@ llvm::Value* BinaryOperatorAST::codegen(IRContext& context) {
         return context.builder->CreateXor(left, llvm::ConstantInt::getBool(llvm::Type::getInt1Ty(*context.context), true), "negtmp");
     }
 
-    logError(m_line, u8"Syntax Error: " + m_op + u8" is illegal operator!");
+    ErrorHandler::logError(m_line, u8"Syntax Error: " + m_op + u8" is illegal operator!");
 
     return nullptr;
 }
@@ -237,7 +237,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
     llvm::Function* function = context.theModule->getFunction(cStr(m_calleeIdentifier));
     const ScopeEntry* entry = context.symbolTable.lookupFunction(m_calleeIdentifier);
     if (!function || !entry) {
-        logError(m_line, u8"Syntax Error: function '" + m_calleeIdentifier + u8"' not defined!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: function '" + m_calleeIdentifier + u8"' not defined!");
         return nullptr; 
     }
 
@@ -266,7 +266,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         if (!argValue->getType()->isPointerTy()) {
             llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
             if (!currentBlock) {
-                logError(m_line, u8"Syntax Error: function call in global scope is not allowed!");
+                ErrorHandler::logError(m_line, u8"Syntax Error: function call in global scope is not allowed!");
                 return nullptr;
             }
             llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
@@ -324,7 +324,7 @@ llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
 llvm::Value* FunctionAST::codegen(IRContext& context) {
     llvm::Function* function = dyn_cast<llvm::Function>(m_prototype->codegen(context));
     if (!function->empty()){ // it's a redifinition
-        logError(m_line, u8"Syntax Error: Function " + m_prototype->getName() +  u8" is already defined!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: Function " + m_prototype->getName() +  u8" is already defined!");
         return nullptr;
     }
     
@@ -347,7 +347,7 @@ llvm::Value* FunctionAST::codegen(IRContext& context) {
         context.builder->CreateRetVoid(); 
 
     if (llvm::verifyFunction(*function, &(llvm::errs()))) {
-        logError(m_line, u8"Syntax Error: Content of function " + m_prototype->getName() +  u8" is not valid!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: Content of function " + m_prototype->getName() +  u8" is not valid!");
         function->eraseFromParent();
         return nullptr;
     }
@@ -370,7 +370,7 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 
     llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
     if (!currentBlock){    
-        logError(m_line, u8"Syntax Error: Return(retro) is not allowed in global scope!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: Return(retro) is not allowed in global scope!");
         return nullptr;
     }
 
@@ -387,7 +387,7 @@ llvm::Value* ReturnAST::codegen(IRContext& context) {
 llvm::Value* BreakAST::codegen(IRContext& context) {
     llvm::BasicBlock* returnBlock = context.afterLoop.top();
     if (!returnBlock){
-        logError(m_line, u8"Syntax Error: break(finio) outside of loop is not allowed!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: break(finio) outside of loop is not allowed!");
         return nullptr;
     }
 
@@ -455,7 +455,7 @@ llvm::Value* LoopAST::codegen(IRContext& context) {
 llvm::Value* AccessArrayElementAST::codegen(IRContext &context) {
     const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
     if (!arrVar){
-        logError(m_line, u8"Syntax Error: Array '" + m_name + u8"' not found!");
+        ErrorHandler::logError(m_line, u8"Syntax Error: Array '" + m_name + u8"' not found!");
         return nullptr;
     }
     
@@ -474,7 +474,7 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext &context) {
         int index = -1;
         auto iter = context.symbolTable.lookupStruct(structType->name);
         if (!iter) {
-            logError(m_line, u8"Syntax Error: Struct with name: '" + structType->name + u8"' isn't declared!");
+            ErrorHandler::logError(m_line, u8"Syntax Error: Struct with name: '" + structType->name + u8"' isn't declared!");
             return nullptr;
         }
 
@@ -489,25 +489,25 @@ llvm::Value* AccessArrayElementAST::codegen(IRContext &context) {
                 }
             }
             if (index == -1) {
-                logError(m_line, u8"Syntax Error: Can't find '" + ref->getName() + u8"' attribute in '" + m_name + u8"' struct!");
+                ErrorHandler::logError(m_line, u8"Syntax Error: Can't find '" + ref->getName() + u8"' attribute in '" + m_name + u8"' struct!");
                 return nullptr;
             }
         } else if (number) {
             index = number->getValue();
             if (index >= (int)iter->attributes.size() || index < 0) {
                 std::string indexStr = std::to_string(index);
-                logError(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
+                ErrorHandler::logError(m_line, u8"Syntax Error: Can't find " + std::u8string(indexStr.begin(), indexStr.end()) + u8" attribute in '" + m_name + u8"' struct!");
                 return nullptr;
             }
         } else {
-            logError(m_line, u8"Syntax Error: Wrong syntax accessing struct attribute!");
+            ErrorHandler::logError(m_line, u8"Syntax Error: Wrong syntax accessing struct attribute!");
             return nullptr;
         }
         
         return context.builder->CreateStructGEP(iter->getLLVMType(*context.context), arrVar->value, index, "structIdx");
     }
 
-    logError(m_line, u8"Syntax Error: Only structs/arrays can be accessed using []!");
+    ErrorHandler::logError(m_line, u8"Syntax Error: Only structs/arrays can be accessed using []!");
     return nullptr;
 }
 

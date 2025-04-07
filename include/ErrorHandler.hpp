@@ -65,11 +65,4 @@ public:
 
     /// @brief queues Error without line, gets dumped via dumpErrorLog() like usual
     static void queueUndefinedError(std::u8string name);
-
-private:
-    // iterates over file ranges to calculate line of the correct source file
-    size_t getLineCount(std::u8string text);
-    size_t getLineCountTilPos(std::u8string text, size_t pos);
-    rangeResult getFileName(size_t line);
-    size_t calcDistance(size_t line, size_t start);
 };

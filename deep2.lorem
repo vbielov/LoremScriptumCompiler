@@ -1,0 +1,5 @@
+nihil printf = λ(litera[] str)
+
+nihil printDeep2 = λ():
+    printf("deep2\n")
+;

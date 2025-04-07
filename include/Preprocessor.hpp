@@ -25,7 +25,8 @@ public:
 private:
     const LoremSourceFile* findFile(size_t line, const LoremSourceFile& file) const;
     std::unique_ptr<LoremSourceFile> createFileTree(std::filesystem::path filePath, std::vector<std::filesystem::path>& includingStack);
-    std::u8string mergeSourceCode(LoremSourceFile& file) const;
+    // File, LineStr, LineInFile
+    std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> mergeSourceCode(const LoremSourceFile* file) const;
     static std::u8string readFileToU8String(std::filesystem::path& filePath);
-
+    static int countLines(const std::u8string& str, size_t untilPos);
 };

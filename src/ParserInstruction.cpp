@@ -23,7 +23,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
             // is Top level declaration
             
             if (declaration == nullptr) {
-                logError(currentLine, u8"Syntax Error: Invalid declaration!");
+                ErrorHandler::logError(currentLine, u8"Syntax Error: Invalid declaration!");
                 return nullptr;
             }
             m_topLevelDeclarations.push_back(std::move(declaration));
@@ -49,7 +49,7 @@ std::unique_ptr<AST> Parser::parseInstruction() {
                 return parseInstructionShorthand(identifier);
         }
     }
-    logError(currentLine, u8"Syntax Error: expected identifier!");
+    ErrorHandler::logError(currentLine, u8"Syntax Error: expected identifier!");
     return nullptr;
 }
 
@@ -70,7 +70,7 @@ std::unique_ptr<AST> Parser::parseInstructionAssignment(const std::u8string& ide
     getNextToken();
     auto expression = parseExpression();
     if (expression == nullptr) {
-        logError(currentLine, u8"Syntax Error: invalid assignment expression!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid assignment expression!");
         return nullptr;
     }
     
@@ -84,25 +84,25 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
     
     std::unique_ptr<AST> index = parseExpression();
     if (!index) {
-        logError(currentLine, u8"Syntax Error: expected index for indexing array!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: expected index for indexing array!");
         return nullptr;
     }
 
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-        logError(currentLine, u8"Syntax Error: expected ']' after array indexing!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: expected ']' after array indexing!");
         return nullptr;
     }
     getNextToken(); // eat ']'
 
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
         return nullptr;
     }
     getNextToken(); // eat '='
     
     std::unique_ptr<AST> expression = parseExpression();
     if (expression == nullptr) {
-        logError(currentLine, u8"Syntax Error: invalid array instruction expression!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid array instruction expression!");
         return nullptr;
     }
     
@@ -124,7 +124,7 @@ std::unique_ptr<AST> Parser::parseInstructionArrayAssignment(const std::u8string
  */
 std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& identifier) {
     if (!isToken(operators::PLUS) && !isToken(operators::MINUS) && !isToken(operators::MULTIPLY) && !isToken(operators::DIVIDE) && !isToken(operators::POWER)) {
-        logError(currentLine, u8"Syntax Error: invalid shorthand operator - only plus, minus, multiply, divide and power is allowed!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid shorthand operator - only plus, minus, multiply, divide and power is allowed!");
         return nullptr;
     }
 
@@ -132,7 +132,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
 
     getNextToken();
     if (!isToken(TokenType::OPERATOR)){
-        logError(currentLine, u8"Syntax Error: expected operator!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: expected operator!");
         return nullptr;    
     }
 
@@ -143,7 +143,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         expression = std::make_unique<NumberAST>(1, currentLine);
 
         if (!isToken(TokenType::EOF_TOKEN) && !isToken(TokenType::NEW_LINE) && !isToken(TokenType::PUNCTUATION)) {
-            logError(currentLine, u8"Syntax Error: shorthand operator cannot interact with other operators!");   
+            ErrorHandler::logError(currentLine, u8"Syntax Error: shorthand operator cannot interact with other operators!");   
             return nullptr;
         }
     } else if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
@@ -152,7 +152,7 @@ std::unique_ptr<AST> Parser::parseInstructionShorthand(const std::u8string& iden
         getNextToken();
         expression = parseExpression();
     } else {
-        logError(currentLine, u8"Syntax Error: invalid shorthand operator!");   
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid shorthand operator!");   
         return nullptr;
     } 
 
@@ -173,21 +173,21 @@ std::unique_ptr<AST> Parser::parseInstructionDeclarationStruct() {
     getNextToken(); // eat rerum
 
     if (!isToken(TokenType::IDENTIFIER)) {
-        logError(currentLine, u8"Syntax Error: identifier expected!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
     std::u8string identifier = m_currentToken->value;
     getNextToken(); // eat identifier
 
     if (!isToken(TokenType::OPERATOR, u8"=")) {
-        logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: assign operator '=' expected!");
         return nullptr;
     }
     getNextToken(); // eat '=' 
 
     auto hackyPrototype = parseInstructionPrototype(u8"", nullptr);
     if (hackyPrototype == nullptr) {
-        logError(currentLine, u8"Syntax Error: invalid struct declaration! Try: rerum vector = (numerus x, numerus y)");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid struct declaration! Try: rerum vector = (numerus x, numerus y)");
         return nullptr;
     }
 
@@ -228,7 +228,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
         return nullptr;
 
     if (!isToken(TokenType::IDENTIFIER)) {
-        logError(currentLine, u8"Syntax Error: identifier expected!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: identifier expected!");
         return nullptr;
     }
     std::u8string identifier = m_currentToken->value;
@@ -239,7 +239,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
     }
     
     if (!isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        logError(currentLine, u8"Syntax Error: initialization missing! Use assign operator '=' to assign a value!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: initialization missing! Use assign operator '=' to assign a value!");
         return nullptr;
     }
     getNextToken(); // eat '='
@@ -253,7 +253,7 @@ std::unique_ptr<AST> Parser::parseInstructionDeclaration() {
 
     expression = parseExpression();
     if (expression == nullptr)  {
-        logError(currentLine, u8"Syntax Error: invalid declaration expression!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid declaration expression!");
         return nullptr;
     }
     
@@ -276,14 +276,14 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     std::vector<std::unique_ptr<TypeIdentifierPair>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
         if (!isToken(TokenType::TYPE)) {
-            logError(currentLine, u8"Syntax Error: type expected!");
+            ErrorHandler::logError(currentLine, u8"Syntax Error: type expected!");
             return nullptr;
         }
 
         std::unique_ptr<IDataType> dataType = parseType();
 
         if (!isToken(TokenType::IDENTIFIER)) {
-            logError(currentLine, u8"Syntax Error: identifier expected!");
+            ErrorHandler::logError(currentLine, u8"Syntax Error: identifier expected!");
             return nullptr;
         }
 
@@ -295,7 +295,7 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
             if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) || isToken(TokenType::EOF_TOKEN)) {
-                logError(currentLine, u8"Syntax Error: missing expression after comma!");   
+                ErrorHandler::logError(currentLine, u8"Syntax Error: missing expression after comma!");   
                 return nullptr;
             }
 
@@ -305,12 +305,12 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
             break;
         }
 
-        logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
         return nullptr;
     }
 
     if(!isToken(TokenType::PUNCTUATION, u8")")) {
-        logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: expected ')' in function declaration!");
         return nullptr;
     }
     getNextToken(); // eat ')'
@@ -338,19 +338,19 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
  */
 std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& identifier, std::unique_ptr<IDataType> type) {
     if (m_blockCount != 0) {
-        logError(currentLine, u8"Syntax Error: Function Declaration is only allowed at top-level!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: Function Declaration is only allowed at top-level!");
         return nullptr;
     }
 
     getNextToken(); // eat λ
     if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_OPEN)) {
-        logError(currentLine, u8"Syntax Error: opening bracket '(' expected!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: opening bracket '(' expected!");
         return nullptr;
     }
 
     auto prototype = parseInstructionPrototype(identifier, std::move(type));
     if (prototype == nullptr) {
-            logError(currentLine, u8"Syntax Error: invalid function header!");
+            ErrorHandler::logError(currentLine, u8"Syntax Error: invalid function header!");
             return nullptr;
         }
 
@@ -359,7 +359,7 @@ std::unique_ptr<AST> Parser::parseInstructionFunction(const std::u8string& ident
 
     auto funcBlock = parseBlock();
     if (funcBlock == nullptr){
-        logError(currentLine, u8"Syntax Error: invalid function block!");
+        ErrorHandler::logError(currentLine, u8"Syntax Error: invalid function block!");
         return nullptr;
     }
 

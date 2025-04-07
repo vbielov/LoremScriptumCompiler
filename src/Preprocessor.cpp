@@ -10,7 +10,17 @@ Preprocessor::Preprocessor(std::filesystem::path& mainFilePath)
 }
 
 std::u8string Preprocessor::getMergedSourceCode() const {
-    return mergeSourceCode(*m_rootFile);
+    auto lines = mergeSourceCode(m_rootFile.get());
+    std::u8string mergedCode = u8"";
+    for (const auto& line : lines) {
+        mergedCode += std::get<1>(line);
+    }
+
+    for(size_t i = 0; i < lines.size(); i++) {
+        std::cout << "Line " << i << " Merged Line " << std::get<2>(lines[i]) << " in file " << std::get<0>(lines[i])->filePath.filename() << ": " << (const char*)(std::get<1>(lines[i]).c_str()) << std::endl;
+    } 
+
+    return mergedCode;
 }
 
 const std::vector<std::filesystem::path>& Preprocessor::getLinkLibs() const {
@@ -22,13 +32,18 @@ const LoremSourceFile* Preprocessor::findFileFromLineInMergedCode(size_t line) c
 }
 
 const LoremSourceFile* Preprocessor::findFile(size_t line, const LoremSourceFile& file) const {
+    size_t lineInTheFile = line;
     for(const auto& includedFile : file.includedLorem) {
         size_t pos = includedFile.first;
+        if (line < pos) {
+            break;
+        }
         const auto& file = includedFile.second;
 
         if (line >= pos && line < pos + file->sourceCode.length()) {
             return findFile(line - pos, *file.get());
         }
+        lineInTheFile -= file->sourceCode.length();
     }
     return &file;
 }
@@ -120,10 +135,8 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         // It's a file, process it recursively
         else if (extension == ".lorem") {
             auto includeFile = createFileTree(includePath, includingStack);
-            currentFile->includedLorem.emplace_back(index, std::move(includeFile));
-
-            sourceCode.insert(index, includeFile->sourceCode);
-            index += includeFile->sourceCode.length(); // Move the index to the end of the inserted code
+            int line = countLines(sourceCode, index);
+            currentFile->includedLorem.emplace_back(line, std::move(includeFile));
         }
         else {
             // TODO(Vlad): Error
@@ -139,20 +152,33 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
     return currentFile;
 }
 
-std::u8string Preprocessor::mergeSourceCode(LoremSourceFile& file) const {
-    // std::u8string mergedCode = m_rootFile->sourceCode;
+
+std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> Preprocessor::mergeSourceCode(const LoremSourceFile* file) const {
+    assert(file);
+    std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> lines;
+    lines.emplace_back(file, std::u8string(), 0);
+
+    const std::u8string& code = file->sourceCode;
+    for (size_t i = 0; i < code.length(); i++) {
+        std::get<1>(lines.back()) += code[i];
+
+        if (code[i] == u8'\n') {
+            lines.emplace_back(file, std::u8string(), lines.size());
+        }
+    }
     
-    // for (const auto& includedFile : m_rootFile->includedLorem) {
-    //     size_t pos = includedFile.first;
-    //     const auto& file = includedFile.second;
+    size_t offset = 0;
+    for (const auto& includedFile : file->includedLorem) {
+        size_t line = includedFile.first;
+        const auto& file = includedFile.second;
 
-    //     // Recursively merge the source code of the included file
-    //     std::u8string fileCode = mergeSourceCode(*file.get());
-    //     mergedCode.insert(pos, fileCode);
-    // }
+        // Recursively merge the source code of the included file
+        auto fileLines = mergeSourceCode(file.get());
+        lines.insert(lines.begin() + line + offset, fileLines.begin(), fileLines.end());
+        offset += fileLines.size() - 1; // Adjust the offset for the next included file
+    }
 
-    // return mergedCode;
-    return file.sourceCode;
+    return lines;
 }
 
 std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) {
@@ -166,4 +192,14 @@ std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) 
 
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     return std::u8string(content.begin(), content.end());  // Convert to u8string
+}
+
+int Preprocessor::countLines(const std::u8string& str, size_t untilPos) {
+    int count = 0;
+    for (size_t i = 0; i < untilPos; i++) {
+        if (str[i] == u8'\n') {
+            count++;
+        }
+    }
+    return count;
 }

@@ -1,4 +1,4 @@
-nihil printf = λ(litera[] str)
+apere "deep1.lorem"
 
 litera[] helloWorld = "Hello, World!"
 
