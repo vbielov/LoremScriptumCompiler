@@ -21,7 +21,7 @@ size_t calcDistance(size_t line, size_t start){ // iterates over file ranges to 
     size_t distance = 1;
     for (size_t j = 0; j < fileRanges.size()-1; j++){
         if(fileRanges[j].start > position && position < line && fileRanges[j].start < line){
-            distance+= fileRanges[j].start - position;
+            distance += fileRanges[j].start - position;
             position = fileRanges[j].end;
         }        
     }
@@ -35,9 +35,7 @@ size_t calcDistance(size_t line, size_t start){ // iterates over file ranges to 
 
 
 rangeResult getFileName(size_t line){
-
     rangeResult closestMatch;
-    std::unordered_set<std::u8string> stringSet;
 
     for (size_t i = 0; i < fileRanges.size(); i++){ // finds correct sourcefile
         size_t start = fileRanges[i].start;
@@ -142,7 +140,6 @@ void grabSource(std::u8string sourceCode, std::string fileLocation){
     sourceArray.push_back(line);
 
     std::u8string temp(fileLocation.begin(), fileLocation.end()); 
-    file = temp;
     output.append(temp);
     output.append(u8" -----------------------");
 
@@ -168,8 +165,6 @@ void logError(size_t line, std::u8string reason){
     
 
     rangeResult data = getFileName(line);
-
-    std::filesystem::path relativePath = (const char*)file.c_str();
     
     std::u8string stringAbsPath = data.fileName;
 
@@ -212,7 +207,6 @@ void logWarning(size_t line, std::u8string reason){
 
     rangeResult data = getFileName(line);
 
-    std::filesystem::path relativePath = (const char*)file.c_str();
     
     std::u8string stringAbsPath = data.fileName;
 
