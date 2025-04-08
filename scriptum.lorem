@@ -1,5 +1,10 @@
 apere "deep1.lorem"
 
-litera[] helloWorld = "Hello, World!"
+
+litera[] teststatement = "test"
+
+numerus alpha = 22
+
+litera[] helloWorld = "Hello, World!" 
 
 printf(helloWorld)
