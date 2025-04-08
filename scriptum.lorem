@@ -1,5 +1,10 @@
 nihil printf = λ(litera[] str)
 
-litera[] helloWorld = "Hello, World!"
+
+litera[] teststatement = "test"
+
+numerus alpha = 22
+
+litera[] helloWorld = "Hello, World!" 
 
 printf(helloWorld)
