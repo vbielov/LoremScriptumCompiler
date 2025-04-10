@@ -1,9 +1,8 @@
-apere "deep1.lorem"
-
 
 litera[] teststatement = "test"
 
-numerus alpha = 22
+apere "deep1.lorem"
+// numerus alpha = 22
 
 litera[] helloWorld = "Hello, World!" 
 

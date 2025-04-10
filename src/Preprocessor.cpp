@@ -3,22 +3,36 @@
 Preprocessor::Preprocessor(std::filesystem::path& mainFilePath)
     : m_rootFile(nullptr)
     , m_includedFiles()
-    , m_linkLibraries() 
+    , m_linkLibraries()
+    , m_mergedLines()
 {    
     std::vector<std::filesystem::path> stack;
     m_rootFile = createFileTree(mainFilePath, stack);
+    m_mergedLines = mergeFiles(m_rootFile.get());
+}
+
+const std::vector<SourceLine>& Preprocessor::getMergedLines() const {
+    return m_mergedLines;
 }
 
 std::u8string Preprocessor::getMergedSourceCode() const {
-    auto lines = mergeSourceCode(m_rootFile.get());
     std::u8string mergedCode = u8"";
-    for (const auto& line : lines) {
-        mergedCode += std::get<1>(line);
+    for (const auto& line : m_mergedLines) {
+        mergedCode += line.line;
     }
 
-    for(size_t i = 0; i < lines.size(); i++) {
-        std::cout << "Line " << i << " Merged Line " << std::get<2>(lines[i]) << " in file " << std::get<0>(lines[i])->filePath.filename() << ": " << (const char*)(std::get<1>(lines[i]).c_str()) << std::endl;
-    } 
+    // For debugging purposes, print the merged lines
+    // for(size_t i = 0; i < lines.size(); i++) {
+    //     std::cout   << "Line " << i + 1 
+    //                 << " Merged Line " << lines[i].lineIndexInFile + 1 
+    //                 << " in file " << lines[i].filePath.filename() << ": " 
+    //                 << (const char*)lines[i].line.c_str() << std::endl;
+    // } 
+
+    #if !defined(NDEBUG)
+    std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
+    std::cout << (const char*)(mergedCode.c_str()) << std::endl << std::endl;
+    #endif
 
     return mergedCode;
 }
@@ -27,36 +41,15 @@ const std::vector<std::filesystem::path>& Preprocessor::getLinkLibs() const {
     return m_linkLibraries;
 }
 
-const LoremSourceFile* Preprocessor::findFileFromLineInMergedCode(size_t line) const {
-    return findFile(line, *m_rootFile);
-}
-
-const LoremSourceFile* Preprocessor::findFile(size_t line, const LoremSourceFile& file) const {
-    size_t lineInTheFile = line;
-    for(const auto& includedFile : file.includedLorem) {
-        size_t pos = includedFile.first;
-        if (line < pos) {
-            break;
-        }
-        const auto& file = includedFile.second;
-
-        if (line >= pos && line < pos + file->sourceCode.length()) {
-            return findFile(line - pos, *file.get());
-        }
-        lineInTheFile -= file->sourceCode.length();
-    }
-    return &file;
-}
-
-std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::path filePath, std::vector<std::filesystem::path>& includingStack) {
-    std::unique_ptr<LoremSourceFile> currentFile = std::make_unique<LoremSourceFile>();
-    currentFile->filePath = filePath;
-    currentFile->sourceCode = readFileToU8String(filePath);
-    std::u8string& sourceCode = currentFile->sourceCode;
-
+std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::path& filePath, std::vector<std::filesystem::path>& includingStack) {
     includingStack.push_back(filePath);
     m_includedFiles.emplace_back(filePath);
 
+    std::unique_ptr<LoremSourceFile> currentFile = std::make_unique<LoremSourceFile>();
+    currentFile->filePath = filePath; 
+    currentFile->sourceCode = readFileToU8String(filePath);
+    
+    std::u8string& sourceCode = currentFile->sourceCode;
     static const std::u8string_view INCLUDE_STR = u8"apere";
     size_t includePos = 0;
     while ((includePos = sourceCode.find(INCLUDE_STR, includePos)) != std::u8string::npos) {
@@ -108,7 +101,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
             index++; // eat "
         }
         
-        sourceCode.erase(includePos, index - includePos); // remove apere "fileName"
+        sourceCode.erase(includePos, index - includePos); // remove apere "fileName", but not the \n
         index = includePos; // set index to the start of the line
 
         std::filesystem::path includePath = std::filesystem::path(filePath.parent_path()) / std::filesystem::path(includeFileName);
@@ -153,19 +146,28 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
 }
 
 
-std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> Preprocessor::mergeSourceCode(const LoremSourceFile* file) const {
+std::vector<SourceLine> Preprocessor::mergeFiles(const LoremSourceFile* file) {
     assert(file);
-    std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> lines;
-    lines.emplace_back(file, std::u8string(), 0);
+    std::vector<SourceLine> lines;
 
     const std::u8string& code = file->sourceCode;
+    size_t lineStart = 0;
     for (size_t i = 0; i < code.length(); i++) {
-        std::get<1>(lines.back()) += code[i];
-
         if (code[i] == u8'\n') {
-            lines.emplace_back(file, std::u8string(), lines.size());
+            lines.emplace_back(
+                std::u8string(code.begin() + lineStart, code.begin() + i + 1), // Include the last character if it's not a newline
+                lines.size(), 
+                file->filePath
+            );
+            lineStart = i + 1; // Move to the next line
         }
     }
+    // last line (if it doesn't end with a newline)
+    lines.emplace_back(
+        std::u8string(code.begin() + lineStart, code.begin() + code.length()),
+        lines.size(), 
+        file->filePath
+    );
     
     size_t offset = 0;
     for (const auto& includedFile : file->includedLorem) {
@@ -173,9 +175,9 @@ std::vector<std::tuple<const LoremSourceFile*, std::u8string, size_t>> Preproces
         const auto& file = includedFile.second;
 
         // Recursively merge the source code of the included file
-        auto fileLines = mergeSourceCode(file.get());
+        auto fileLines = mergeFiles(file.get());
         lines.insert(lines.begin() + line + offset, fileLines.begin(), fileLines.end());
-        offset += fileLines.size() - 1; // Adjust the offset for the next included file
+        offset += fileLines.size(); // Adjust the offset for the next included file
     }
 
     return lines;

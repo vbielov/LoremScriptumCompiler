@@ -7,7 +7,7 @@
 #include <iostream>
 #include "RomanNumber.hpp"
 #include <mutex>
-#include "LoremSourceFile.hpp"
+#include "SourceLine.hpp"
 
 class ErrorHandler {
 private:
