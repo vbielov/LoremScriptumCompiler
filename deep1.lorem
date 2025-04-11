@@ -1,5 +1,0 @@
-apere "deep2.lorem"
-
-nihil printDeep1 = λ():
-    printf("deep1\n")
-;

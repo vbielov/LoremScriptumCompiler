@@ -1,9 +1,4 @@
-
-litera[] teststatement = "test"
-
-apere "deep1.lorem"
-// numerus alpha = 22
+nihil printf = λ(litera[] text)
 
 litera[] helloWorld = "Hello, World!"
-
 printf(helloWorld)

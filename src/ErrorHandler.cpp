@@ -63,12 +63,11 @@ void ErrorHandler::log(size_t* line, std::u8string reason, bool isError) {
     if (sourceLine) {
         outputStream << "\x1b]8;;vscode://file/"+ sourceLine->filePath.string() << ":" << std::to_string(sourceLine->lineIndexInFile + 1); // link
         outputStream << "\x1b\\" << (const char*)toRomanConverter(sourceLine->lineIndexInFile + 1).c_str() << "\x1b]8;;\x1b\\" << " in File: "+ sourceLine->filePath.string() << "\n"; // link title
-        // outputStream << "\taaa:" << (const char*)(sourceLine->line.c_str()) << " \n"; // line content
+        outputStream << "\t \033[31m:" << (const char*)(sourceLine->line.c_str()) << "\033[0m \n"; // line content
     } else {
         outputStream << "In undefined line"; // Unknown file case
     }
 
     outputStream << "possible Reason: " << (const char*)reason.c_str() << std::endl; // reason 
-    outputStream << std::string(sourceLine->line.begin(), sourceLine->line.end()).c_str() << std::endl; // line content
     std::cerr << outputStream.str() << std::endl;
 }
