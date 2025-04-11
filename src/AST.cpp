@@ -62,7 +62,7 @@ const IDataType* ArrayAST::getType(const IRContext& context) {
     }
 
     if (m_elements.empty()) {
-        logError(m_line, u8"Syntax Error: Empty array initialization is not allowed!");
+        ErrorHandler::logError(u8"Syntax Error: Empty array initialization is not allowed!", m_line);
         return nullptr;
     }
     
@@ -70,7 +70,7 @@ const IDataType* ArrayAST::getType(const IRContext& context) {
     const IDataType* firstType = m_elements[0]->getType(context);
     for (const auto& element : m_elements) {
         if (element->getType(context)->getLLVMType(*context.context) != firstType->getLLVMType(*context.context)) {
-            logWarning(m_line, u8"Syntax Error: All elements of array must be of the same type!");
+            ErrorHandler::logWarning(u8"Syntax Error: All elements of array must be of the same type!", m_line);
             break;
         }
     }
@@ -84,7 +84,7 @@ const IDataType* ArrayAST::getType(const IRContext& context) {
         if (structType) {
             cloneType = std::make_unique<StructDataType>(structType->name);
         } else {
-            logError(m_line, u8"Syntax Error: Array can only be of primitive or struct type!");
+            ErrorHandler::logError(u8"Syntax Error: Array can only be of primitive or struct type!", m_line);
             return nullptr;
         }
     }
@@ -126,6 +126,14 @@ BinaryOperatorAST::BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AS
 
 const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& context) {
     return m_LHS->getType(context);
+}
+
+std::unique_ptr<AST>* BinaryOperatorAST::getLHS() {
+    return &m_LHS;
+}
+
+std::unique_ptr<AST>* BinaryOperatorAST::getRHS() {
+    return &m_RHS;
 }
 
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args, size_t line)
@@ -210,7 +218,7 @@ const std::u8string& AccessArrayElementAST::getName() const {
 const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
     const ScopeEntry* arrVar = context.symbolTable.lookupVariable(m_name);
     if (!arrVar) {
-        logError(m_line, u8"Syntax Error: Array or Struct '" + m_name + u8"' not found!");
+        ErrorHandler::logError(u8"Syntax Error: Array or Struct '" + m_name + u8"' not found!", m_line);
         return nullptr;
     }
 
@@ -226,7 +234,7 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
         const NumberAST* index = dynamic_cast<const NumberAST*>(m_index.get());
         if (index) {
             if (index->getValue() < 0 || index->getValue() >= (int)structType->attributes.size()) {
-                logError(m_line, u8"Syntax Error: Index out of bounds for '" + m_name + u8"' struct!");
+                ErrorHandler::logError(u8"Syntax Error: Index out of bounds for '" + m_name + u8"' struct!", m_line);
                 return nullptr;
             }
             return structType->attributes[index->getValue()].type.get();
@@ -236,11 +244,11 @@ const IDataType* AccessArrayElementAST::getType(const IRContext& context) {
                 return attribute.type.get();
             }
         }
-        logError(m_line, u8"Syntax Error: Can't find '" + m_index->getName() + u8"' attribute in '" + m_name + u8"' struct!");
+        ErrorHandler::logError(u8"Syntax Error: Can't find '" + m_index->getName() + u8"' attribute in '" + m_name + u8"' struct!", m_line);
         return nullptr;
     }
 
-    logError(m_line, u8"Syntax Error: '" + m_name + u8"' is not an array or struct!");
+    ErrorHandler::logError(u8"Syntax Error: '" + m_name + u8"' is not an array or struct!", m_line);
     return nullptr;
 }
 

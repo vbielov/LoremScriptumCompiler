@@ -2,7 +2,8 @@
 
 Lexer::Lexer(const std::u8string& sourceCode) 
     : m_souceCode(&sourceCode)
-    , m_charIterator(0) {}
+    , m_charIterator(0)
+    , m_lineCounter(0) {}
 
 void Lexer::tokenize(std::vector<Token>& outTokens, std::ostream &ostr) {
     Token token;
@@ -38,6 +39,7 @@ Token Lexer::getNextToken() {
     // New line
     if (getCharAt(m_charIterator) == u8'\n') {
         m_charIterator++;
+        m_lineCounter++;
         return {TokenType::NEW_LINE, u8""};
     }
 
@@ -47,7 +49,11 @@ Token Lexer::getNextToken() {
         m_charIterator++; // skip '
         // NOTE(Vlad):  it's allowed here to input multiple symbols to literal, 
         //              parser should not let literal with multiple symbols inside
-        while (getCharAt(m_charIterator) != punctuation::APOSTROPHE[0] && getCharAt(m_charIterator) != u8'\0') {
+        while (getCharAt(m_charIterator) != punctuation::APOSTROPHE[0]) {
+            if (getCharAt(m_charIterator) == u8'\0') {
+                ErrorHandler::logError(u8"No closing apostrophe found!", m_lineCounter);
+                return {TokenType::EOF_TOKEN, u8""};
+            }
             literraSymbol += getCharAt(m_charIterator);
             m_charIterator++;
         }
@@ -61,7 +67,11 @@ Token Lexer::getNextToken() {
     if (getCharAt(m_charIterator) == punctuation::QUOTE[0]) {
         std::u8string string = u8"";
         m_charIterator++; // skip "
-        while (getCharAt(m_charIterator) != punctuation::QUOTE[0] && getCharAt(m_charIterator) != u8'\0') {
+        while (getCharAt(m_charIterator) != punctuation::QUOTE[0]) {
+            if (getCharAt(m_charIterator) == u8'\0') {
+                ErrorHandler::logError(u8"No closing quote found!", m_lineCounter);
+                return {TokenType::EOF_TOKEN, u8""};
+            }
             string += getCharAt(m_charIterator);
             m_charIterator++;
         }
@@ -160,7 +170,6 @@ int Lexer::startWithWord(const std::u8string_view* words, size_t wordsSize, bool
     return -1;
 }
 
-char8_t Lexer::getCharAt(int index) const
-{
+char8_t Lexer::getCharAt(int index) const {
     return (*m_souceCode)[index];
 }

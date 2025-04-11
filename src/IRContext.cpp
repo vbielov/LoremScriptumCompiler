@@ -65,7 +65,6 @@ const ScopeEntry* SymbolTable::lookupVariable(const std::u8string& name) const {
     if (iter != m_globals.end())
         return iter.base();
 
-    queueUndefinedError(u8"variable not found: '" + name + u8"' check your scopes!");
     return nullptr;
 }
 
@@ -77,7 +76,6 @@ const ScopeEntry* SymbolTable::lookupFunction(const std::u8string& name) const {
     if (iter != m_functions.end())
         return iter.base();
 
-    queueUndefinedError(u8"function not found: '" + name + u8"' check your scopes!");
     return nullptr;
 }
 
@@ -85,6 +83,5 @@ const StructDataType* SymbolTable::lookupStruct(const std::u8string& name) const
     auto iter = m_structsTypeMap.find(name);
     if (iter != m_structsTypeMap.end())
         return iter->second;
-    queueUndefinedError(u8"struct not found: '" + name + u8"' !");
     return nullptr;
 }

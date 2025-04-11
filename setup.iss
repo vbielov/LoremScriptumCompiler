@@ -9,8 +9,8 @@ OutputBaseFilename=lsc-Installer-Windows-X64
 
 [Files]
 ; Add files to install
-Source: ".\lsc.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: ".\build\lsc.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\admin\Desktop\lsc\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 ; Create Start Menu icon

@@ -15,7 +15,7 @@
 # Platforms
 
 You should be able to compile LoremScriptumCompiler successfully on the following platforms:
-- Windows 11 + MinGW
+- Windows 10+ & MinGW
 - Linux Ubuntu/Arch + GNU
 
 # Get the source code

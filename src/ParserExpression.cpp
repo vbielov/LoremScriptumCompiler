@@ -32,12 +32,12 @@ std::unique_ptr<AST> Parser::parseExpression() {
     if (isExpressionEnd()) return left;
     
     if (!isToken(TokenType::OPERATOR)) {
-        logError(currentLine, u8"Syntax Error: operator expected!");
+        ErrorHandler::logError(u8"Syntax Error: operator expected!", currentLine);
         return nullptr;
     }
 
     if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        logError(currentLine, u8"Syntax Error: assign operator is not allowed here!");
+        ErrorHandler::logError(u8"Syntax Error: assign operator is not allowed here!", currentLine);
         return nullptr;
     }
 
@@ -46,7 +46,7 @@ std::unique_ptr<AST> Parser::parseExpression() {
     
     auto right = parseExpressionSingle();
     if (right == nullptr){
-        logError(currentLine, u8"Syntax Error: right side of binary operator is missing or invalid!");
+        ErrorHandler::logError(u8"Syntax Error: right side of binary operator is missing or invalid!", currentLine);
         return nullptr;
     }
 
@@ -55,11 +55,11 @@ std::unique_ptr<AST> Parser::parseExpression() {
     }
 
     if (!isToken(TokenType::OPERATOR)) {
-        logError(currentLine, u8"Syntax Error: expected operator!");   
+        ErrorHandler::logError(u8"Syntax Error: expected operator!", currentLine);
         return nullptr;
     }
     if (isToken(TokenType::OPERATOR, operators::ASSIGN)) {
-        logError(currentLine, u8"Syntax Error: assign operator is not allowed here!");   
+        ErrorHandler::logError(u8"Syntax Error: assign operator is not allowed here!", currentLine);
         return nullptr;
     }
     auto nextOp = *operators::BINARY_OPERATION_PRIORITY_MAP.find(m_currentToken->value);
@@ -104,7 +104,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
         getNextToken();
         if (isUnaryOperator()) {
-            logError(currentLine, u8"Syntax Error: double unary operator is not allowed!");
+            ErrorHandler::logError(u8"Syntax Error: double unary operator is not allowed!", currentLine);
             return nullptr;
         }
             
@@ -122,14 +122,14 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
             return std::make_unique<BinaryOperatorAST>(sign, std::move(value), std::move(rhs), currentLine);
         }
 
-        logError(currentLine, u8"Syntax Error: invalid unary operator!");
+        ErrorHandler::logError(u8"Syntax Error: invalid unary operator!", currentLine);
         return nullptr;
     }
 
     if (isToken(TokenType::NUMBER)) {
         int intValue;
         if (!toArabicConverter(m_currentToken->value, &intValue)) {
-            logError(currentLine, u8"Syntax Error: failure to understand Roman numeral, Optime vale!");
+            ErrorHandler::logError(u8"Syntax Error: failure to understand Roman numeral, Optime vale!", currentLine);
             return nullptr;
         }
 
@@ -141,17 +141,17 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     if (isToken(TokenType::LITERAL)) {
         if (m_currentToken->value.length() > 1) {
             if (m_currentToken->value[0] != '\\' || m_currentToken->value.length() != 2) {
-                logWarning(currentLine, u8"Syntax Error: Char can't be longer then a single character!");
+                ErrorHandler::logWarning(u8"Syntax Error: Char can't be longer then a single character!", currentLine);
             }
         }
 
         char8_t letter = m_currentToken->value[0];
 
         if(m_currentToken->value == u8"\\0") letter = '\0';
-        if(m_currentToken->value == u8"\\n") letter = '\n';
-        if(m_currentToken->value == u8"\\t") letter = '\t';
-        if(m_currentToken->value == u8"\\r") letter = '\r';
-        
+        else if(m_currentToken->value == u8"\\n") letter = '\n';
+        else if(m_currentToken->value == u8"\\t") letter = '\t';
+        else if(m_currentToken->value == u8"\\r") letter = '\r';
+
         auto value = std::make_unique<CharAST>(letter, currentLine);
         getNextToken();
         return value;
@@ -160,7 +160,21 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     if (isToken(TokenType::STRING)) {
         std::vector<std::unique_ptr<AST>> letters;
         for (size_t i = 0; i < m_currentToken->value.length(); i++) {
-            letters.push_back(std::make_unique<CharAST>(m_currentToken->value[i], currentLine));
+            char8_t letter = m_currentToken->value[i];
+            if(letter == u8'\\') {
+                char8_t nextLetter = m_currentToken->value[i + 1];
+                if (nextLetter == u8'n') letter = '\n';
+                else if (nextLetter == u8't') letter = '\t';
+                else if (nextLetter == u8'r') letter = '\r';
+                else if (nextLetter == u8'0') letter = '\0';
+                else if (nextLetter == u8'\\') letter = '\\';
+                else {
+                    ErrorHandler::logWarning(u8"Syntax Error: invalid escape sequence in string literal!", currentLine);
+                    letter = nextLetter;
+                }
+                i++;
+            }
+            letters.push_back(std::make_unique<CharAST>(letter, currentLine));
         }
         letters.push_back(std::make_unique<CharAST>(u8'\0', currentLine)); // null terminator
         auto strArr = std::make_unique<ArrayAST>(std::move(letters), currentLine);
@@ -183,12 +197,12 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
 
             std::unique_ptr<AST> index = parseExpression();
             if (index == nullptr) {
-                logError(currentLine, u8"Syntax Error: Expected index to index array!");
+                ErrorHandler::logError(u8"Syntax Error: Expected index to index array!", currentLine);
                 return nullptr;
             }
 
             if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-                logError(currentLine, u8"Syntax Error: closing array bracket ']' expected!");
+                ErrorHandler::logError(u8"Syntax Error: closing array bracket ']' expected!", currentLine);
                 return nullptr;
             }
             getNextToken(); // eat ]
@@ -201,7 +215,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         getNextToken();
         auto value = parseExpression();
         if (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
-                logError(currentLine, u8"Syntax Error: closing array bracket ')' expected!");
+                ErrorHandler::logError(u8"Syntax Error: closing array bracket ')' expected!", currentLine);
                 return nullptr;
             }
         getNextToken();
@@ -211,7 +225,7 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         return parseArray();
     }
 
-    logError(currentLine, u8"Syntax Error: Token not recognised...!");
+    ErrorHandler::logError(u8"Syntax Error: Token not recognised...!", currentLine);
     return nullptr;
 }
 
@@ -229,13 +243,13 @@ std::unique_ptr<ArrayAST> Parser::parseArray() {
     // get expression from each index
     while (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) { 
         if (isToken(TokenType::EOF_TOKEN)) {
-            logError(currentLine, u8"Syntax Error: closing bracket for array initialization ']' expected!");
+            ErrorHandler::logError(u8"Syntax Error: closing bracket for array initialization ']' expected!", currentLine);
             return nullptr;
         }
 
         std::unique_ptr<AST> element = parseExpression();
         if (element == nullptr) {
-            logError(currentLine, u8"Syntax Error: invalid expression during array initialization!");
+            ErrorHandler::logError(u8"Syntax Error: invalid expression during array initialization!", currentLine);
             return nullptr;
         }
 
@@ -248,7 +262,7 @@ std::unique_ptr<ArrayAST> Parser::parseArray() {
         if (isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
             break;
         }
-        logError(currentLine, u8"Syntax Error: expected ',' or ']' during array initialization!");
+        ErrorHandler::logError(u8"Syntax Error: expected ',' or ']' during array initialization!", currentLine);
         return nullptr;
     }
     getNextToken(); // eat ']'
@@ -276,7 +290,7 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
         auto expression = parseExpression();
         if (expression == nullptr) {
-            logError(currentLine, u8"Syntax Error: invalid expression inside function call!");
+            ErrorHandler::logError(u8"Syntax Error: invalid expression inside function call!", currentLine);
             return nullptr;
         }
             
@@ -285,7 +299,7 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
         if (isToken(TokenType::PUNCTUATION, punctuation::COMMA)) {
             getNextToken();
             if (isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE)) {
-                logError(currentLine, u8"Syntax Error: closing function call bracket ')' expected!");
+                ErrorHandler::logError(u8"Syntax Error: closing function call bracket ')' expected!", currentLine);
                 return nullptr;
             } 
             continue;
@@ -294,7 +308,7 @@ std::unique_ptr<FuncCallAST> Parser::parseExpressionFunctionCall(const std::u8st
             break;
         }
 
-        logError(currentLine, u8"Syntax Error: closing function call bracket ')' expected!");
+        ErrorHandler::logError(u8"Syntax Error: closing function call bracket ')' expected!", currentLine);
         return nullptr;
     }
 

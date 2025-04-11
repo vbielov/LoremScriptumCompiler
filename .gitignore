@@ -1,4 +1,5 @@
 build/
+output/
 
 # Ignore top level generated code
 /*.o

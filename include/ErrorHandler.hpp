@@ -5,69 +5,47 @@
 #include <filesystem>
 #include <unordered_set>
 #include <iostream>
+#include <sstream>
 #include "RomanNumber.hpp"
+#include <mutex>
+#include <assert.h>
+#include "SourceLine.hpp"
 
-struct fileLength{
-    std::u8string fileName;
-    size_t lines;
-    size_t lineTillPos;
-    size_t pos;
+class ErrorHandler {
+private:
+    const std::vector<SourceLine>* m_sourceLines; // Reference to source lines for error reporting
+    bool m_errorFlag;
+    bool m_warnFlag;
+
+    inline static ErrorHandler* s_instance = nullptr; // Singleton instance
+    inline static std::mutex s_mutex; // Mutex for thread safety
+    ErrorHandler() : m_sourceLines(nullptr), m_errorFlag(false), m_warnFlag(false) {} // Private constructor for singleton pattern
+
+public:
+    // Deleting copy constructor and assignment operator to prevent copying
+    ErrorHandler(const ErrorHandler& obj) = delete;
+
+    /// @brief Static method to get the singleton instance of ErrorHandler
+    static ErrorHandler* getInstance();
+
+    static void init(const std::vector<SourceLine>& lines);
+
+    /// @return returns bool based on if any errors happened before hand
+    static bool hasError();
+
+    /// @return returns bool based on detected warnings
+    static bool hasWarning();
+
+    /// @brief build string with reason as error message
+    /// get line from source file to print aswell
+    /// printed via dumpErrorLog
+    static void logError(std::u8string reason, size_t line);
+    static void logError(std::u8string reason);
+
+    /// @brief works like logError but doesn't stop program flow
+    static void logWarning(std::u8string reason, size_t);
+    static void logWarning(std::u8string reason);
+
+private:
+    void log(size_t* line, std::u8string reason, bool isError);
 };
-
-struct fileRange{
-    std::u8string fileName;
-    size_t start;
-    size_t end;
-};
-
-
-struct rangeResult {
-    std::u8string fileName;
-    size_t displayline;
-};
-
-void setInstantDump();
-
-
-// returns bool based on if any errors happened before hand
-bool error();
-
-// returns bool based on detected warnings
-bool warn();
-
-// splits source into individual lines
-void grabSource(std::u8string sourceCode, std::string fileLocation);
-
-
-// build string with reason as error message
-// get line from source file to print aswell
-// printed via dumpErrorLog
-void logError(size_t line, std::u8string reason);
-
-// works like logError but doesnt stop program flow
-void logWarning(size_t line, std::u8string reason);
-
-
-// dumps all ErrorLogs into terminal
-void dumpErrorLog();
-
-
-// removes markers in sourcecode and builds ranges from them
-// ranges are used to determine which line corresponds to which file
-void buildRanges(std::u8string& sourceCode);
-
-// adds marker to array to match against
-void depthMapping(std::u8string fileName);
-
-// immidiatly dumps error to console, no line input
-void dumpAndBuildError(std::u8string text);
-
-// queues Error without line, gets dumped via dumpErrorLog() like usual
-void queueUndefinedError(std::u8string name);
-
-
-
-// canceled
-
-// did you mean? for typos
-void typoDetection();

@@ -1,4 +1,4 @@
-nihil printf = λ(litera[O] str)
+nihil printf = λ(litera[] str)
 
 numerus rand = λ()
 
