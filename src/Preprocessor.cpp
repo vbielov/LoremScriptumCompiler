@@ -105,6 +105,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         index = includePos; // set index to the start of the line
 
         std::filesystem::path includePath = std::filesystem::path(filePath.parent_path()) / std::filesystem::path(includeFileName);
+        includePath = std::filesystem::weakly_canonical(includePath); // Get the absolute path
         
         // Check if there is a circle in inclusion
         if (std::find(includingStack.begin(), includingStack.end(), includePath) != includingStack.end()) {

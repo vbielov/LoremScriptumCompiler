@@ -148,10 +148,10 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
         char8_t letter = m_currentToken->value[0];
 
         if(m_currentToken->value == u8"\\0") letter = '\0';
-        if(m_currentToken->value == u8"\\n") letter = '\n';
-        if(m_currentToken->value == u8"\\t") letter = '\t';
-        if(m_currentToken->value == u8"\\r") letter = '\r';
-        
+        else if(m_currentToken->value == u8"\\n") letter = '\n';
+        else if(m_currentToken->value == u8"\\t") letter = '\t';
+        else if(m_currentToken->value == u8"\\r") letter = '\r';
+
         auto value = std::make_unique<CharAST>(letter, currentLine);
         getNextToken();
         return value;
@@ -160,7 +160,21 @@ std::unique_ptr<AST> Parser::parseExpressionSingle() {
     if (isToken(TokenType::STRING)) {
         std::vector<std::unique_ptr<AST>> letters;
         for (size_t i = 0; i < m_currentToken->value.length(); i++) {
-            letters.push_back(std::make_unique<CharAST>(m_currentToken->value[i], currentLine));
+            char8_t letter = m_currentToken->value[i];
+            if(letter == u8'\\') {
+                char8_t nextLetter = m_currentToken->value[i + 1];
+                if (nextLetter == u8'n') letter = '\n';
+                else if (nextLetter == u8't') letter = '\t';
+                else if (nextLetter == u8'r') letter = '\r';
+                else if (nextLetter == u8'0') letter = '\0';
+                else if (nextLetter == u8'\\') letter = '\\';
+                else {
+                    ErrorHandler::logWarning(currentLine, u8"Syntax Error: invalid escape sequence in string literal!");
+                    letter = nextLetter;
+                }
+                i++;
+            }
+            letters.push_back(std::make_unique<CharAST>(letter, currentLine));
         }
         letters.push_back(std::make_unique<CharAST>(u8'\0', currentLine)); // null terminator
         auto strArr = std::make_unique<ArrayAST>(std::move(letters), currentLine);

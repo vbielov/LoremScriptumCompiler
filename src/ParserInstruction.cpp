@@ -18,14 +18,28 @@ std::unique_ptr<AST> Parser::parseInstruction() {
 
     if (isToken(TokenType::TYPE) || isStructType) {
         std::unique_ptr<AST> declaration = parseInstructionDeclaration();
-
+        if (declaration == nullptr) {
+            ErrorHandler::logError(currentLine, u8"Syntax Error: Invalid declaration!");
+            return nullptr;
+        }
+        
         if (m_blockCount == 0 && !m_isTest) {
             // is Top level declaration
-            
-            if (declaration == nullptr) {
-                ErrorHandler::logError(currentLine, u8"Syntax Error: Invalid declaration!");
-                return nullptr;
+            BinaryOperatorAST* assignment = dynamic_cast<BinaryOperatorAST*>(declaration.get());
+            if (assignment) {
+                // split declaration and assignment
+                if (assignment->getLHS() && dynamic_cast<const VariableDeclarationAST*>(assignment->getLHS()->get())) {
+                    std::unique_ptr<AST> varDecl = std::move(*assignment->getLHS());
+                    auto varRef = std::make_unique<VariableReferenceAST>(varDecl->getName(), currentLine);
+                    auto assign = std::make_unique<BinaryOperatorAST>(std::u8string(operators::ASSIGN), std::move(varRef), std::move(*assignment->getRHS()), currentLine);
+                    m_topLevelDeclarations.push_back(std::move(varDecl));
+                    return assign;
+                } else {
+                    // TODO(Vlad): Error
+                    assert(false && "Invalid assignment!");
+                }
             }
+            
             m_topLevelDeclarations.push_back(std::move(declaration));
             
             auto pseudoEmptyInstr = std::vector<std::unique_ptr<AST>>();
@@ -275,12 +289,11 @@ std::unique_ptr<FunctionPrototypeAST> Parser::parseInstructionPrototype(const st
     getNextToken(); // eat '('
     std::vector<std::unique_ptr<TypeIdentifierPair>> args;
     while (!isToken(TokenType::PUNCTUATION, punctuation::PAREN_CLOSE) && !isToken(TokenType::EOF_TOKEN)) {
-        if (!isToken(TokenType::TYPE)) {
-            ErrorHandler::logError(currentLine, u8"Syntax Error: type expected!");
+        std::unique_ptr<IDataType> dataType = parseType();
+        if (!dataType) {
             return nullptr;
         }
-
-        std::unique_ptr<IDataType> dataType = parseType();
+        
 
         if (!isToken(TokenType::IDENTIFIER)) {
             ErrorHandler::logError(currentLine, u8"Syntax Error: identifier expected!");

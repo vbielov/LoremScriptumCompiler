@@ -149,7 +149,10 @@ private:
 
 public:
     BinaryOperatorAST(const std::u8string& op, std::unique_ptr<AST> LHS, std::unique_ptr<AST> RHS, size_t line);
-    const IDataType* getType(const IRContext& context) override; 
+    const IDataType* getType(const IRContext& context) override;
+    // NOTE(Vlad): very bad getters here. But they are needed in ParserInstruction.cpp for spliting assigments for wrapping "main"
+    std::unique_ptr<AST>* getLHS();
+    std::unique_ptr<AST>* getRHS(); 
     llvm::Value* codegen(IRContext& context) override;
     void printTree(std::ostream& ostr, const std::string& indent, bool isLast) const override; 
     size_t getLine() const override;

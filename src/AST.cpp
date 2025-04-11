@@ -128,6 +128,14 @@ const IDataType* BinaryOperatorAST::getType([[maybe_unused]] const IRContext& co
     return m_LHS->getType(context);
 }
 
+std::unique_ptr<AST>* BinaryOperatorAST::getLHS() {
+    return &m_LHS;
+}
+
+std::unique_ptr<AST>* BinaryOperatorAST::getRHS() {
+    return &m_RHS;
+}
+
 FuncCallAST::FuncCallAST(const std::u8string& callee, std::vector<std::unique_ptr<AST>> args, size_t line)
     : m_calleeIdentifier(std::move(callee))
     , m_args(std::move(args))

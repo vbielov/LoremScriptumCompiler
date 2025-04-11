@@ -64,26 +64,26 @@ llvm::Value* ArrayAST::codegen(IRContext& context) {
         llvm::Constant* initializer = llvm::ConstantArray::get(arrayType, constValues);
         return initializer;   
     }
-    ErrorHandler::logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
-    return nullptr;
+    // ErrorHandler::logError(m_line, u8"Syntax Error: Array initialization can only be done with constant values!");
+    // return nullptr;
     
-    // TODO(Vlad): Dynamic array initialization
-    // if (!context.builder->GetInsertBlock()) {
-    //     ErrorHandler::logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
-    //     return nullptr;
-    // }
+    // TODO(Vlad): Dynamic array initialization. For some reason this code hasn't worked before, but now it does.
+    if (!context.builder->GetInsertBlock()) {
+        ErrorHandler::logError(m_line, u8"Syntax Error: Dynamic array initialization is not allowed outside of a function!");
+        return nullptr;
+    }
 
-    // llvm::IRBuilder<> tmpBuilder(context.builder->GetInsertBlock(), context.builder->GetInsertBlock()->begin());
-    // llvm::AllocaInst* arrayVariable = tmpBuilder.CreateAlloca(arrayType, nullptr, "tmpArr");
-    // int i = 0;
-    // for (const auto& val : values) {
-    //     static llvm::Value* zero = llvm::ConstantInt::get(*context.context, llvm::APInt(32, 0, true));
-    //     llvm::Value* index = llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true));
-    //     llvm::Value* gep = context.builder->CreateInBoundsGEP(type, arrayVariable, {zero, index}, "arrIdx");
-    //     context.builder->CreateStore(val, gep);
-    //     i++;
-    // }
-    // return arrayVariable;
+    llvm::IRBuilder<> tmpBuilder(context.builder->GetInsertBlock(), context.builder->GetInsertBlock()->begin());
+    llvm::AllocaInst* arrayVariable = tmpBuilder.CreateAlloca(arrayType, nullptr, "tmpArr");
+    int i = 0;
+    for (const auto& val : values) {
+        static llvm::Value* zero = llvm::ConstantInt::get(*context.context, llvm::APInt(32, 0, true));
+        llvm::Value* index = llvm::ConstantInt::get(*context.context, llvm::APInt(32, i, true));
+        llvm::Value* gep = context.builder->CreateInBoundsGEP(type, arrayVariable, {zero, index}, "arrIdx");
+        context.builder->CreateStore(val, gep);
+        i++;
+    }
+    return arrayVariable;
 }
 
 llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
