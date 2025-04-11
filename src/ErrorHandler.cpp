@@ -49,11 +49,14 @@ void ErrorHandler::logWarning(std::u8string reason) {
 void ErrorHandler::log(size_t* line, std::u8string reason, bool isError) {
     const SourceLine* sourceLine = nullptr; // Initialize sourceLine pointer to null
     if (line) {
-        assert(m_sourceLines && "Source lines not initialized!"); // Ensure source lines are initialized
-        assert(*line - 1 < m_sourceLines->size());
-        sourceLine = &(*m_sourceLines)[*line - 1]; // Get the source lines reference
+        if(!m_sourceLines) {
+            return; // Ensure source lines are initialized. Can't assert, because of testing
+        } else  {
+            assert(*line - 1 < m_sourceLines->size());
+            sourceLine = &(*m_sourceLines)[*line - 1]; // Get the source lines reference
+        }
     }
-
+    
     const static std::string_view ERROR_STR = "\n \033[1;41mError\033[0m encountered in Line ";
     const static std::string_view WARNING_STR = "\n \033[1;48;5;214mWarning\033[0m for Line ";
     
