@@ -5,21 +5,21 @@
 #include <filesystem>
 #include <unordered_set>
 #include <iostream>
+#include <sstream>
 #include "RomanNumber.hpp"
 #include <mutex>
+#include <assert.h>
 #include "SourceLine.hpp"
 
 class ErrorHandler {
 private:
-    std::vector<std::u8string> m_errorLog;
-    std::vector<std::u8string> m_warningLog;
+    const std::vector<SourceLine>* m_sourceLines; // Reference to source lines for error reporting
     bool m_errorFlag;
     bool m_warnFlag;
-    bool m_instantDump;
 
-    static ErrorHandler* m_instance; // Singleton instance
-    static std::mutex m_mutex; // Mutex for thread safety
-    ErrorHandler() {} // Private constructor for singleton pattern
+    inline static ErrorHandler* s_instance = nullptr; // Singleton instance
+    inline static std::mutex s_mutex; // Mutex for thread safety
+    ErrorHandler() : m_sourceLines(nullptr), m_errorFlag(false), m_warnFlag(false) {} // Private constructor for singleton pattern
 
 public:
     // Deleting copy constructor and assignment operator to prevent copying
@@ -28,10 +28,7 @@ public:
     /// @brief Static method to get the singleton instance of ErrorHandler
     static ErrorHandler* getInstance();
 
-    static void init(std::u8string& sourceCode, std::u8string fileName, std::u8string fileLocation, bool instantDump);
-
-    /// @brief Allows error handler to print errors and warnings to the console immediately
-    static void setInstantDump(bool state);
+    static void init(const std::vector<SourceLine>& lines);
 
     /// @return returns bool based on if any errors happened before hand
     static bool hasError();
@@ -39,30 +36,16 @@ public:
     /// @return returns bool based on detected warnings
     static bool hasWarning();
 
-    /// @brief splits source into individual lines
-    static void grabSource(std::u8string sourceCode, std::string fileLocation);
-
     /// @brief build string with reason as error message
     /// get line from source file to print aswell
     /// printed via dumpErrorLog
-    static void logError(size_t line, std::u8string reason);
+    static void logError(std::u8string reason, size_t line);
+    static void logError(std::u8string reason);
 
     /// @brief works like logError but doesn't stop program flow
-    static void logWarning(size_t line, std::u8string reason);
+    static void logWarning(std::u8string reason, size_t);
+    static void logWarning(std::u8string reason);
 
-    /// @brief dumps all ErrorLogs into terminal
-    static void dumpErrorLog();
-
-    /// @brief removes markers in sourcecode and builds ranges from them
-    /// ranges are used to determine which line corresponds to which file
-    static void buildRanges(std::u8string& sourceCode);
-
-    /// @brief adds marker to array to match against
-    static void depthMapping(std::u8string fileName);
-
-    /// @brief immidiatly dumps error to console, no line input
-    static void dumpAndBuildError(std::u8string text);
-
-    /// @brief queues Error without line, gets dumped via dumpErrorLog() like usual
-    static void queueUndefinedError(std::u8string name);
+private:
+    void log(size_t* line, std::u8string reason, bool isError);
 };

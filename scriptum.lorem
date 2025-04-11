@@ -4,6 +4,6 @@ litera[] teststatement = "test"
 apere "deep1.lorem"
 // numerus alpha = 22
 
-litera[] helloWorld = "Hello, World!" 
+litera[] helloWorld = "Hello, World!"
 
 printf(helloWorld)

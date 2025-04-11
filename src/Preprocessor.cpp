@@ -22,12 +22,12 @@ std::u8string Preprocessor::getMergedSourceCode() const {
     }
 
     // For debugging purposes, print the merged lines
-    // for(size_t i = 0; i < lines.size(); i++) {
-    //     std::cout   << "Line " << i + 1 
-    //                 << " Merged Line " << lines[i].lineIndexInFile + 1 
-    //                 << " in file " << lines[i].filePath.filename() << ": " 
-    //                 << (const char*)lines[i].line.c_str() << std::endl;
-    // } 
+    for(size_t i = 0; i < m_mergedLines.size(); i++) {
+        std::cout   << "Line " << i + 1 
+                    << " Merged Line " << m_mergedLines[i].lineIndexInFile + 1 
+                    << " in file " << m_mergedLines[i].filePath.filename() << ": " 
+                    << (const char*)m_mergedLines[i].line.c_str() << std::endl;
+    } 
 
     #if !defined(NDEBUG)
     std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
@@ -65,7 +65,8 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
                 indexBack--;
             }
             if (!onlyApereInLine) {
-                // TODO(Vlad): Error
+                std::string fileNameStr = filePath.filename().string();
+                ErrorHandler::logError(u8"apere must be the only thing in the line! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
                 includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
                 continue;
             }
@@ -75,14 +76,15 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
 
         // Skip whitespace after 'apere'
         while (sourceCode[index] == u8' ' || sourceCode[index] == u8'\t')
-        index++;
+            index++;
         
         // Read the file name from " until the next "
         std::string includeFileName = "";
         {
             if (sourceCode[index] != '"') {
-                // TODO(Vlad): Error
-                includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
+                std::string fileNameStr = filePath.filename().string();
+                ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
+                includePos = sourceCode.find(INCLUDE_STR, index);
                 continue;
             }
     
@@ -94,11 +96,19 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
             }
     
             if (sourceCode[index] != '"') {
-                // TODO(Vlad): Error
-                includePos = sourceCode.find(INCLUDE_STR, includePos + INCLUDE_STR.length());
+                std::string fileNameStr = filePath.filename().string();
+                ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
+                includePos = sourceCode.find(INCLUDE_STR, index);
                 continue;
             }
             index++; // eat "
+
+            // while(sourceCode[index] == u8' ' || sourceCode[index] == u8'\t')
+            //     index++; // eat whitespace after "fileName"
+            // if (sourceCode[index] == '\r')
+            //     index++; // eat \r
+            // if (sourceCode[index] == '\n')
+            //     index++; // eat \n
         }
         
         sourceCode.erase(includePos, index - includePos); // remove apere "fileName", but not the \n
@@ -109,7 +119,8 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         
         // Check if there is a circle in inclusion
         if (std::find(includingStack.begin(), includingStack.end(), includePath) != includingStack.end()) {
-            // TODO(Vlad): Error
+            std::string fileNameStr = filePath.filename().string();
+            ErrorHandler::logError(u8"Detected circle in inclusion for file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) +  u8"!");
             includePos = sourceCode.find(INCLUDE_STR, index);
             continue;
         }
@@ -133,14 +144,16 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
             currentFile->includedLorem.emplace_back(line, std::move(includeFile));
         }
         else {
-            // TODO(Vlad): Error
+            std::string filePathStr = includePath.string();
+            ErrorHandler::logError(u8"Unknown file type " + std::u8string(filePathStr.begin(), filePathStr.end()) + u8"!");
         }
 
         includePos = sourceCode.find(INCLUDE_STR, index);
     }
 
     if (includingStack.back() != filePath) {
-        // TODO(Vlad): Error
+        std::string fileNameStr = filePath.filename().string();
+        ErrorHandler::logError(u8"Detected circle in inclusion for file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) +  u8"!");
     }
     includingStack.pop_back();
     return currentFile;
@@ -169,6 +182,9 @@ std::vector<SourceLine> Preprocessor::mergeFiles(const LoremSourceFile* file) {
         lines.size(), 
         file->filePath
     );
+    if(lines.back().line.back() != u8'\n') {
+        lines.back().line += u8'\n'; // Add a newline at the end of the last line if it doesn't exist
+    }
     
     size_t offset = 0;
     for (const auto& includedFile : file->includedLorem) {
@@ -188,9 +204,8 @@ std::u8string Preprocessor::readFileToU8String(std::filesystem::path& filePath) 
     std::ifstream file = std::ifstream(filePath, std::ios::binary);  // Open file in binary mode
     if (!file) {
         std::string pathStr = filePath.string();
-        // TODO(Vlad): Error
-        //dumpAndBuildError(u8"File " + std::u8string(pathStr.begin(), pathStr.end()) + u8" isn't found");
-        assert(false);
+        ErrorHandler::logError(u8"File " + std::u8string(pathStr.begin(), pathStr.end()) + u8" isn't found");
+        return u8"";
     }
 
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());

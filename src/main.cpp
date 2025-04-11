@@ -17,7 +17,6 @@ int main(int argc, const char** argv) {
     if (argc < 2 || strcmp(argv[1], "--help") == 0) {
         std::cout << "Usage: \n"
             <<"\t"<<"lsc <input_file.lorem>"<<"           "<<"compiles file to executable\n"
-            <<"\t"<<"lsc <input_file.lorem> -l"<<"        "<<"dumps logs upon detection of error or warning" 
             << std::endl;
         return 0;
     }
@@ -25,11 +24,6 @@ int main(int argc, const char** argv) {
     if (strcmp(argv[1], "--version") == 0) {
         std::cout << "LSC 0.1 (built by Backbenchers)";
         return 0;
-    }
-
-    if (argc == 3 && strcmp(argv[2], "-l") == 0) {
-        std::cout << "logs dumped on creation\n";
-        // setInstantDump();
     }
 
     // Read File
@@ -44,24 +38,27 @@ int main(int argc, const char** argv) {
 
     // Preprocess
     Preprocessor preprocessor = Preprocessor(mainFilePath);
-    // std::u8string sourceCode = preprocessor.process(mainFilePath);
     std::u8string sourceCode = preprocessor.getMergedSourceCode();
-
-    // buildRanges(sourceCode);
-    // grabSource(sourceCode, inputFilePath); //TODO: start thread maybe and lock ErrorHandler in meantime
-
     
+    ErrorHandler::init(preprocessor.getMergedLines()); // initialize ErrorHandler with source lines
+    if(ErrorHandler::hasError()) { // check if any errors occured
+        return 1;
+    }
+
     // Tokenize
     Lexer lexer = Lexer(sourceCode);
     std::vector<Token> tokens;
     lexer.tokenize(tokens, std::cout);
+
+    if(ErrorHandler::hasError()) { // check if any errors occured
+        return 1;
+    }
 
     // Parse
     Parser parser = Parser(tokens);
     std::unique_ptr<AST> tree = parser.parse();
     
     if (ErrorHandler::hasError()) { // check if any errors occured
-        ErrorHandler::dumpErrorLog();
         return 1;
     }
 
@@ -70,7 +67,6 @@ int main(int argc, const char** argv) {
     codeGenerator.generateIRCode();
 
     if (ErrorHandler::hasError()) { // check if any errors occured
-        ErrorHandler::dumpErrorLog();
         return 1;
     }
 
@@ -87,10 +83,6 @@ int main(int argc, const char** argv) {
     assembler.compileToObjectFile(objFilePath, codeGenerator.getModule(), CodeGenFileType::ObjectFile); 
     auto libs = preprocessor.getLinkLibs();
     assembler.compileToExecutable(objFilePath, exeFilePath, libs);
-
-    if (ErrorHandler::hasWarning()) { // check if any warnings occured
-        ErrorHandler::dumpErrorLog();
-    }
 
     // Note: There is a bug, when lld is linked dynamicly, that it can't stop program after end of main()
     //       Mingw doesn't support staticlly linking LLVM/LLD, for some reason => it will not allow exiting program without lld::exitLld(0), 

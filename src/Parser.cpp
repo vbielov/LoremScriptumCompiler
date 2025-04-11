@@ -108,7 +108,7 @@ std::unique_ptr<IDataType> Parser::parseType() {
     } else {
         auto typeIter = STR_TO_PRIMITIVE_MAP.find(m_currentToken->value);
         if (typeIter == STR_TO_PRIMITIVE_MAP.end()) {
-            ErrorHandler::logError(currentLine, u8"Unknown or invalid type!");
+            ErrorHandler::logError(u8"Unknown or invalid type!", currentLine);
             return nullptr;
         }
         basicType = std::make_unique<PrimitiveDataType>(typeIter->second);
@@ -123,7 +123,7 @@ std::unique_ptr<IDataType> Parser::parseType() {
     // TODO(Vlad): 2D Arrays?
     PrimitiveDataType* primitiveType = dynamic_cast<PrimitiveDataType*>(basicType.get());
     if (primitiveType && primitiveType->type == PrimitiveType::VOID) {
-        ErrorHandler::logError(currentLine, u8"Void type cannot be an array!");
+        ErrorHandler::logError(u8"Void type cannot be an array!", currentLine);
         return nullptr;
     }
 
@@ -134,14 +134,14 @@ std::unique_ptr<IDataType> Parser::parseType() {
     if (isToken(TokenType::NUMBER)) {
         bool success = toArabicConverter(m_currentToken->value, &arrSize);
         if (!success) {
-            ErrorHandler::logError(currentLine, u8"Syntax Error: invalid roman number!");
+            ErrorHandler::logError(u8"Syntax Error: invalid roman number!", currentLine);
             return nullptr;
         }
         getNextToken(); // eat number
     }
 
     if (!isToken(TokenType::PUNCTUATION, punctuation::SQR_BRACKET_CLOSE)) {
-        ErrorHandler::logError(currentLine, u8"Syntax Error: closing array bracket ']' expected!");
+        ErrorHandler::logError(u8"Syntax Error: closing array bracket ']' expected!", currentLine);
         return nullptr;
     }
     getNextToken(); // eat ']'

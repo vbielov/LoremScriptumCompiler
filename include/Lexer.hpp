@@ -6,11 +6,13 @@
 #include <vector>
 #include "Token.hpp"
 #include "Syntax.hpp"
+#include "ErrorHandler.hpp"
 
 class Lexer {
    private:
     const std::u8string* m_souceCode;
     int m_charIterator;
+    size_t m_lineCounter;
 
    public:
     Lexer(const std::u8string& sourceCode);
