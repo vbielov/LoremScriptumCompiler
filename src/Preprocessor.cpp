@@ -22,12 +22,12 @@ std::u8string Preprocessor::getMergedSourceCode() const {
     }
 
     // For debugging purposes, print the merged lines
-    for(size_t i = 0; i < m_mergedLines.size(); i++) {
-        std::cout   << "Line " << i + 1 
-                    << " Merged Line " << m_mergedLines[i].lineIndexInFile + 1 
-                    << " in file " << m_mergedLines[i].filePath.filename() << ": " 
-                    << (const char*)m_mergedLines[i].line.c_str() << std::endl;
-    } 
+    // for(size_t i = 0; i < m_mergedLines.size(); i++) {
+    //     std::cout   << "Line " << i + 1 
+    //                 << " Merged Line " << m_mergedLines[i].lineIndexInFile + 1 
+    //                 << " in file " << m_mergedLines[i].filePath.filename() << ": " 
+    //                 << (const char*)m_mergedLines[i].line.c_str() << std::endl;
+    // } 
 
     #if !defined(NDEBUG)
     std::cout << "----------------------- Source Code: ----------------------- " << std::endl << std::endl;
@@ -133,7 +133,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
 
         // It's a library, add it to the list of libraries, to be linked later
         auto extension = includePath.extension();
-        if (extension == ".a" || extension == ".so" || extension == ".dll") {
+        if (extension == ".a" || extension == ".so" || extension == ".dll" || extension == ".o") {
             m_linkLibraries.push_back(includePath);
             m_includedFiles.push_back(includePath);
         }
