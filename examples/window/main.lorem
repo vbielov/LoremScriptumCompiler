@@ -1,25 +1,9 @@
-apere "libs/libraylibdll.a"
-apere "libs/raylibbindings.o"
+apere "raylib.lorem"
 
-nihil initWindow = λ(numerus width, numerus height, litera[] title)
-
-nihil setTargetFPS = λ(numerus fps)
-
-asertio windowShouldClose = λ()
-
-nihil beginDrawing = λ()
-
-nihil clearBackground = λ(numerus r, numerus g, numerus b, numerus a)
-
-nihil drawText = λ(litera text, numerus posX, numerus posY, numerus fontSize, numerus colorR, numerus colorG, numerus colorB, numerus colorA)
-
-nihil endDrawing = λ()
-
-nihil closeWindow = λ()
-
-nihil drawRectangle = λ(numerus posX, numerus posY, numerus width, numerus height, numerus colorR, numerus colorG, numerus colorB, numerus colorA)
-
-asertio isKeyDown = λ(numerus key)
+vector snakePos
+vector snakeMoveDir
+numerus snakeSize
+vector[] snakeBody
 
 nihil gameLoop = λ():
     initWindow(D, D, "Window Title") 
@@ -27,9 +11,22 @@ nihil gameLoop = λ():
     ∑(¬windowShouldClose()):
         clearBackground(O, O, O, CCLV)
         beginDrawing()
+        ∑(numerus i = O, i < snakeSize, i++):
+            vector snakeElem = snakeBody[i]
+            drawRectangle(snakeElem[x], snakeElem[y], X, X, O, CCLV, O, CCLV)
+        ;
         endDrawing()
     ;
     closeWindow()
 ;
 
-gameLoop()
+nihil start = λ():
+    snakePos = create_vector(O, O)
+    snakeMoveDir = create_vector(O, O)
+    snakeSize = I 
+    ∑(numerus i = O, i < snakeSize, i++):
+        snakeBody[i] = create_vector(O, O)
+    ;
+    gameLoop()
+;
+start()

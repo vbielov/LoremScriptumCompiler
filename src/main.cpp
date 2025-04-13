@@ -22,7 +22,7 @@ int main(int argc, const char** argv) {
     }
 
     if (strcmp(argv[1], "--version") == 0) {
-        std::cout << "LSC 0.1 (built by Backbenchers)";
+        std::cout << "LSC 0.1 (built by Backbenchers)" << std::endl;
         return 0;
     }
 

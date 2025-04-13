@@ -78,7 +78,7 @@ for more info about the LLVM toolchain on arch: https://wiki.archlinux.org/title
 mkdir build
 cd build
 cmake ..    # On windows: cmake .. -G "MinGW Makefiles"
-cmake --build . -j
+cmake --build . -j <number of threads>
 ```
 
 When make finishes the compilation, you can find the executable inside `./build/lsc`.
@@ -89,9 +89,13 @@ When make finishes the compilation, you can find the executable inside `./build/
 
 ![LLDConfig.cmake](./resources/img/lld_cmake.png)
 
-it means your package manager doesn't have cmake configurations.
+It means your package manager didn't found cmake configuration `LLDConfig.cmake`.
 
-We solved it by getting them from [LLVM Releases](https://github.com/llvm/llvm-project/releases). Download `LLVM-x.x.x-Linux-X64.tar.xz` or `LLVM-x.x.x-Windows-X64.tar.xz`. And unzip it somewhere.
+The best case is, if your package manager has already downloaded them. It usually is found in `"/lib/llvm-18/lib/cmake/lld`.
+
+If not, then you try luck by getting them from [LLVM Releases](https://github.com/llvm/llvm-project/releases). 
+
+Download `LLVM-x.x.x-Linux-X64.tar.xz` or `LLVM-x.x.x-Windows-X64.tar.xz`. And unzip it somewhere.
 
 Now we have to tell cmake where those files are:
 

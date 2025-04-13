@@ -73,7 +73,8 @@ llvm::Value* ArrayAST::codegen(IRContext& context) {
         return nullptr;
     }
 
-    llvm::IRBuilder<> tmpBuilder(context.builder->GetInsertBlock(), context.builder->GetInsertBlock()->begin());
+    llvm::BasicBlock* insertBlock = &context.builder->GetInsertBlock()->getParent()->getEntryBlock();
+    llvm::IRBuilder<> tmpBuilder(insertBlock, insertBlock->begin());
     llvm::AllocaInst* arrayVariable = tmpBuilder.CreateAlloca(arrayType, nullptr, "tmpArr");
     int i = 0;
     for (const auto& val : values) {
@@ -92,7 +93,8 @@ llvm::Value* VariableDeclarationAST::codegen(IRContext& context) {
     
     if (insertBlock) {
         // stack allocated
-        llvm::IRBuilder<> tmpBuilder(insertBlock, insertBlock->begin());
+        llvm::BasicBlock* funcBlock = &(insertBlock->getParent()->getEntryBlock());
+        llvm::IRBuilder<> tmpBuilder(funcBlock, funcBlock->begin());
         llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(type, nullptr, cStr(m_name));
         context.symbolTable.addVariable(m_name, m_type.get(), stackVariable);
         return stackVariable;
@@ -269,6 +271,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
                 ErrorHandler::logError(u8"Syntax Error: function call in global scope is not allowed!", m_line);
                 return nullptr;
             }
+            llvm::BasicBlock* insertBlock = &(currentBlock->getParent()->getEntryBlock());
             llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
             llvm::Type* argType = arg->getType(context)->getLLVMType(*context.context);
             llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, "argTmp");
@@ -283,12 +286,20 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         return context.builder->CreateCall(function, arguments);
     }
 
-    llvm::BasicBlock* currentBlock = context.builder->GetInsertBlock();
-    llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
-    llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
-    arguments.push_back(returnVariable);
+    std::u8string returnName = std::u8string((const char8_t*)RETURN_ARG_NAME);
+    std::unique_ptr<IDataType> returnType = std::make_unique<PrimitiveDataType>(PrimitiveType::VOID); // will be changed later.
+    std::unique_ptr<VariableDeclarationAST> returnVariable = std::make_unique<VariableDeclarationAST>(
+        returnName, std::move(returnType), m_line
+    );
+    auto returnVariablePtr = returnVariable->codegen(context);
+    returnVariablePtr->mutateType(llvm::PointerType::get(type, 0)); // NOTE(Vlad): it can be very bad.
+
+    // llvm::BasicBlock* currentBlock = &context.builder->GetInsertBlock()->getParent()->getEntryBlock();
+    // llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
+    // llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
+    arguments.push_back(returnVariablePtr);
     context.builder->CreateCall(function, arguments);
-    return returnVariable;
+    return returnVariablePtr;
 }
 
 llvm::Value* FunctionPrototypeAST::codegen(IRContext& context) {
