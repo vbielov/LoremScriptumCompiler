@@ -286,17 +286,33 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
         return context.builder->CreateCall(function, arguments);
     }
 
-    std::u8string returnName = std::u8string((const char8_t*)RETURN_ARG_NAME);
-    std::unique_ptr<IDataType> returnType = std::make_unique<PrimitiveDataType>(PrimitiveType::VOID); // will be changed later.
-    std::unique_ptr<VariableDeclarationAST> returnVariable = std::make_unique<VariableDeclarationAST>(
-        returnName, std::move(returnType), m_line
-    );
-    auto returnVariablePtr = returnVariable->codegen(context);
-    returnVariablePtr->mutateType(llvm::PointerType::get(type, 0)); // NOTE(Vlad): it can be very bad.
-
-    // llvm::BasicBlock* currentBlock = &context.builder->GetInsertBlock()->getParent()->getEntryBlock();
-    // llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
-    // llvm::AllocaInst* returnVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
+    // NOTE(Vlad):  this is variableDeclaration codegen(), 
+    //              but I can't create here VariableDeclarationAST, because I don't own a IDataType...
+    llvm::Value* returnVariablePtr = nullptr;
+    {
+        llvm::BasicBlock* insertBlock = context.builder->GetInsertBlock();
+        llvm::Type* type = entry->type->getLLVMType(*context.context);
+        
+        if (insertBlock) {
+            // stack allocated
+            llvm::BasicBlock* funcBlock = &(insertBlock->getParent()->getEntryBlock());
+            llvm::IRBuilder<> tmpBuilder(funcBlock, funcBlock->begin());
+            llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(type, nullptr, RETURN_ARG_NAME);
+            returnVariablePtr = stackVariable;
+        } else {
+            // global
+            llvm::GlobalVariable* globalVariable = new llvm::GlobalVariable(
+                *context.theModule, 
+                type, 
+                false, 
+                llvm::GlobalValue::WeakAnyLinkage,
+                llvm::ConstantPointerNull::get(llvm::PointerType::get(type, 0)),
+                RETURN_ARG_NAME
+            );
+            returnVariablePtr = globalVariable;
+        }
+    }
+    
     arguments.push_back(returnVariablePtr);
     context.builder->CreateCall(function, arguments);
     return returnVariablePtr;
