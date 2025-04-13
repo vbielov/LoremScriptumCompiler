@@ -272,7 +272,7 @@ llvm::Value* FuncCallAST::codegen(IRContext& context) {
                 return nullptr;
             }
             llvm::BasicBlock* insertBlock = &(currentBlock->getParent()->getEntryBlock());
-            llvm::IRBuilder<> tmpBuilder(currentBlock, currentBlock->begin());
+            llvm::IRBuilder<> tmpBuilder(insertBlock, insertBlock->begin());
             llvm::Type* argType = arg->getType(context)->getLLVMType(*context.context);
             llvm::AllocaInst* stackVariable = tmpBuilder.CreateAlloca(argType, nullptr, "argTmp");
             context.builder->CreateStore(argValue, stackVariable);

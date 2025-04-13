@@ -2,14 +2,4 @@ nihil printf = λ(litera[] text)
 
 litera[] helloWorld = "Hello, World!\n"
 
-∑(numerus i = O, i < II, i++):
-    ∑(numerus j = O, j < II, j++):
-        printf(helloWorld)
-    ;
-;
-
-∑(numerus i = O, i < II, i++):
-    ∑(numerus j = O, j < II, j++):
-        printf(helloWorld)
-    ;
-;
+printf(helloWorld)
