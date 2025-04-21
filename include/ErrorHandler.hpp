@@ -16,10 +16,14 @@ private:
     const std::vector<SourceLine>* m_sourceLines; // Reference to source lines for error reporting
     bool m_errorFlag;
     bool m_warnFlag;
+    bool m_queueFlag;
+
+    std::string m_ErrorQueue;
+    std::string m_WarningQueue;
 
     inline static ErrorHandler* s_instance = nullptr; // Singleton instance
     inline static std::mutex s_mutex; // Mutex for thread safety
-    ErrorHandler() : m_sourceLines(nullptr), m_errorFlag(false), m_warnFlag(false) {} // Private constructor for singleton pattern
+    ErrorHandler() : m_sourceLines(nullptr), m_errorFlag(false), m_warnFlag(false), m_queueFlag(true) {} // Private constructor for singleton pattern
 
 public:
     // Deleting copy constructor and assignment operator to prevent copying
@@ -28,7 +32,8 @@ public:
     /// @brief Static method to get the singleton instance of ErrorHandler
     static ErrorHandler* getInstance();
 
-    static void init(const std::vector<SourceLine>& lines);
+    /// @brief gets file lines and mainFilePath of to be compiled file
+    static void init(const std::vector<SourceLine>& lines, std::filesystem::path mainFilePath);
 
     /// @return returns bool based on if any errors happened before hand
     static bool hasError();
@@ -45,6 +50,12 @@ public:
     /// @brief works like logError but doesn't stop program flow
     static void logWarning(std::u8string reason, size_t);
     static void logWarning(std::u8string reason);
+
+    /// @brief changes output behaviour to more structured print before compilation termination
+    static void setQueueFlag(bool setQueueFlag);
+
+    /// @brief prints queued Errors and Warnings to terminal if queueFlag is set
+    static void dumpErrorAndWarning();
 
 private:
     void log(size_t* line, std::u8string reason, bool isError);

@@ -10,8 +10,16 @@ ErrorHandler* ErrorHandler::getInstance() {
     return s_instance; // Return the singleton instance
 }
 
-void ErrorHandler::init(const std::vector<SourceLine>& lines) {
+void ErrorHandler::init(const std::vector<SourceLine>& lines, std::filesystem::path mainFilePath) {
     getInstance()->m_sourceLines = &lines; // Initialize the source lines reference
+
+    std::string disclaimer = "----------------------- Error/s or Warning/s while compiling  " + mainFilePath.string() + " -----------------------\n bracket errors can be very inconsistant with more errors mixed in, for ease of use consider using our vscode extention for highlighting\n\n";
+    
+    if(!(getInstance()->m_queueFlag)){
+        std::cout << disclaimer;
+    } else {
+        getInstance()->m_ErrorQueue.append(disclaimer);
+    }
 }
 
 bool ErrorHandler::hasError() {
@@ -64,13 +72,41 @@ void ErrorHandler::log(size_t* line, std::u8string reason, bool isError) {
     std::stringstream outputStream(outputStr);
     outputStream << (isError ? ERROR_STR : WARNING_STR); // Set the error or warning string
     if (sourceLine) {
+
         outputStream << "\x1b]8;;vscode://file/"+ sourceLine->filePath.string() << ":" << std::to_string(sourceLine->lineIndexInFile + 1); // link
         outputStream << "\x1b\\" << (const char*)toRomanConverter(sourceLine->lineIndexInFile + 1).c_str() << "\x1b]8;;\x1b\\" << " in File: "+ sourceLine->filePath.string() << "\n"; // link title
-        outputStream << "\t \033[31m:" << (const char*)(sourceLine->line.c_str()) << "\033[0m \n"; // line content
-    } else {
+
+        if (isError) {
+            outputStream << "\t \033[31m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in RED
+        } else {
+            outputStream << "\t \033[38;5;214m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in ORANGE
+        }
+
+    } else if (isError) {
         outputStream << "In undefined line"; // Unknown file case
     }
 
-    outputStream << "possible Reason: " << (const char*)reason.c_str() << std::endl; // reason 
-    std::cerr << outputStream.str() << std::endl;
+    if (isError){
+        outputStream << " possible Reason: " << (const char*)reason.c_str() << std::endl; // reason     
+    } else {
+        outputStream << " Warning: " << (const char*)reason.c_str() << std::endl; 
+    }
+    
+    if (m_queueFlag) {
+        if(isError) {
+            m_ErrorQueue.append(outputStream.str());
+        } else {
+            m_WarningQueue.append(outputStream.str());
+        }
+    } else {
+        std::cerr << outputStream.str() << std::endl;
+    }   
 }
+
+void ErrorHandler::dumpErrorAndWarning(){
+    if(getInstance()->m_queueFlag){
+        std::cerr << getInstance()->m_ErrorQueue;
+        std::cerr << getInstance()->m_WarningQueue;
+    }
+};
+
