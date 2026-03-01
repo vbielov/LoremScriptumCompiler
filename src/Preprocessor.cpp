@@ -81,7 +81,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         // Read the file name from " until the next "
         std::string includeFileName = "";
         {
-            if (sourceCode[index] != '"') {
+            if (sourceCode[index] != '\'') {
                 std::string fileNameStr = filePath.filename().string();
                 ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
                 includePos = sourceCode.find(INCLUDE_STR, index);
@@ -90,12 +90,12 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
     
             index++; // eat "
     
-            while (sourceCode[index] != '"' && index < sourceCode.length() && sourceCode[index] != '\n') {
+            while (sourceCode[index] != '\'' && index < sourceCode.length() && sourceCode[index] != '\n') {
                 includeFileName += sourceCode[index];
                 index++;
             }
     
-            if (sourceCode[index] != '"') {
+            if (sourceCode[index] != '\'') {
                 std::string fileNameStr = filePath.filename().string();
                 ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
                 includePos = sourceCode.find(INCLUDE_STR, index);
