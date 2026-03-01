@@ -66,9 +66,12 @@ sudo apt-get install -y g++ libc++-dev libc++abi-dev cmake clang llvm-dev libllv
 On Arch:
 
 ```bash
-sudo pacman -S gcc libc++ cmake llvm lld lldb libclc polly clang
+sudo pacman -S gcc libc++ cmake llvm19 lld19 lldb libclc polly clang
 ```
+-> check "Known issues" with title "arch maintinance", llvm20+ changed api somewhat, therefore to compile we need to force llvm19 and lld19 usage
+
 for more info about the LLVM toolchain on arch: https://wiki.archlinux.org/title/LLVM
+
 
 # Compiling
 
@@ -84,6 +87,40 @@ cmake --build . -j <number of threads>
 When make finishes the compilation, you can find the executable inside `./build/lsc`.
 
 # Known issues
+
+## Arch maintinance / failure to compile (1.3.2026)
+
+### Step 1
+
+find **CMakeLists.txt** in the root folder of the project.
+
+Delete and uncomment code snippets as you can see in the image -> enforce correct llvm and lld version
+
+![CMakeLists.txt fix](resources/img/instructions.png)
+
+### Step 2
+
+get args for cmake
+
+```bash
+llvm-config-19 --cmakedir
+    output:    /usr/lib/llvm19/lib/cmake/llvm -> this is your LLVM19 Dir
+
+find /usr -type f -name "LLDConfig.cmake" 2>/dev/null
+    output:        /usr/lib/llvm19/lib/cmake/lld/LLDConfig.cmake  <- this is your LLD19 dir, just without the LLDConfig.cmake bit
+                   /usr/lib/cmake/lld/LLDConfig.cmake
+
+```
+### Step 3
+insert your LLVM19 dir into the **-DLLVM-DIR=** and your LLD19 dir into **-DLLD_DIR=** and compile
+
+```bash
+mkdir build
+cd build
+cmake -DLLVM_DIR=/usr/lib/llvm19/lib/cmake/llvm -DLLD_DIR=/usr/lib/llvm19/lib/cmake/lld/  ..
+cmake --build . -j <number of threads>
+```
+The executable as always should be in `./build/lsc`
 
 ## Could not find a package configuration file provided by "LLD"
 
@@ -109,8 +146,6 @@ Now we have to tell cmake where those files are:
     cmake .. -DLLD_DIR="/path/to/llvm/lib/cmake/lld"
     ```
 
-
-arch should not be affected by this (23.3.2025).
 
 
 ## No llvm/lld header files
