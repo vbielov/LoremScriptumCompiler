@@ -182,7 +182,7 @@ std::vector<SourceLine> Preprocessor::mergeFiles(const LoremSourceFile* file) {
         lines.size(), 
         file->filePath
     );
-    if(lines.back().line.back() != u8'\n') {
+    if( lines.back().line == u8"" || lines.back().line.back() != u8'\n') {
         lines.back().line += u8'\n'; // Add a newline at the end of the last line if it doesn't exist
     }
     
