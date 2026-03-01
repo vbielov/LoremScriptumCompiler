@@ -18,7 +18,9 @@ void ErrorHandler::init(const std::vector<SourceLine>& lines, std::filesystem::p
     if(!(getInstance()->m_queueFlag)){
         std::cout << disclaimer;
     } else {
-        getInstance()->m_ErrorQueue.append(disclaimer);
+        std::string preProcessorErrors = getInstance()->m_ErrorQueue;
+        getInstance()->m_ErrorQueue = disclaimer;
+        getInstance()->m_ErrorQueue.append(preProcessorErrors);
     }
 }
 
@@ -56,43 +58,85 @@ void ErrorHandler::logWarning(std::u8string reason) {
 
 void ErrorHandler::log(size_t* line, std::u8string reason, bool isError) {
     const SourceLine* sourceLine = nullptr; // Initialize sourceLine pointer to null
+
+    const SourceLine* previousLine = nullptr;
+    const SourceLine* followingLine = nullptr;
+
     if (line) {
         if(!m_sourceLines) {
             return; // Ensure source lines are initialized. Can't assert, because of testing
         } else  {
             assert(*line - 1 < m_sourceLines->size());
             sourceLine = &(*m_sourceLines)[*line - 1]; // Get the source lines reference
+            std::filesystem::path mainFilePath = sourceLine->filePath;
+
+            if (*line - 2 < m_sourceLines->size()) {
+                previousLine = &(*m_sourceLines)[*line - 2];
+            
+                if (previousLine->filePath != mainFilePath){
+                    previousLine = nullptr;
+                }
+            }
+
+            if (*line < m_sourceLines->size()) {
+                followingLine = &(*m_sourceLines)[*line];
+
+                if (followingLine->filePath != mainFilePath){
+                    followingLine = nullptr;
+                }
+            }
         }
     }
-    
-    const static std::string_view ERROR_STR = "\n \033[1;41mError\033[0m encountered in Line ";
-    const static std::string_view WARNING_STR = "\n \033[1;48;5;214mWarning\033[0m for Line ";
-    
+
     std::string outputStr;
     std::stringstream outputStream(outputStr);
-    outputStream << (isError ? ERROR_STR : WARNING_STR); // Set the error or warning string
-    if (sourceLine) {
 
-        outputStream << "\x1b]8;;vscode://file/"+ sourceLine->filePath.string() << ":" << std::to_string(sourceLine->lineIndexInFile + 1); // link
-        outputStream << "\x1b\\" << (const char*)toRomanConverter(sourceLine->lineIndexInFile + 1).c_str() << "\x1b]8;;\x1b\\" << " in File: "+ sourceLine->filePath.string() << "\n"; // link title
-
+    if(!sourceLine){ // handle generic Warning/Error without lines
         if (isError) {
-            outputStream << "\t \033[31m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in RED
+            outputStream << "\n \033[1;41mError\033[0m: " << (const char*)reason.c_str() << std::endl;
         } else {
-            outputStream << "\t \033[38;5;214m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in ORANGE
+            outputStream << "\n \033[1;48;5;214mWarning\033[0m: " << (const char*)reason.c_str() << std::endl;
+        }
+        
+    } else {    
+        const static std::string_view ERROR_STR = "\n \033[1;41mError\033[0m encountered in Line ";
+        const static std::string_view WARNING_STR = "\n \033[1;48;5;214mWarning\033[0m for Line ";
+        
+        outputStream << (isError ? ERROR_STR : WARNING_STR); // Set the error or warning string
+        if (sourceLine) {
+
+            outputStream << "\x1b]8;;vscode://file/"+ sourceLine->filePath.string() << ":" << std::to_string(sourceLine->lineIndexInFile + 1); // link
+            outputStream << "\x1b\\" << (const char*)toRomanConverter(sourceLine->lineIndexInFile + 1).c_str() << "\x1b]8;;\x1b\\" << " in File: "+ sourceLine->filePath.string() << "\n"; // link title
+
+
+            if(previousLine){
+                outputStream << "\t | " << (const char*)(previousLine->line.c_str());
+            }
+
+            if (isError) {
+                outputStream << "\t \033[31m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in RED
+            } else {
+                outputStream << "\t \033[38;5;214m| " << (const char*)(sourceLine->line.c_str()) << "\033[0m"; // line content, in ORANGE
+            }
+
+            if(followingLine){
+                outputStream << "\t | " << (const char*)(followingLine->line.c_str());
+            }
+
+        } else {
+            outputStream << "In undefined line"; // Unknown file case
         }
 
-    } else if (isError) {
-        outputStream << "In undefined line"; // Unknown file case
+        if (isError){
+            outputStream << " possible Reason: " << (const char*)reason.c_str() << std::endl; // reason     
+        } else {
+            outputStream << " Warning: " << (const char*)reason.c_str() << std::endl; 
+        }
     }
 
-    if (isError){
-        outputStream << " possible Reason: " << (const char*)reason.c_str() << std::endl; // reason     
-    } else {
-        outputStream << " Warning: " << (const char*)reason.c_str() << std::endl; 
-    }
     
     if (m_queueFlag) {
+        outputStream << std::endl;
         if(isError) {
             m_ErrorQueue.append(outputStream.str());
         } else {
@@ -106,7 +150,7 @@ void ErrorHandler::log(size_t* line, std::u8string reason, bool isError) {
 void ErrorHandler::dumpErrorAndWarning(){
     if(getInstance()->m_queueFlag){
         std::cerr << getInstance()->m_ErrorQueue;
-        std::cerr << getInstance()->m_WarningQueue;
+        std::cout << getInstance()->m_WarningQueue;
     }
 };
 

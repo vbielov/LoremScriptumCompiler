@@ -1,3 +1,5 @@
+apere "./test.lorem"
+
 nihil printf = λ(litera[] text)
 
 litera[] helloWorld = "Hello, World!\n"
