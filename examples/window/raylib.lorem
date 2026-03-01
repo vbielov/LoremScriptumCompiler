@@ -1,5 +1,5 @@
-apere "libs/libraylibdll.a"
-apere "libs/raylibbindings.o"
+apere 'libs/libraylibdll.a'
+apere 'libs/raylibbindings.o'
 
 nihil initWindow = λ(numerus width, numerus height, litera title)
 
