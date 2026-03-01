@@ -69,19 +69,6 @@ int main(int argc, const char** argv) {
     IRGenerator codeGenerator = IRGenerator(mainFilePath.stem().string().c_str(), tree);
     codeGenerator.generateIRCode();
 
-    // ErrorHandler::logWarning(u8"test", 0);
-
-    ErrorHandler::logWarning(u8"test", 1);
-    ErrorHandler::logWarning(u8"test", 2);
-    ErrorHandler::logWarning(u8"test", 3);
-    ErrorHandler::logWarning(u8"test", 4);
-    ErrorHandler::logWarning(u8"test");
-    ErrorHandler::logWarning(u8"test");
-    ErrorHandler::logWarning(u8"test", 5);
-
-    ErrorHandler::logWarning(u8"test", 6);
-
-    ErrorHandler::logError(u8"test", 3);
     if (ErrorHandler::hasError()) { // check if any errors occured
         ErrorHandler::dumpErrorAndWarning();
         return 1;

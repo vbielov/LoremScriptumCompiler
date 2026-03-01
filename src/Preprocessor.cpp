@@ -57,7 +57,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         {
             int indexBack = includePos - 1;
             bool onlyApereInLine = true;
-            while (sourceCode[indexBack] != u8'\n' && indexBack > 0) {
+            while (indexBack > 0 && sourceCode[indexBack] != u8'\n') {
                 if (sourceCode[indexBack] != u8' ' && sourceCode[indexBack] != u8'\t') {
                     onlyApereInLine = false;
                     break;
