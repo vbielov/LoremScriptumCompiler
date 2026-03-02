@@ -57,7 +57,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         {
             int indexBack = includePos - 1;
             bool onlyApereInLine = true;
-            while (sourceCode[indexBack] != u8'\n' && indexBack > 0) {
+            while (indexBack > 0 && sourceCode[indexBack] != u8'\n') {
                 if (sourceCode[indexBack] != u8' ' && sourceCode[indexBack] != u8'\t') {
                     onlyApereInLine = false;
                     break;
@@ -81,7 +81,7 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
         // Read the file name from " until the next "
         std::string includeFileName = "";
         {
-            if (sourceCode[index] != '"') {
+            if (sourceCode[index] != '\'') {
                 std::string fileNameStr = filePath.filename().string();
                 ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
                 includePos = sourceCode.find(INCLUDE_STR, index);
@@ -90,12 +90,12 @@ std::unique_ptr<LoremSourceFile> Preprocessor::createFileTree(std::filesystem::p
     
             index++; // eat "
     
-            while (sourceCode[index] != '"' && index < sourceCode.length() && sourceCode[index] != '\n') {
+            while (sourceCode[index] != '\'' && index < sourceCode.length() && sourceCode[index] != '\n') {
                 includeFileName += sourceCode[index];
                 index++;
             }
     
-            if (sourceCode[index] != '"') {
+            if (sourceCode[index] != '\'') {
                 std::string fileNameStr = filePath.filename().string();
                 ErrorHandler::logError(u8"apere must be followed by \"fileName\"! Error happened in file: " + std::u8string(fileNameStr.begin(), fileNameStr.end()) + u8"!");
                 includePos = sourceCode.find(INCLUDE_STR, index);
@@ -182,7 +182,7 @@ std::vector<SourceLine> Preprocessor::mergeFiles(const LoremSourceFile* file) {
         lines.size(), 
         file->filePath
     );
-    if(lines.back().line.back() != u8'\n') {
+    if( lines.back().line == u8"" || lines.back().line.back() != u8'\n') {
         lines.back().line += u8'\n'; // Add a newline at the end of the last line if it doesn't exist
     }
     

@@ -122,6 +122,22 @@ cmake --build . -j <number of threads>
 ```
 The executable as always should be in `./build/lsc`
 
+If you actually are trying to mess aroud with the code and use the debugger and run tests, you should hard code your DIR in the CMake file
+
+This is double commented out in the cmake file, just uncomment replace your dirs if needed. 
+```cmake
+set(LLVM_DIR "/usr/lib/llvm19/lib/cmake/llvm") # IF YOU DONT WANT TO DO THE FLAGS BY HAND YOU CAN HARDCODE THEM HERE 
+set(LLD_DIR "/usr/lib/llvm19/lib/cmake/lld") # that way you can use the normal compile commands
+```
+Now you can run `cmake ..` without the extra parameters.
+Now if you want to run VS-Code tasks like the debugger, first you compile in the terminal, then run the task. Otherwhise it will still grab the latest LLVM that is installed and it will break again.
+
+Now to get the tests working -> compile your LSC via command line -> go into the test folder, find the CMakeLists.txt there.
+
+Same pattern as before, delete the duplicates remove the comments on the Arch maintinance thing. -> now you can run the tests task
+
+If someting breaks feel free to contact us via issues.
+
 ## Could not find a package configuration file provided by "LLD"
 
 ![LLDConfig.cmake](./resources/img/lld_cmake.png)

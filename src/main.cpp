@@ -40,8 +40,9 @@ int main(int argc, const char** argv) {
     Preprocessor preprocessor = Preprocessor(mainFilePath);
     std::u8string sourceCode = preprocessor.getMergedSourceCode();
     
-    ErrorHandler::init(preprocessor.getMergedLines()); // initialize ErrorHandler with source lines
+    ErrorHandler::init(preprocessor.getMergedLines(), mainFilePath); // initialize ErrorHandler with source lines
     if(ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorAndWarning();
         return 1;
     }
 
@@ -51,6 +52,7 @@ int main(int argc, const char** argv) {
     lexer.tokenize(tokens, std::cout);
 
     if(ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorAndWarning();
         return 1;
     }
 
@@ -59,6 +61,7 @@ int main(int argc, const char** argv) {
     std::unique_ptr<AST> tree = parser.parse();
     
     if (ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorAndWarning();
         return 1;
     }
 
@@ -67,7 +70,12 @@ int main(int argc, const char** argv) {
     codeGenerator.generateIRCode();
 
     if (ErrorHandler::hasError()) { // check if any errors occured
+        ErrorHandler::dumpErrorAndWarning();
         return 1;
+    }
+
+    if (ErrorHandler::hasWarning()) {
+        ErrorHandler::dumpErrorAndWarning();
     }
 
     // Assemble

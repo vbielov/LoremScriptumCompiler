@@ -10,3 +10,6 @@ output/
 /examples/**/*.o
 /examples/**/*.asm
 /examples/**/*.exe
+
+# keep raylibbindings -> keep in mind its for windows
+!/examples/window/libs/raylibbindings.o
