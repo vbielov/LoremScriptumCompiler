@@ -24,6 +24,21 @@ execute_process(COMMAND llvm-config --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUT
 execute_process(COMMAND llvm-config --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND llvm-config --system-libs --libs all OUTPUT_VARIABLE LLVM_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+
+# # Arch linux maintinance
+# set(LLVM_DIR "/usr/lib/llvm19/lib/cmake/llvm") # in this case you really have to hard code it
+# set(LLD_DIR "/usr/lib/llvm19/lib/cmake/lld") #
+
+# find_package(LLD 19.1 REQUIRED CONFIG)
+# find_package(LLVM 19.1 REQUIRED CONFIG)
+
+
+# # Get LLVM compile and link flags from llvm-config
+# execute_process(COMMAND llvm-config-19 --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+# execute_process(COMMAND llvm-config-19 --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+# execute_process(COMMAND llvm-config-19 --system-libs --libs all OUTPUT_VARIABLE LLVM_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+
 # Print found values (for debugging)
 message(STATUS "LLVM CXXFLAGS: ${LLVM_CXXFLAGS}")
 message(STATUS "LLVM LDFLAGS: ${LLVM_LDFLAGS}")

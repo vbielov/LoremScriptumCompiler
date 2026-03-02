@@ -33,9 +33,13 @@ if(NOT BUILD_TESTS)
 
 
     # # ARCH LINUX WORKAROUNDS/MAINTINANCE, UNCOMMENT AND FOLLOW INSTALL INSTRUCTIONS!
+    # # set(LLVM_DIR "/usr/lib/llvm19/lib/cmake/llvm") # IF YOU DONT WANT TO DO THE FLAGS BY HAND YOU CAN HARDCODE THEM HERE 
+    # # set(LLD_DIR "/usr/lib/llvm19/lib/cmake/lld") # that way you can use the normal compile commands
+
+    # # Then find packages normally
     # find_package(LLVM 19.1 REQUIRED CONFIG)
     # find_package(LLD 19.1 REQUIRED CONFIG)
-
+     
     # # Get all LLVM's modules and libraries 
     # execute_process(COMMAND llvm-config-19 --cxxflags OUTPUT_VARIABLE LLVM_CXXFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
     # execute_process(COMMAND llvm-config-19 --ldflags OUTPUT_VARIABLE LLVM_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
